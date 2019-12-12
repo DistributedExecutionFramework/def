@@ -1,10 +1,16 @@
-﻿using routine_api;
+﻿using System;
+using routine_api.routine;
 using routine_api.exception;
 
-namespace demo_routines
+namespace demoroutines
 {
     public class PiCalc : ObjectiveRoutine<DEFDouble>
     {
+        public static new void Main(String[] args)
+        {
+            AbstractRoutine.Main(args);
+        }
+
         protected override DEFDouble Routine()
         {
             try

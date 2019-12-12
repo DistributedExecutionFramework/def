@@ -1,5 +1,7 @@
 package at.enfilo.def.routine;
 
+import at.enfilo.def.communication.dto.Protocol;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.datatype.DEFInteger;
 import at.enfilo.def.datatype.DEFString;
 import at.enfilo.def.routine.mock.ObjectiveRoutineMock;
@@ -8,10 +10,12 @@ import at.enfilo.def.routine.api.Order;
 import at.enfilo.def.routine.util.DataReader;
 import at.enfilo.def.routine.util.DataWriter;
 import at.enfilo.def.routine.util.ThreadSafePipedIOStream;
+import at.enfilo.def.transfer.dto.ProgramDTO;
 import org.apache.thrift.TException;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
@@ -45,17 +49,40 @@ public class ObjectiveRoutineTest {
 		await().atMost(10, SECONDS).until(t::isAlive);
 
 		// Receiver 3 orders: request input parameters
-		// 1. param: firstname
+		// 1. param: program
 		handleLog(ctrlReader);
 		handleLog(ctrlReader);
 		handleLog(ctrlReader);
 		Order o = ctrlReader.read(new Order());
 		assertEquals(Command.GET_PARAMETER, o.getCommand());
+		assertEquals("program", o.getValue());
+		ProgramDTO program = new ProgramDTO();
+		program.setId(UUID.randomUUID().toString());
+		program.setResults(new HashMap<>());
+		inWriter.store(program);
+
+		// 2. param: parameter server endpoint
+		handleLog(ctrlReader);
+		handleLog(ctrlReader);
+		o = ctrlReader.read(new Order());
+		assertEquals(Command.GET_PARAMETER, o.getCommand());
+		assertEquals("parameterServerEndpoint", o.getValue());
+		ServiceEndpointDTO endpoint = new ServiceEndpointDTO();
+		endpoint.setProtocol(Protocol.THRIFT_TCP);
+		endpoint.setPort(40092);
+		endpoint.setHost("localhost");
+		inWriter.store(endpoint);
+
+		// 3. param: firstname
+		handleLog(ctrlReader);
+		handleLog(ctrlReader);
+		o = ctrlReader.read(new Order());
+		assertEquals(Command.GET_PARAMETER, o.getCommand());
 		assertEquals("firstName", o.getValue());
 		DEFString firstName = new DEFString(UUID.randomUUID().toString());
 		inWriter.store(firstName);
 
-		// 2. param: lastname
+		// 4. param: lastname
 		handleLog(ctrlReader);
 		handleLog(ctrlReader);
 		o = ctrlReader.read(new Order());
@@ -64,7 +91,7 @@ public class ObjectiveRoutineTest {
 		DEFString lastName = new DEFString(UUID.randomUUID().toString());
 		inWriter.store(lastName);
 
-		// 3. param: age
+		// 5. param: age
 		handleLog(ctrlReader);
 		handleLog(ctrlReader);
 		o = ctrlReader.read(new Order());

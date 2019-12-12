@@ -1,6 +1,8 @@
 package at.enfilo.def.library.api;
 
 import at.enfilo.def.communication.api.ticket.rest.ITicketService;
+import at.enfilo.def.communication.dto.Protocol;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.library.api.client.ILibraryAdminServiceClient;
 import at.enfilo.def.library.api.client.factory.LibraryAdminServiceClientFactory;
@@ -11,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 
@@ -70,7 +70,7 @@ public class LibraryAdminServiceClientTest {
 		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> future = client.removeRoutine(routineId);
-		assertNull(future.get());
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class LibraryAdminServiceClientTest {
 		routineDTO.setName("Test routine name");
 		routineDTO.setDescription("Test routine description");
 		routineDTO.setRevision((short) 0);
-		routineDTO.setType(RoutineType.MASTER);
+		routineDTO.setType(RoutineType.CLIENT);
 		routineDTO.setInParameters(new LinkedList<>());
 		routineDTO.setOutParameter(new FormalParameterDTO());
 
@@ -106,7 +106,7 @@ public class LibraryAdminServiceClientTest {
 		routineDTO.setName("Test routine name");
 		routineDTO.setDescription("Test routine description");
 		routineDTO.setRevision((short) 0);
-		routineDTO.setType(RoutineType.MASTER);
+		routineDTO.setType(RoutineType.CLIENT);
 		routineDTO.setInParameters(new LinkedList<>());
 		routineDTO.setOutParameter(new FormalParameterDTO());
 
@@ -120,30 +120,44 @@ public class LibraryAdminServiceClientTest {
 	}
 
 	@Test
-	public void uploadRoutineBinary() throws Exception {
+	public void createRoutineBinary() throws Exception {
 		String ticketId = UUID.randomUUID().toString();
 		String routineBinaryId = UUID.randomUUID().toString();
+		String routineBinaryName = "name";
 
-		when(service.uploadRoutineBinary(
-			anyString(),
-			anyString(),
+		when(service.createRoutineBinary(
+				anyString(),
+				anyString(),
+				anyString(),
 			anyLong(),
-            anyBoolean(),
-            anyObject()
+            anyBoolean()
 		)).thenReturn(ticketId);
 
 		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
-		when(responseService.uploadRoutineBinary(ticketId)).thenReturn(routineBinaryId);
+		when(responseService.createRoutineBinary(ticketId)).thenReturn(routineBinaryId);
 
-		Future<String> future = client.uploadRoutineBinary(
-			routineBinaryId,
-			"1",
-			1,
-			true,
-				ByteBuffer.wrap(UUID.randomUUID().toString().getBytes())
+		Future<String> future = client.createRoutineBinary(
+				UUID.randomUUID().toString(),
+			routineBinaryName,
+				"1",
+				1,
+				true
 		);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 		assertEquals(routineBinaryId, future.get());
+	}
+
+	@Test
+	public void uploadRoutineBinaryChunk() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String routineBinaryId = UUID.randomUUID().toString();
+		RoutineBinaryChunkDTO chunk = new RoutineBinaryChunkDTO();
+
+		when(service.uploadRoutineBinaryChunk(routineBinaryId, chunk)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.uploadRoutineBinaryChunk(routineBinaryId, chunk);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 	@Test
@@ -157,7 +171,6 @@ public class LibraryAdminServiceClientTest {
 
 		Future<Void> future = client.removeRoutineBinary(routineId, routineBinaryId);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
 	}
 
 	@Test
@@ -218,7 +231,7 @@ public class LibraryAdminServiceClientTest {
 		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> future = client.removeDataType(dataTypeId);
-		assertNull(future.get());
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 	@Test
@@ -247,7 +260,7 @@ public class LibraryAdminServiceClientTest {
 		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> future = client.createTag(UUID.randomUUID().toString(), "typical description.");
-		assertNull(future.get());
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 	@Test
@@ -258,7 +271,7 @@ public class LibraryAdminServiceClientTest {
 		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> future = client.removeTag(UUID.randomUUID().toString());
-		assertNull(future.get());
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 	@Test
@@ -308,5 +321,31 @@ public class LibraryAdminServiceClientTest {
 		Future<List<FeatureDTO>> future = client.getFeatures(keyword);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 		assertEquals(features, future.get());
+	}
+
+	@Test
+	public void getMasterLibrary() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		ServiceEndpointDTO serviceEndpoint = new ServiceEndpointDTO("host", 123, Protocol.THRIFT_HTTP);
+
+		when(service.getMasterLibrary()).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(responseService.getMasterLibrary(ticketId)).thenReturn(serviceEndpoint);
+
+		Future<ServiceEndpointDTO> future = client.getMasterLibrary();
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+		assertEquals(serviceEndpoint, future.get());
+	}
+
+	@Test
+	public void setMasterLibrary() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		ServiceEndpointDTO serviceEndpoint = new ServiceEndpointDTO("host", 123, Protocol.THRIFT_HTTP);
+
+		when(service.setMasterLibrary(serviceEndpoint)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.setMasterLibrary(serviceEndpoint);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 }

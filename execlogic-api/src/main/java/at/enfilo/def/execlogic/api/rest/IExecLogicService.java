@@ -45,20 +45,26 @@ public interface IExecLogicService extends ExecLogicService.Iface, IResource {
 	String abortProgram(@PathParam("pId") String pId);
 
 	@PUT
-	@Path("/programs/{pId}/name/{pName}")
+	@Path("/programs/{pId}/name")
 	@Produces(MediaType.APPLICATION_JSON)
-	String updateProgramName(@PathParam("pId") String pId, @PathParam("pName") String name);
+	String updateProgramName(@PathParam("pId") String pId, @QueryParam("name") String name);
 
 	@PUT
-	@Path("/programs/{pId}/description/{pDescription}")
+	@Path("/programs/{pId}/description")
 	@Produces(MediaType.APPLICATION_JSON)
-	String updateProgramDescription(@PathParam("pId") String pId, @PathParam("pDescription") String description);
+	String updateProgramDescription(@PathParam("pId") String pId, @QueryParam("description") String description);
 
 	@POST
 	@Path("/programs/{pId}/finished")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	String markProgramAsFinished(@PathParam("pId") String pId);
+
+	@POST
+	@Path("/programs/{pId}/client-routine")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	String startClientRoutine(@PathParam("pId") String pId, @QueryParam("crId") String crId);
 
 	@GET
 	@Path("/programs/{pId}/jobs")
@@ -148,7 +154,7 @@ public interface IExecLogicService extends ExecLogicService.Iface, IResource {
 	);
 
 	@POST
-	@Path("/programs/{pId}/jobs/{jId}/tasks/complete")
+	@Path("/programs/{pId}/jobs/{jId}/complete")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	String markJobAsComplete(@PathParam("pId") String pId, @PathParam("jId") String jId);

@@ -278,7 +278,8 @@ class GenericDAO<T extends AbstractEntity<U>, U extends Serializable> implements
                 CriteriaBuilder builder = session.getCriteriaBuilder();
                 CriteriaQuery<T> criteriaQuery = builder.createQuery(domainClass);
                 criteriaQuery.from(domainClass);
-
+                criteriaQuery.distinct(true);
+                
                 return session.createQuery(criteriaQuery).getResultList();
             });
         } catch (HibernateException e) {
@@ -300,6 +301,7 @@ class GenericDAO<T extends AbstractEntity<U>, U extends Serializable> implements
                     idClass,
                     entityRoot.get(idAttribute)
                 ));
+                criteriaQuery.distinct(true);
 
                 return session.createQuery(criteriaQuery).getResultList();
             });
@@ -343,6 +345,7 @@ class GenericDAO<T extends AbstractEntity<U>, U extends Serializable> implements
                     entityRoot.get(idAttribute),
                     entityRoot.get(propertyAttribute)
                 ));
+                criteriaQuery.distinct(true);
 
                 List<javax.persistence.Tuple> hibernateTupleList = session.createQuery(criteriaQuery).getResultList();
                 return hibernateTupleList.stream().map(t -> {

@@ -1,6 +1,7 @@
 package at.enfilo.def.library.api.rest;
 
 import at.enfilo.def.communication.api.common.service.IResource;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.library.api.thrift.LibraryAdminResponseService;
 import at.enfilo.def.transfer.dto.DataTypeDTO;
 import at.enfilo.def.transfer.dto.FeatureDTO;
@@ -12,6 +13,12 @@ import java.util.List;
 
 @Path("/response/library")
 public interface ILibraryAdminResponseService extends ILibraryResponseService, LibraryAdminResponseService.Iface, IResource {
+	@GET
+	@Path("/masterLibrary")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	ServiceEndpointDTO getMasterLibrary(@QueryParam("ticketId") String ticketId);
 
 	/**
 	 * Returns all registered Routine Id's.
@@ -29,7 +36,7 @@ public interface ILibraryAdminResponseService extends ILibraryResponseService, L
 	 *
 	 * @param ticketId
 	 */
-    @PUT
+    @POST
 	@Path("/routines")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
@@ -40,7 +47,7 @@ public interface ILibraryAdminResponseService extends ILibraryResponseService, L
 	 *
 	 * @param ticketId
 	 */
-    @PUT
+    @POST
 	@Path("/routines/rId")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
@@ -51,11 +58,17 @@ public interface ILibraryAdminResponseService extends ILibraryResponseService, L
 	 *
 	 * @param ticketId
 	 */
-    @PUT
-	@Path("/routines/binary")
+    @POST
+	@Path("/routines/rId/binaries")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String uploadRoutineBinary(@QueryParam("ticketId") String ticketId);
+	String createRoutineBinary(@QueryParam("ticketId") String ticketId);
+
+	@GET
+	@Path("/routines/binaries/rbId/verify")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	boolean verifyRoutineBinary(@QueryParam("ticketId") String ticketId);
 
 	/**
 	 * Returns all registered DataType Id's.
@@ -118,4 +131,10 @@ public interface ILibraryAdminResponseService extends ILibraryResponseService, L
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	List<FeatureDTO> getFeatures(@QueryParam("ticketId") String ticketId);
+
+	@GET
+	@Path("/features/name/version")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	FeatureDTO getFeatureByNameAndVersion(@QueryParam("ticketId") String ticketId);
 }

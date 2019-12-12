@@ -13,6 +13,7 @@ class RoutineBinaryDTOFormatter extends ShellFormatter<RoutineBinaryDTO> {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(shifted).append("Id: ").append(routineBinary.getId()).append("\n");
+		sb.append(shifted).append("Name: ").append(routineBinary.getName()).append("\n");
 		sb.append(shifted).append("Md5: ").append(routineBinary.getMd5()).append("\n");
 		sb.append(shifted).append("Size (bytes): ").append(routineBinary.getSizeInBytes()).append("\n");
 		sb.append(shifted).append("Is primary: ").append(routineBinary.isPrimary()).append("\n");

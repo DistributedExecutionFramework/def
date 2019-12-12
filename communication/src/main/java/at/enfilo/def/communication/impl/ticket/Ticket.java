@@ -25,7 +25,7 @@ public class Ticket<T> implements ITicket<T>, Comparable<Ticket<T>>, Runnable {
 	private final Class<T> resultClass;
 	private final CountDownLatch resultSignal;
 	private final long seq;
-	private final int priority;
+	private final byte priority;
 	private final Object stateAndTimeLock;
 
 	private Callable<T> operation;
@@ -35,10 +35,10 @@ public class Ticket<T> implements ITicket<T>, Comparable<Ticket<T>>, Runnable {
 	private TicketStatusDTO state;
 	private Thread runningThread;
 
-	public Ticket(Class<T> resultClass, Callable<T> operation, int prio) {
+	public Ticket(Class<T> resultClass, Callable<T> operation, byte priority) {
 		this.id = UUID.randomUUID();
 		this.seq = SEQ.getAndIncrement();
-		this.priority = prio;
+		this.priority = priority;
 		this.resultClass = resultClass;
 		this.operation = operation;
 		this.resultSignal = new CountDownLatch(1);
@@ -99,7 +99,12 @@ public class Ticket<T> implements ITicket<T>, Comparable<Ticket<T>>, Runnable {
 					e.getCause().printStackTrace(pw);
 				}
 			}
-			exception = sw.toString();
+			StringBuilder sb = new StringBuilder();
+			sb.append('\n');
+			for (String exLine : sw.toString().split(System.lineSeparator())) {
+				sb.append('>').append(' ').append(exLine).append('\n');
+			}
+			exception = sb.toString();
 			synchronized (stateAndTimeLock) {
 				state = TicketStatusDTO.FAILED;
 				finishedTime = Instant.now();
@@ -145,7 +150,7 @@ public class Ticket<T> implements ITicket<T>, Comparable<Ticket<T>>, Runnable {
 	}
 
 	@Override
-	public int getPriority() {
+	public byte getPriority() {
 		return priority;
 	}
 
@@ -161,11 +166,10 @@ public class Ticket<T> implements ITicket<T>, Comparable<Ticket<T>>, Runnable {
 
 	@Override
 	public int compareTo(Ticket<T> other) {
-		int res = Integer.compare(priority, other.priority);
-		if (res == 0) {
-			res = seq < other.seq ? -1 : 1;
+		if (priority == other.priority) {
+			return seq < other.seq ? -1 : 1;
 		}
-		return res;
+		return priority < other.priority ? -1 : 1;
 	}
 
 	@Override

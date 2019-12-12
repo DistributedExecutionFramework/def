@@ -18,6 +18,8 @@ public class WorkerServiceProcess {
 		String ctrlPipe = args[1];
 
 		HashMap<String, TBase> params = new HashMap<>();
+		params.put("program", ObjectiveRoutineProcessTest.PROGRAM);
+		params.put("parameterServerEndpoint", ObjectiveRoutineProcessTest.PARAMETER_SERVER_ENDPOINT);
 		params.put("firstName", new DEFString(ObjectiveRoutineProcessTest.FIRST_NAME));
 		params.put("lastName", new DEFString(ObjectiveRoutineProcessTest.LAST_NAME));
 		params.put("age", new DEFInteger(ObjectiveRoutineProcessTest.AGE));

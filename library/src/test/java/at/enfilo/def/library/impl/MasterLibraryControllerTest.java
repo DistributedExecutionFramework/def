@@ -1,6 +1,5 @@
 package at.enfilo.def.library.impl;
 
-import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.domain.entity.*;
 import at.enfilo.def.library.LibraryConfiguration;
 import at.enfilo.def.library.api.util.BaseDataTypeRegistry;
@@ -18,7 +17,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -36,8 +34,10 @@ public class MasterLibraryControllerTest {
 	private Routine routine;
 	private RoutineDTO routineDTO;
 	private String rbId;
+	private String rbName;
 	private RoutineBinary routineBinary;
 	private RoutineBinaryDTO routineBinaryDTO;
+	private RoutineBinaryChunkDTO routineBinaryChunk;
 	private IDataTypeDAO dataTypeDAO;
 	private IRoutineDAO routineDAO;
 	private IRoutineBinaryDAO routineBinaryDAO;
@@ -64,11 +64,19 @@ public class MasterLibraryControllerTest {
 		routineDTO = new RoutineDTO();
 		routineDTO.setId(rId);
 
+		routineBinaryChunk = new RoutineBinaryChunkDTO();
+		routineBinaryChunk.setChunk((short)1);
+		routineBinaryChunk.setTotalChunks((short)1);
+		routineBinaryChunk.setChunkSize(1000);
+		routineBinaryChunk.setData(new byte[]{0x00, 0x01, 0x02, 0x03});
+
 		rbId = UUID.randomUUID().toString();
+		rbName = "name";
 		routineBinary = new RoutineBinary();
 		routineBinary.setId(rbId);
-		routineBinary.setData(new byte[]{0x00, 0x01, 0x02, 0x03});
-		routine.setRoutineBinaries(new ArrayList<>());
+		routineBinary.setName(rbName);
+		routineBinary.setSizeInBytes(4);
+		routine.setRoutineBinaries(new HashSet<>());
 		routine.getRoutineBinaries().add(routineBinary);
 		routine.setRequiredFeatures(new HashSet<>());
 		Feature python = new Feature();
@@ -100,7 +108,8 @@ public class MasterLibraryControllerTest {
 
 		routineBinaryDTO = new RoutineBinaryDTO();
 		routineBinaryDTO.setId(rbId);
-		routineBinaryDTO.setData(new byte[]{0x00, 0x01, 0x02, 0x03});
+		routineBinaryDTO.setName(rbName);
+		routineBinaryDTO.setSizeInBytes(4);
 		routineDTO.addToRoutineBinaries(routineBinaryDTO);
 
 		FeatureDTO pythonDTO = new FeatureDTO();
@@ -157,6 +166,7 @@ public class MasterLibraryControllerTest {
 	@Test
 	public void getRoutine() throws Exception {
 		when(routineDAO.findById(rId)).thenReturn(routine);
+		when(storeDriver.getExecutionURL(rId, rbId, rbName)).thenReturn(new URL("file:/path/to/routine/binary"));
 
 		// First time getRoutine --> fetch from master library
 		RoutineDTO r = masterLibraryController.getRoutine(rId);
@@ -168,9 +178,6 @@ public class MasterLibraryControllerTest {
 			} else {
 				assertEquals(0, featureDTO.getExtensions().size());
 			}
-		}
-		for (RoutineBinaryDTO rb : r.getRoutineBinaries()) {
-			assertFalse(rb.isSetData());
 		}
 
 		// Second time getRoutine --> should be cached
@@ -251,39 +258,18 @@ public class MasterLibraryControllerTest {
 	}
 
 	@Test
-	public void uploadRoutineBinary() throws ExecutionException, IOException {
-		String md5 = UUID.randomUUID().toString();
+	public void uploadRoutineBinaryChunk() throws ExecutionException, IOException {
 		Random rnd = new Random();
-		int size = rnd.nextInt();
-		boolean primary = rnd.nextBoolean();
-		byte[] data = new byte[16];
+		byte[] data = new byte[1024];
 		rnd.nextBytes(data);
-		URL url = new URL("file:/" + UUID.randomUUID().toString());
+		RoutineBinaryChunkDTO chunk = new RoutineBinaryChunkDTO((short)1, (short)1, 1024, ByteBuffer.wrap(data));
 
 		when(routineDAO.findById(rId)).thenReturn(routine);
-		when(storeDriver.store(any())).thenReturn(url);
+		when(storeDriver.exists(rbId)).thenReturn(true);
 
-		String id = masterLibraryController.uploadRoutineBinary(
-				rId,
-				md5,
-				size,
-				primary,
-				ByteBuffer.wrap(data)
-		);
+		masterLibraryController.uploadRoutineBinaryChunk(rbId, chunk);
 
-		RoutineBinaryDTO binary = new RoutineBinaryDTO();
-		binary.setId(id);
-		binary.setMd5(md5);
-		binary.setSizeInBytes(size);
-		binary.setPrimary(primary);
-		binary.setUrl(url.toString());
-
-		assertTrue(masterLibraryController.routineRegistry.containsKey(rId));
-		assertTrue(masterLibraryController.routineRegistry.get(rId).getRoutineBinaries().contains(binary));
-
-		binary.setUrl(null);
-		binary.setData(data);
-		verify(storeDriver, times(1)).store(binary);
+		verify(storeDriver, times(1)).storeChunk(rbId, chunk);
 	}
 
 	@Test
@@ -299,32 +285,33 @@ public class MasterLibraryControllerTest {
 	}
 
 	@Test
-	public void getCachedRoutineBinary() throws IOException, NoSuchAlgorithmException, ExecutionException {
+	public void getCachedRoutineBinary() throws Exception {
 		when(storeDriver.exists(rbId)).thenReturn(true);
-		when(storeDriver.read(rbId)).thenReturn(routineBinaryDTO);
+		when(storeDriver.read(rbId, rbName)).thenReturn(routineBinaryDTO);
+		masterLibraryController.routineRegistry.put(rId, routineDTO);
 
 		RoutineBinaryDTO b = masterLibraryController.getRoutineBinary(rbId);
 		assertEquals(routineBinaryDTO, b);
 	}
 
 	@Test
-	public void getNonCachedRoutineBinary() throws ExecutionException, ClientCommunicationException, IOException, NoSuchAlgorithmException {
+	public void getNonCachedRoutineBinary() throws Exception {
 		URL url = new URL("file:/" + rbId);
 		routineBinary.setUrl(url.toString());
 		routineBinaryDTO.setUrl(url.toString());
 		when(storeDriver.exists(rbId)).thenReturn(false);
 		when(routineBinaryDAO.findById(rbId)).thenReturn(routineBinary);
-		when(storeDriver.read(rbId, url)).thenReturn(routineBinaryDTO);
+		when(storeDriver.read(rbId, rbName, url)).thenReturn(routineBinaryDTO);
 
 		RoutineBinaryDTO b = masterLibraryController.getRoutineBinary(rbId);
 		assertEquals(routineBinaryDTO, b);
 	}
 
-	@Test(expected = ExecutionException.class)
-	public void getNonExistsRoutineBinary() throws ExecutionException {
-		when(storeDriver.exists(rbId)).thenReturn(false);
+	@Test
+	public void getNonExistsRoutineBinary() throws Exception {
 		when(routineBinaryDAO.findById(rbId)).thenReturn(null);
-		RoutineBinaryDTO b = masterLibraryController.getRoutineBinary(rbId);
+		RoutineBinaryDTO rb = masterLibraryController.getRoutineBinary(rbId);
+		assertNull(rb);
 	}
 
 
@@ -418,8 +405,9 @@ public class MasterLibraryControllerTest {
 
 		when(tagDAO.save(tag)).thenReturn(label);
 
-		String result = masterLibraryController.createTag(label, desc);
-		assertEquals(label, result);
+		masterLibraryController.createTag(label, desc);
+
+		verify(tagDAO).save(tag);
 	}
 
 	@Test

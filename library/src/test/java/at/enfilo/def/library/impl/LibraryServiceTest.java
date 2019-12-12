@@ -1,6 +1,5 @@
 package at.enfilo.def.library.impl;
 
-
 import at.enfilo.def.communication.api.common.server.IServer;
 import at.enfilo.def.communication.dto.Protocol;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
@@ -26,10 +25,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 public abstract class LibraryServiceTest {
     private IServer server;
@@ -54,10 +53,10 @@ public abstract class LibraryServiceTest {
         routine.setRequiredFeatures(Collections.singletonList(featureDTO));
         routineBinary1 = new RoutineBinaryDTO();
         routineBinary1.setId(UUID.randomUUID().toString());
-        routineBinary1.setData(routineBinary1.getId().getBytes());
+        routineBinary1.setName("binary1");
         routineBinary2 = new RoutineBinaryDTO();
         routineBinary2.setId(UUID.randomUUID().toString());
-        routineBinary2.setData(routineBinary1.getId().getBytes());
+        routineBinary2.setName("binary2");
         routine.addToRoutineBinaries(routineBinary1);
         routine.addToRoutineBinaries(routineBinary2);
 
@@ -123,15 +122,5 @@ public abstract class LibraryServiceTest {
 		await().atMost(30, TimeUnit.SECONDS).until(futureRoutineBinary::isDone);
 
 		assertEquals(routineBinary1, futureRoutineBinary.get());
-	}
-
-	@Test
-	public void setDataEndpoint() throws Exception {
-		ServiceEndpointDTO endpoint = new ServiceEndpointDTO("host", 1234, Protocol.THRIFT_TCP);
-
-		Future<Void> future = client.setDataEndpoint(endpoint);
-		assertNull(future.get());
-
-		verify(libraryController, times(1)).setLibraryEndpoint(endpoint);
 	}
 }

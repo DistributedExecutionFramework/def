@@ -155,14 +155,14 @@ public class WorkerCommandsTest extends ShellBaseTest {
 
 
 	@Test
-	public void getQueues() throws Exception {
+	public void getQueueIds() throws Exception {
 		IWorkerServiceClient clientMock = setupMocks();
 
 		List<String> queueIds = new LinkedList<>();
 		String queueId = UUID.randomUUID().toString();
 		queueIds.add(queueId);
 		Future<List<String>> future = Mockito.mock(Future.class);
-		when(clientMock.getQueues()).thenReturn(future);
+		when(clientMock.getQueueIds()).thenReturn(future);
 		when(future.get()).thenReturn(queueIds);
 
 		CommandResult result = shell.executeCommand(CMD_WORKER_QUEUE_LIST);

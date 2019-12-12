@@ -9,11 +9,12 @@ import at.enfilo.def.communication.api.ticket.ITicketRegistry;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ticket.TicketRegistry;
 import at.enfilo.def.communication.util.ServiceRegistry;
-import at.enfilo.def.domain.entity.Program;
+import at.enfilo.def.routine.WrongTypeException;
 import at.enfilo.def.transfer.dto.ClusterInfoDTO;
 import at.enfilo.def.transfer.dto.FeatureDTO;
 import at.enfilo.def.transfer.dto.NodeInfoDTO;
 import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.ProgramDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 	private final ITicketRegistry ticketRegistry;
 	private final WorkerController workerController;
 	private final ReducerController reducerController;
+	private final ClientRoutineWorkerController clientRoutineWorkerController;
 	private final ClusterResource clusterResource;
 	private final ClusterExecLogicController execLogicController;
 
@@ -34,6 +36,7 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 		this(
 			WorkerController.getInstance(),
 			ReducerController.getInstance(),
+			ClientRoutineWorkerController.getInstance(),
 			ClusterResource.getInstance(),
 			ClusterExecLogicController.getInstance()
 		);
@@ -50,12 +53,14 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 	public ClusterServiceImpl(
 		WorkerController workerController,
 		ReducerController reducerController,
+		ClientRoutineWorkerController clientRoutineWorkerController,
 		ClusterResource clusterResource,
 		ClusterExecLogicController execLogicController
 	) {
 		this.ticketRegistry = TicketRegistry.getInstance();
 		this.workerController = workerController;
 		this.reducerController = reducerController;
+		this.clientRoutineWorkerController = clientRoutineWorkerController;
 		this.clusterResource = clusterResource;
 		this.execLogicController = execLogicController;
 	}
@@ -95,12 +100,13 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 		info.setActivePrograms(
 			execLogicController.getAllPrograms()
 					.stream()
-					.map(Program::getId)
+					.map(ProgramDTO::getId)
 					.collect(Collectors.toList())
 		);
 		info.setCloudType(clusterResource.getCloudType());
 		info.setNumberOfWorkers(workerController.getNodePoolSize());
 		info.setNumberOfReducers(reducerController.getNodePoolSize());
+		info.setNumberOfClientRoutineWorkers(clientRoutineWorkerController.getNodePoolSize());
 		info.setDefaultMapRoutineId(clusterResource.getDefaultMapRoutineId());
 		info.setStoreRoutineId(workerController.getStoreRoutineId());
 		return info;
@@ -123,99 +129,106 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 
 	@Override
 	public String getAllNodes(NodeType type) {
-		ITicket ticket;
-		switch (type) {
-			case WORKER:
-				ticket = ticketRegistry.createTicket(
-						List.class,
-						workerController::getAllNodeIds,
-						ITicket.SERVICE_PRIORITY
-				);
-				break;
-			case REDUCER:
-				ticket = ticketRegistry.createTicket(
-						List.class,
-						reducerController::getAllNodeIds,
-						ITicket.SERVICE_PRIORITY
-				);
-				break;
-			default:
-				String msg = String.format("NodeType %s not supported.", type);
-				ticket = ticketRegistry.createFailedTicket(msg);
-		}
+		ITicket ticket = ticketRegistry.createTicket(
+			List.class,
+			() -> {
+				switch (type) {
+					case WORKER:
+						return workerController.getAllNodeIds();
+					case REDUCER:
+						return reducerController.getAllNodeIds();
+					case CLIENT:
+						return clientRoutineWorkerController.getAllNodeIds();
+					default:
+						String msg = String.format("NodeType %s not supported.", type);
+						throw new WrongTypeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
+		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String getNodeInfo(String nId) {
 		ITicket ticket = ticketRegistry.createTicket(
-				NodeInfoDTO.class,
-				() -> fetchNodeInfo(nId),
-				ITicket.SERVICE_PRIORITY
+			NodeInfoDTO.class,
+			() -> {
+				if (workerController.containsNode(nId)) {
+					return workerController.getNodeInfo(nId);
+				} else if (reducerController.containsNode(nId)) {
+					return reducerController.getNodeInfo(nId);
+				} else if (clientRoutineWorkerController.containsNode(nId)) {
+					return clientRoutineWorkerController.getNodeInfo(nId);
+				}
+				String msg = String.format("Node with id %s is not known.", nId);
+				throw new UnknownNodeException(msg);
+			},
+			ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
 
-	private NodeInfoDTO fetchNodeInfo(String nId) throws UnknownNodeException {
-		NodeInfoDTO nodeInfo;
-		if (workerController.containsNode(nId)) {
-			nodeInfo = workerController.getNodeInfo(nId);
-		} else if (reducerController.containsNode(nId)) {
-			nodeInfo = reducerController.getNodeInfo(nId);
-		} else {
-			throw new UnknownNodeException();
-		}
-		return nodeInfo;
-	}
-
 	@Override
 	public String addNode(ServiceEndpointDTO serviceEndpoint, NodeType type) {
-		ITicket ticket;
-		switch (type) {
-			case WORKER:
-				ticket = ticketRegistry.createTicket(
-						() -> workerController.addNode(serviceEndpoint),
-						ITicket.SERVICE_PRIORITY
-				);
-				break;
-			case REDUCER:
-				ticket = ticketRegistry.createTicket(
-						() -> reducerController.addNode(serviceEndpoint),
-						ITicket.SERVICE_PRIORITY
-				);
-				break;
-			default:
-				String msg = String.format("NodeType %s not supported.", type);
-				ticket = ticketRegistry.createFailedTicket(msg);
-		}
+		ITicket ticket = ticketRegistry.createTicket(
+			String.class,
+			() -> {
+				switch (type) {
+					case WORKER:
+						return workerController.addWorker(serviceEndpoint);
+					case REDUCER:
+						return reducerController.addReducer(serviceEndpoint);
+					case CLIENT:
+						return clientRoutineWorkerController.addClientRoutineWorker(serviceEndpoint);
+					default:
+						String msg = String.format("NodeType %s is not supported.", type);
+						throw new WrongTypeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
+		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String removeNode(String nId) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> removeWorkerOrReducer(nId),
-				ITicket.SERVICE_PRIORITY
+			() -> {
+				if (workerController.containsNode(nId)) {
+					workerController.removeNode(nId);
+				} else if (reducerController.containsNode(nId)) {
+					reducerController.removeNode(nId);
+				} else if (clientRoutineWorkerController.containsNode(nId)) {
+					clientRoutineWorkerController.removeNode(nId);
+				} else {
+					String msg = String.format("Node with id %s is not known.", nId);
+					throw new UnknownNodeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
-	}
-
-	private void removeWorkerOrReducer(String nId) throws UnknownNodeException {
-		if (workerController.containsNode(nId)) {
-			workerController.removeNode(nId, true);
-		} else if (reducerController.containsNode(nId)) {
-			reducerController.removeNode(nId, true);
-		} else {
-			throw new UnknownNodeException();
-		}
 	}
 
 	@Override
 	public String getSchedulerServiceEndpoint(NodeType nodeType) {
 		ITicket ticket = ticketRegistry.createTicket(
-				ServiceEndpointDTO.class,
-				() -> clusterResource.getSchedulerServiceClient(nodeType).getServiceEndpoint(),
-				ITicket.SERVICE_PRIORITY
+			ServiceEndpointDTO.class,
+			() -> {
+				switch (nodeType) {
+					case WORKER:
+						return clusterResource.getWorkerSchedulerServiceClient().getServiceEndpoint();
+					case REDUCER:
+						return clusterResource.getReducerSchedulerServiceClient().getServiceEndpoint();
+					case CLIENT:
+						return clusterResource.getClientRoutineWorkerSchedulerSerivceClient().getServiceEndpoint();
+					default:
+						String msg = String.format("NodeType %s is not known.", nodeType);
+						throw new WrongTypeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -226,15 +239,40 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 		ServiceEndpointDTO schedulerServiceEndpoint
 	) {
 		ITicket ticket = ticketRegistry.createTicket(
+			() -> {
+				clusterResource.setSchedulerService(nodeType, schedulerServiceEndpoint);
+				switch (nodeType) {
+					case WORKER:
+						workerController.addAllNodesToScheduler();
+						break;
+					case REDUCER:
+						reducerController.addAllNodesToScheduler();
+						break;
+					case CLIENT:
+						clientRoutineWorkerController.addAllNodesToScheduler();
+						break;
+				}
+			},
+			ITicket.SERVICE_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String getStoreRoutine(NodeType nodeType) {
+		ITicket ticket = ticketRegistry.createTicket(
+				String.class,
 				() -> {
-					clusterResource.setSchedulerService(nodeType, schedulerServiceEndpoint);
 					switch (nodeType) {
 						case WORKER:
-							workerController.addAllNodesToScheduler();
-							break;
+							return workerController.getStoreRoutineId();
 						case REDUCER:
-							reducerController.addAllNodesToScheduler();
-							break;
+							return reducerController.getStoreRoutineId();
+						case CLIENT:
+							return clientRoutineWorkerController.getStoreRoutineId();
+						default:
+							String msg = String.format("NodeType %s is not supported.", nodeType);
+							throw new WrongTypeException(msg);
 					}
 				},
 				ITicket.SERVICE_PRIORITY
@@ -243,73 +281,88 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 	}
 
 	@Override
-	public String getStoreRoutine() {
+	public String setStoreRoutine(String routineId, NodeType nodeType) {
 		ITicket ticket = ticketRegistry.createTicket(
-				String.class,
-				workerController::getStoreRoutineId,
-				ITicket.SERVICE_PRIORITY
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String setStoreRoutine(String routineId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				() -> {
-					workerController.setStoreRoutineId(routineId);
-					// TODO: reducerController
-				},
-				ITicket.SERVICE_PRIORITY
+			() -> {
+				switch (nodeType) {
+					case WORKER:
+						workerController.setStoreRoutineId(routineId);
+						break;
+					case REDUCER:
+						reducerController.setStoreRoutineId(routineId);
+						break;
+					case CLIENT:
+						clientRoutineWorkerController.setStoreRoutineId(routineId);
+						break;
+					default:
+						String msg = String.format("NodeType %s is not supported.", nodeType);
+						throw new WrongTypeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String getDefaultMapRoutine() {
-		ITicket ticket = ticketRegistry.createTicket(String.class, clusterResource::getDefaultMapRoutineId);
+		ITicket ticket = ticketRegistry.createTicket(
+				String.class,
+				clusterResource::getDefaultMapRoutineId,
+				ITicket.SERVICE_PRIORITY
+		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String setDefaultMapRoutine(String routineId) {
-		ITicket ticket = ticketRegistry.createTicket(() -> clusterResource.setDefaultMapRoutineId(routineId));
+		ITicket ticket = ticketRegistry.createTicket(
+				() -> clusterResource.setDefaultMapRoutineId(routineId),
+				ITicket.SERVICE_PRIORITY
+		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String findNodesForShutdown(NodeType nodeType, int nrOfNodesToShutdown) {
-		ITicket ticket;
-		switch (nodeType) {
-			case WORKER:
-					ticket = ticketRegistry.createTicket(
-							List.class,
-							() -> workerController.findNodesForShutdown(nrOfNodesToShutdown),
-							ITicket.SERVICE_PRIORITY
-					);
-				break;
-			case REDUCER:
-					ticket = ticketRegistry.createTicket(
-							List.class,
-							() -> reducerController.findNodesForShutdown(nrOfNodesToShutdown),
-							ITicket.SERVICE_PRIORITY
-					);
-				break;
-			default:
-				String msg = String.format("NodeType %s not supported.", nodeType);
-				ticket = ticketRegistry.createFailedTicket(msg);
-		}
+		ITicket ticket = ticketRegistry.createTicket(
+			List.class,
+			() -> {
+				switch (nodeType) {
+					case WORKER:
+						return workerController.findNodesForShutdown(nrOfNodesToShutdown);
+					case REDUCER:
+						return reducerController.findNodesForShutdown(nrOfNodesToShutdown);
+					case CLIENT:
+						return clientRoutineWorkerController.findNodesForShutdown(nrOfNodesToShutdown);
+					default:
+						String msg = String.format("NodeType %s is not supported.", nodeType);
+						throw new WrongTypeException(msg);
+				}
+			},
+			ITicket.SERVICE_PRIORITY
+		);
 		return ticket.getId().toString();
 	}
 
 	@Override
 	public String getNodeServiceEndpointConfiguration(NodeType nodeType) {
-		ITicket ticket = ticketRegistry.createTicket(ServiceEndpointDTO.class, () -> fetchNodeServiceEndpointConfiguration(nodeType));
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String getLibraryEndpointConfiguration() {
-		ITicket ticket = ticketRegistry.createTicket(ServiceEndpointDTO.class, this::fetchLibraryEndpointConfiguration);
+		ITicket ticket = ticketRegistry.createTicket(
+				ServiceEndpointDTO.class,
+				() -> {
+					switch (nodeType) {
+						case WORKER:
+							return Cluster.getInstance().getConfiguration().getWorkersConfiguration().getNodeServiceEndpoint();
+						case REDUCER:
+							return Cluster.getInstance().getConfiguration().getReducersConfiguration().getNodeServiceEndpoint();
+						case CLIENT:
+							return Cluster.getInstance().getConfiguration().getClientRoutineWorkersConfiguration().getNodeServiceEndpoint();
+						default:
+							String msg = String.format("NodeType %s not supported.", nodeType);
+							throw new WrongTypeException(msg);
+					}
+				}
+		);
 		return ticket.getId().toString();
 	}
 
@@ -341,6 +394,9 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 		if (reducerController != null) {
 			nIds.addAll(reducerController.getAllNodeIds());
 		}
+		if (clientRoutineWorkerController != null) {
+			nIds.addAll(clientRoutineWorkerController.getAllNodeIds());
+		}
 
 		List<FeatureDTO> features = new ArrayList<>();
 		for(String nId : nIds) {
@@ -361,43 +417,40 @@ public class ClusterServiceImpl implements IClusterService, ClusterService.Iface
 			environment = workerController.getNodeEnvironment(nId);
 		} else if (reducerController.containsNode(nId)) {
 			environment = reducerController.getNodeEnvironment(nId);
+		} else if (clientRoutineWorkerController.containsNode(nId)) {
+			environment = clientRoutineWorkerController.getNodeEnvironment(nId);
 		} else {
 			throw new UnknownNodeException();
 		}
 		return environment;
 	}
 
-	private ServiceEndpointDTO fetchNodeServiceEndpointConfiguration(NodeType nodeType) {
-		switch (nodeType) {
-			case WORKER:
-				return Cluster.getInstance().getConfiguration().getWorkersConfiguration().getNodeServiceEndpoint();
-			case REDUCER:
-				return Cluster.getInstance().getConfiguration().getReducersConfiguration().getNodeServiceEndpoint();
-			default:
-				return null;
-		}
-	}
-
-	private ServiceEndpointDTO fetchLibraryEndpointConfiguration() {
-		return Cluster.getInstance().getConfiguration().getLibraryEndpoint();
+	@Override
+	public String getLibraryEndpointConfiguration() {
+		ITicket ticket = ticketRegistry.createTicket(
+				ServiceEndpointDTO.class,
+				() -> Cluster.getInstance().getConfiguration().getLibraryEndpoint()
+		);
+		return ticket.getId().toString();
 	}
 
 	@Override
 	public String getNodeServiceEndpoint(String nId) {
-		ITicket ticket = ticketRegistry.createTicket(ServiceEndpointDTO.class, () -> fetchNodeServiceEndpoint(nId));
+		ITicket ticket = ticketRegistry.createTicket(
+			ServiceEndpointDTO.class,
+			() -> {
+				if (workerController.containsNode(nId)) {
+					return workerController.getNodeServiceEndpoint(nId);
+				} else if (reducerController.containsNode(nId)) {
+					return reducerController.getNodeServiceEndpoint(nId);
+				} else if (clientRoutineWorkerController.containsNode(nId)) {
+					return clientRoutineWorkerController.getNodeServiceEndpoint(nId);
+				} else {
+					String msg = String.format("Node with id %s is not known.", nId);
+					throw new UnknownNodeException(msg);
+				}
+			}
+		);
 		return ticket.getId().toString();
-	}
-
-	private ServiceEndpointDTO fetchNodeServiceEndpoint(String nId) throws UnknownNodeException {
-		ServiceEndpointDTO serviceEndpoint;
-		if (workerController.containsNode(nId)) {
-			serviceEndpoint = workerController.getNodeServiceEndpoint(nId);
-		} else if (reducerController.containsNode(nId)) {
-			serviceEndpoint = reducerController.getNodeServiceEndpoint(nId);
-		} else {
-			throw new UnknownNodeException();
-		}
-		return serviceEndpoint;
-
 	}
 }

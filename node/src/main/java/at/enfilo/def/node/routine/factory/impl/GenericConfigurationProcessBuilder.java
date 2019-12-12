@@ -3,7 +3,7 @@ package at.enfilo.def.node.routine.factory.impl;
 import at.enfilo.def.common.util.environment.domain.Environment;
 import at.enfilo.def.common.util.environment.domain.Extension;
 import at.enfilo.def.common.util.environment.domain.Feature;
-import at.enfilo.def.node.api.RoutineCreationException;
+import at.enfilo.def.node.api.exception.RoutineCreationException;
 import at.enfilo.def.node.routine.exec.SequenceStep;
 import at.enfilo.def.node.routine.factory.IRoutineProcessBuilderFactory;
 import at.enfilo.def.node.util.NodeConfiguration;

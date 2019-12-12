@@ -22,21 +22,15 @@
         <!-- MAPPING CLASSES DECLARATION -->
         <mapping class="at.enfilo.def.domain.entity.FormalParameter"/>
         <mapping class="at.enfilo.def.domain.entity.Group"/>
-        <mapping class="at.enfilo.def.domain.entity.Job"/>
         <mapping class="at.enfilo.def.domain.entity.Routine"/>
         <mapping class="at.enfilo.def.domain.entity.RoutineBinary"/>
-        <mapping class="at.enfilo.def.domain.entity.Program"/>
         <mapping class="at.enfilo.def.domain.entity.Tag"/>
-        <mapping class="at.enfilo.def.domain.entity.Task"/>
         <mapping class="at.enfilo.def.domain.entity.User"/>
         <mapping class="at.enfilo.def.domain.entity.DataType"/>
         <mapping class="at.enfilo.def.domain.entity.Feature"/>
 
-        <mapping class="at.enfilo.def.domain.map.JTMap"/>
         <mapping class="at.enfilo.def.domain.map.RFPMap"/>
         <mapping class="at.enfilo.def.domain.map.RRBMap"/>
-        <mapping class="at.enfilo.def.domain.map.PGMap"/>
-        <mapping class="at.enfilo.def.domain.map.PJMap"/>
         <mapping class="at.enfilo.def.domain.map.UGMap"/>
         <mapping class="at.enfilo.def.domain.map.RFMap"/>
 

@@ -2,6 +2,8 @@ package at.enfilo.def.transfer.util;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertNull;
+
 /**
  * Created by mase on 26.08.2016.
  */
@@ -27,18 +29,16 @@ public abstract class MapperTest<TEntity, TDTO> {
         this.unsupportedClass = unsupportedClass;
     }
 
-    @Test(expected=MapperException.class)
-    public void mapNullToEntity()
-    throws MapperException {
-
-        TEntity entity = MapManager.map((TDTO) null, entityClass);
+    @Test
+    public void mapNullToEntity() throws MapperException {
+        TEntity e = MapManager.map((TDTO) null, entityClass);
+        assertNull(e);
     }
 
-    @Test(expected=MapperException.class)
-    public void mapNullToDTO()
-    throws MapperException {
-
+    @Test
+    public void mapNullToDTO() throws MapperException {
         TDTO dto = MapManager.map((TEntity) null, dtoClass);
+        assertNull(dto);
     }
 
     @Test(expected=MapperException.class)
@@ -51,22 +51,20 @@ public abstract class MapperTest<TEntity, TDTO> {
     @Test(expected=MapperException.class)
     public void mapDTOToNull()
     throws MapperException {
-
         Object obj = MapManager.map(dto, null);
     }
 
-    @Test(expected=MapperException.class)
+    @Test
     public void mapEntityNullToDTONull()
     throws MapperException {
-
         Object obj = MapManager.map((TEntity) null, (Class<TDTO>) null);
+        assertNull(obj);
     }
 
-    @Test(expected=MapperException.class)
-    public void mapDTONullToEntityNull()
-    throws MapperException {
-
+    @Test
+    public void mapDTONullToEntityNull() throws MapperException {
         Object obj = MapManager.map((TDTO) null, (Class<TEntity>) null);
+        assertNull(obj);
     }
 
     @Test(expected=MapperException.class)

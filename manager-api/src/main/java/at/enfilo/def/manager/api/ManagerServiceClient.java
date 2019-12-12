@@ -8,8 +8,7 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.manager.api.thrift.ManagerResponseService;
 import at.enfilo.def.manager.api.thrift.ManagerService;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -88,6 +87,49 @@ implements IManagerServiceClient {
 		String ticketId = requestClient.execute(c -> c.adjustNodePoolSize(cId, newNodePoolSize, nodeType));
 
 		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketServiceClient);
+	}
+
+	@Override
+	public Future<String> createClientRoutine(RoutineDTO routine) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.createClientRoutine(routine));
+
+		return new TicketFutureBuilder<R, String>()
+				.dataTicket(ticketId, ticketServiceClient)
+				.request(R::createClientRoutine)
+				.via(responseClient);
+	}
+
+	@Override
+	public Future<String> createClientRoutineBinary(String rId, String binaryName, String md5, long sizeInBytes, boolean isPrimary) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.createClientRoutineBinary(rId, binaryName, md5, sizeInBytes, isPrimary));
+
+		return new TicketFutureBuilder<R, String>()
+				.dataTicket(ticketId, ticketServiceClient)
+				.request(R::createClientRoutineBinary)
+				.via(responseClient);
+	}
+
+	@Override
+	public Future<Void> uploadClientRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.uploadClientRoutineBinaryChunk(rbId, chunk));
+
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketServiceClient);
+	}
+
+	@Override
+	public Future<Void> removeClientRoutine(String rId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.removeClientRoutine(rId));
+
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketServiceClient);
+	}
+
+	@Override
+	public Future<FeatureDTO> getFeatureByNameAndVersion(String name, String version) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.getFeatureByNameAndVersion(name, version));
+		return new TicketFutureBuilder<R, FeatureDTO>()
+				.dataTicket(ticketId, ticketServiceClient)
+				.request(R::getFeatureByNameAndVersion)
+				.via(responseClient);
 	}
 
 	@Override

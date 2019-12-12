@@ -13,9 +13,18 @@ import at.enfilo.def.config.server.core.DEFTicketServiceConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.NotificationEmitter;
+import java.lang.management.*;
 import java.time.Instant;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -23,6 +32,45 @@ import java.util.concurrent.*;
  * Handles all tickets: creating, storing, cleaning.
  */
 public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
+
+	/**
+	 * Task which checks ticket queue size periodically on low on memory detection.
+	 */
+	private class PeriodicQueueChecker extends TimerTask {
+		private long lastQueueSizeSnapshot;
+
+		private PeriodicQueueChecker() {
+			lastQueueSizeSnapshot = queueSizeSnapshot;
+		}
+
+		@Override
+		public void run() {
+			if (!memoryPoolMXBean.isCollectionUsageThresholdExceeded()) {
+				periodicMemoryCheckTimer.cancel();
+				periodicMemoryCheckTimer = null;
+				lowOnMemory.set(false);
+				LOGGER.info(
+						"Memory usage changed back to normal. Tickets will be accepted without delay. Usage: {}",
+						memoryPoolMXBean.getCollectionUsage()
+				);
+				return;
+			}
+			queueSizeSnapshot = queue.size();
+			if (queueSizeSnapshot > configuration.getThreads()) {
+				long diff = lastQueueSizeSnapshot - queueSizeSnapshot - configuration.getThreads();
+				if (diff <= 0) {
+					delayOnTicketAccept.addAndGet(100);
+					LOGGER.info(
+							"Ticket queue grows instead of shrink. Increased Ticked accept delay to {}ms. Ticket queue size: {}.",
+							delayOnTicketAccept,
+							queueSizeSnapshot
+					);
+				}
+			}
+			lastQueueSizeSnapshot = queueSizeSnapshot;
+		}
+	}
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TicketRegistry.class);
 
 	private static final int VALUE_EXPIRATION_DELAY = 5 * 60;
@@ -34,6 +82,12 @@ public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
 
 	private final PriorityBlockingQueue<Ticket> queue;
 	private final ITimeoutMap<UUID, Ticket> registry;
+	private final DEFTicketServiceConfiguration configuration;
+	private final AtomicBoolean lowOnMemory;
+	private final AtomicLong delayOnTicketAccept;
+	private MemoryPoolMXBean memoryPoolMXBean;
+	private Timer periodicMemoryCheckTimer;
+	private long queueSizeSnapshot;
 
 	/**
 	 * Singleton - returns a instance.
@@ -53,15 +107,57 @@ public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
 	 */
 	static TicketRegistry initialize(DEFTicketServiceConfiguration configuration) {
 		if (instance == null) {
-			instance = new TicketRegistry();
+			instance = new TicketRegistry(configuration);
 		}
 		return instance;
 	}
 
-	TicketRegistry() {
+	TicketRegistry(DEFTicketServiceConfiguration configuration) {
 		LOGGER.info("Initialize TicketRegistry.");
-		queue = new PriorityBlockingQueue<>();
-		registry = new TimeoutMap<>(VALUE_EXPIRATION_DELAY, VALUE_EXPIRATION_UNIT, CLEAN_SCHEDULE_DELAY, CLEAN_SCHEDULE_UNIT);
+		this.queue = new PriorityBlockingQueue<>();
+		this.registry = new TimeoutMap<>(VALUE_EXPIRATION_DELAY, VALUE_EXPIRATION_UNIT, CLEAN_SCHEDULE_DELAY, CLEAN_SCHEDULE_UNIT);
+		this.configuration = configuration;
+		this.lowOnMemory = new AtomicBoolean(false);
+		this.delayOnTicketAccept = new AtomicLong(100);
+
+		// Memory usage listener
+		MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+		NotificationEmitter emitter = (NotificationEmitter) memoryMXBean;
+		emitter.addNotificationListener((notification, handBack) -> {
+			String notifyType = notification.getType();
+			if (notifyType.equals(MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED)) {
+				lowOnMemory.set(true);
+				if (periodicMemoryCheckTimer != null) {
+					delayOnTicketAccept.addAndGet(100);
+					LOGGER.info(
+							"Memory threshold exceeded. Increased Ticked accept delay to {}ms.",
+							delayOnTicketAccept
+					);
+				} else {
+					delayOnTicketAccept.set(100); // initial value: 100ms
+					periodicMemoryCheckTimer = new Timer();
+					periodicMemoryCheckTimer.scheduleAtFixedRate(
+							new PeriodicQueueChecker(),
+							configuration.getMemoryCheckInterval(),
+							configuration.getMemoryCheckInterval()
+					);
+					LOGGER.info(
+							"Memory threshold exceeded. Accept of Tickets with normal or lower priority will be slowed down until memory is recovered. Usage: {}",
+							memoryPoolMXBean.getCollectionUsage()
+					);
+				}
+			}
+		}, null, null);
+
+		// Set threshold on memory pools
+		for (MemoryPoolMXBean p : ManagementFactory.getMemoryPoolMXBeans()) {
+			if (p.isUsageThresholdSupported() && (p.getType() == MemoryType.HEAP)) {
+				long threshold = (long)(p.getUsage().getMax() * configuration.getMemoryThreshold());
+				p.setCollectionUsageThreshold(threshold);
+				memoryPoolMXBean = p;
+				break;
+			}
+		}
 	}
 
 	@Override
@@ -70,12 +166,11 @@ public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
 	}
 
 	@Override
-	public <T> ITicket<T> createTicket(Class<T> resultClass, Callable<T> operation, int prio) {
-		LOGGER.trace("Create new Ticket<{}>[prio={}] for Operation {}", resultClass, prio, operation);
-		Ticket<T> normalTicket = new Ticket<>(resultClass, operation, prio);
-		registry.put(normalTicket.getId(), normalTicket);
-		queue.add(normalTicket);
-		return normalTicket;
+	public <T> ITicket<T> createTicket(Class<T> resultClass, Callable<T> operation, byte priority) {
+		LOGGER.trace("Create new Ticket<{}>[prio={}] for Operation {}", resultClass, priority, operation);
+		Ticket<T> ticket = new Ticket<>(resultClass, operation, priority);
+		registerAndQueueTicket(ticket);
+		return ticket;
 	}
 
 	@Override
@@ -84,12 +179,26 @@ public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
 	}
 
 	@Override
-	public ITicket<Void> createTicket(IVoidCallable operation, int prio) {
-		LOGGER.trace("Create new Ticket<Void>[prio={}] for Operation {}", prio, operation);
-		Ticket<Void> normalTicket = new Ticket<>(Void.class, operation.toCallable(), prio);
-		registry.put(normalTicket.getId(), normalTicket);
-		queue.add(normalTicket);
-		return normalTicket;
+	public ITicket<Void> createTicket(IVoidCallable operation, byte priority) {
+		LOGGER.trace("Create new Ticket<Void>[prio={}] for Operation {}", priority, operation);
+		Ticket<Void> ticket = new Ticket<>(Void.class, operation.toCallable(), priority);
+		registerAndQueueTicket(ticket);
+		return ticket;
+	}
+
+	private void registerAndQueueTicket(Ticket<?> ticket) {
+		if (ticket.getPriority() >= ITicket.NORMAL_PRIORITY) {
+			if (lowOnMemory.get()) {
+				try {
+					Thread.sleep(delayOnTicketAccept.get());
+				} catch (InterruptedException e) {
+					LOGGER.error("Error while delay ticket registration on low memory.", e);
+					Thread.currentThread().interrupt();
+				}
+			}
+		}
+		registry.put(ticket.getId(), ticket);
+		queue.add(ticket);
 	}
 
 	@Override
@@ -150,7 +259,7 @@ public class TicketRegistry implements ITicketRegistry, ITicketRegistryHandler {
 	public void cleanup(long olderThan, TimeUnit timeUnit) {
 		LOGGER.info("Cleanup all finished (done, canceled, failed) tickets which are not requested and older than {} {}", olderThan, timeUnit);
 		Instant limit = Instant.now().minusNanos(timeUnit.toNanos(olderThan));
-		for (Ticket t : registry.values()) {
+		for (Ticket<?> t : registry.values()) {
 			switch (t.getStatus()) {
 				case DONE:
 				case FAILED:

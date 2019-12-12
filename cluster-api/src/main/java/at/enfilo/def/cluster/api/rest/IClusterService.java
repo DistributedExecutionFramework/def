@@ -79,17 +79,17 @@ public interface IClusterService extends ClusterService.Iface, IResource {
 	);
 
 	@GET
-	@Path("/store-routine")
+	@Path("/store-routine/{nodeType}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String getStoreRoutine();
+	String getStoreRoutine(@PathParam("nodeType") final NodeType nodeType);
 
 	@POST
-	@Path("/store-routine")
+	@Path("/store-routine/{nodeType}/{rId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
-	String setStoreRoutine(String routineId);
+	String setStoreRoutine(@PathParam("rId") String routineId, @PathParam("nodeType") NodeType nodeType);
 
 	@GET
 	@Path("/default-map-routine")

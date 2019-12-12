@@ -163,6 +163,11 @@ public class ClusterServiceImpl implements IClusterService {
     }
 
     @Override
+    public List<NodeInfoDTO> getAllClientRoutineWorkersOfCluster(String cId) {
+        return getAllNodesOfCluster(cId, NodeType.CLIENT);
+    }
+
+    @Override
     public NodeInfoDTO getNodeInfo(String cId, String nId) {
         try {
             IClusterServiceClient clusterServiceClient = getClusterServiceClient(cId);

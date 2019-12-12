@@ -3,7 +3,7 @@ package at.enfilo.def.cluster.impl;
 import at.enfilo.def.cluster.api.NodeCreationException;
 import at.enfilo.def.cluster.api.UnknownNodeException;
 import at.enfilo.def.cluster.server.Cluster;
-import at.enfilo.def.cluster.util.NodesConfiguration;
+import at.enfilo.def.cluster.util.configuration.NodesConfiguration;
 import at.enfilo.def.common.impl.TimeoutMap;
 import at.enfilo.def.communication.api.common.factory.UnifiedClientFactory;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
@@ -12,7 +12,7 @@ import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import at.enfilo.def.node.api.INodeServiceClient;
-import at.enfilo.def.node.api.NodeCommunicationException;
+import at.enfilo.def.node.api.exception.NodeCommunicationException;
 import at.enfilo.def.node.observer.api.util.NodeNotificationConfiguration;
 import at.enfilo.def.transfer.dto.FeatureDTO;
 import at.enfilo.def.transfer.dto.NodeInfoDTO;
@@ -43,10 +43,12 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 	private final List<String> nodes;
 	private final Map<String, String> nodeInstanceMap;
 	protected final Map<String, NodeInfoDTO> nodeInfoMap;
-	protected final Map<String, List<FeatureDTO>> nodeFeatureMap;
-	protected final Map<String, C> nodeConnectionMap;
-	private final F nodeServiceClientFactory;
+	private final Map<String, C> nodeConnectionMap;
+    protected final Map<String, List<FeatureDTO>> nodeFeatureMap;
+    private final F nodeServiceClientFactory;
 	private final ServiceEndpointDTO observerEndpoint;
+
+	private String storeRoutineId;
 
 	/**
 	 * Constructor for unit tests.
@@ -59,13 +61,15 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			Map<String, C> nodeConnectionMap,
 			Map<String, NodeInfoDTO> nodeInfoMap,
 			Map<String, List<FeatureDTO>> nodeFeatureMap,
-			NodesConfiguration nodesConfiguration
+			NodesConfiguration nodesConfiguration,
+            String storeRoutineId
 	) {
 		this.nodeType = nodeType;
 		this.nodeLock = new Object();
 		this.nodes = nodes;
 		this.nodeInstanceMap = nodeInstanceMap;
 		this.nodeConnectionMap = nodeConnectionMap;
+		this.storeRoutineId = storeRoutineId;
 		// Create a TimeoutMap for node if periodically notification is configured
 		if (nodeInfoMap == null) {
 			if (nodesConfiguration.getNotificationFromNode().isPeriodically()) {
@@ -108,7 +112,14 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 	 *
 	 * @param nId - Node id
 	 */
-	protected abstract void notifyNodeDown(String nId, NodeInfoDTO nodeInfo);
+	protected void notifyNodeDown(String nId, NodeInfoDTO nodeInfo) {
+		LOGGER.info("Notification: Node ({}) of type {} down. Remove node and re-schedule.", nId, nodeType);
+		try {
+			removeNode(nId, false);
+		} catch (UnknownNodeException e) {
+			LOGGER.error("Node {} already removed.", nId, e);
+		}
+	}
 
 	/**
 	 * Returns all registered Node Ids.
@@ -134,7 +145,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			return nodeInfoMap
 				.entrySet()
 				.stream()
-				.sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getValue().getParameters().get("numberOfQueuedTasks"))))
+				.sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getValue().getParameters().get("numberOfQueuedElements"))))
 				.limit(nrOfNodesToShutdown)
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toList());
@@ -209,7 +220,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 	 * @param serviceEndpoint - service endpoint of client
 	 * @return Node id
 	 */
-	public String addNode(ServiceEndpointDTO serviceEndpoint)
+	protected String addNode(ServiceEndpointDTO serviceEndpoint)
 	throws NodeCreationException {
 
 		LOGGER.debug("Trying to add given Node instance with endpoint at {}", serviceEndpoint);
@@ -305,9 +316,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 	 * @param nId - Node to remove
 	 * @throws UnknownNodeException - if Node id not known
 	 */
-	protected void removeNode(String nId) throws UnknownNodeException {
-		removeNode(nId, false);
-	}
+	protected abstract void removeNodeAssignments(String nId) throws UnknownNodeException;
 
 	/**
 	 * Remove a Node from this cluster. Notifies Scheduler to remove the specified Node.
@@ -338,7 +347,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 		try {
 			removeNodeFromScheduler(nId);
 		} catch (NodeCommunicationException e) {
-			LOGGER.error("Error while remove Mpde {} from Scheduler", nId, e);
+			LOGGER.error("Error while remove Node {} from Scheduler", nId, e);
 		}
 
 		// Third, remove Cluster as observer from Node
@@ -353,6 +362,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			}
 		}
 
+		removeNodeAssignments(nId);
 		LOGGER.info("Node {} successful removed from Cluster.", nId);
 	}
 
@@ -369,13 +379,18 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			switch (nodeType) {
 				case WORKER:
 					future = ClusterResource.getInstance()
-							.getSchedulerServiceClient(NodeType.WORKER)
+							.getWorkerSchedulerServiceClient()
 							.addWorker(nId, endpoint);
 					break;
 				case REDUCER:
 					future = ClusterResource.getInstance()
-							.getSchedulerServiceClient(NodeType.REDUCER)
+							.getReducerSchedulerServiceClient()
 							.addReducer(nId, endpoint);
+					break;
+				case CLIENT:
+					future = ClusterResource.getInstance()
+							.getClientRoutineWorkerSchedulerSerivceClient()
+							.addClientRoutineWorker(nId, endpoint);
 					break;
 				default:
 					LOGGER.error("Error while add Node {} to Scheduler. NodeType {} not supported.", nId, nodeType);
@@ -403,12 +418,12 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			switch (nodeType) {
 				case WORKER:
 					future = ClusterResource.getInstance()
-							.getSchedulerServiceClient(NodeType.WORKER)
+							.getWorkerSchedulerServiceClient()
 							.removeWorker(nId);
 					break;
 				case REDUCER:
 					future = ClusterResource.getInstance()
-							.getSchedulerServiceClient(NodeType.REDUCER)
+							.getReducerSchedulerServiceClient()
 							.removeReducer(nId);
 					break;
 				default:
@@ -483,7 +498,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 	 * Distribute SharedResource to all workers.
 	 * @param sharedResource
 	 */
-	void distributeSharedResource(ResourceDTO sharedResource) {
+	protected void distributeSharedResource(ResourceDTO sharedResource) {
 		execOnAllNodes(nodeServiceClient -> {
 			try {
 				return nodeServiceClient.addSharedResource(sharedResource);
@@ -494,7 +509,7 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 		});
 	}
 
-	void removeSharedResources(List<String> sharedResources) {
+	protected void removeSharedResources(List<String> sharedResources) {
 		execOnAllNodes(nodeServiceClient -> {
 			try {
 				return nodeServiceClient.removeSharedResources(sharedResources);
@@ -504,4 +519,27 @@ abstract class NodeController<C extends INodeServiceClient, F extends UnifiedCli
 			}
 		});
 	}
+
+	protected String getStoreRoutineId() {
+		return storeRoutineId;
+	}
+
+	/**
+	 * Set StoreRoutineId.
+	 * Updates StoreRoutineId on every registered node of the given node type
+	 * @param routineId
+	 */
+	protected void setStoreRoutineId(String routineId) {
+		this.storeRoutineId = routineId;
+		LOGGER.info("Update StoreRoutine on all nodes of type {} to {}.", nodeType, routineId);
+		execOnAllNodes(nodeServiceClient -> {
+			try {
+				return nodeServiceClient.setStoreRoutine(routineId);
+			} catch (ClientCommunicationException e) {
+				LOGGER.error("Error while update StoreRoutine on all nodes of type {}.", nodeType, e);
+				return null;
+			}
+		});
+	}
+
 }

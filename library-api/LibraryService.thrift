@@ -7,12 +7,10 @@ namespace java at.enfilo.def.library.api.thrift
 * Library Service to store and fetch routines.
 */
 service LibraryService {
-
     /**
     * Request Library information.
     */
     DTOs.TicketId getLibraryInfo()
-
 
     /**
     * Request a Routine by id.
@@ -25,15 +23,14 @@ service LibraryService {
     DTOs.TicketId getRoutineBinary(1: DTOs.Id rbId)
 
     /**
+    * Request a RoutineBinary (Chunk) by id.
+    */
+    DTOs.TicketId getRoutineBinaryChunk(1: DTOs.Id rbId, 2: i16 chunk, 3: i32 chunkSize)
+
+    /**
     * Request a Routine by id.
     */
     DTOs.TicketId getRoutineRequiredFeatures(1: DTOs.Id rId)
-
-
-    /**
-    * Sets the data endpoint of the library for pulling routines
-    **/
-    DTOs.TicketId setDataEndpoint(1: CommunicationDTOs.ServiceEndpointDTO serviceEndPoint)
 }
 
 /**
@@ -52,12 +49,17 @@ service LibraryResponseService {
     DTOs.RoutineDTO getRoutine(1: DTOs.TicketId ticketId)
 
     /**
-    * Returns RoutineDTO for the given ticket.
-    **/
-    list<DTOs.FeatureDTO> getRoutineRequiredFeatures(1: DTOs.TicketId ticketId)
-
-    /**
-    * Returns RoutineDTO for the given ticket.
+    * Returns RoutineBinaryDTO for the given ticket.
     **/
     DTOs.RoutineBinaryDTO getRoutineBinary(1: DTOs.TicketId ticketId)
+
+    /**
+    * Returns RoutineBinaryChunkDTO for the given ticket.
+    **/
+    DTOs.RoutineBinaryChunkDTO getRoutineBinaryChunk(1: DTOs.TicketId ticketId)
+
+    /**
+    * Returns FeatureDTO for the given ticket.
+    **/
+    list<DTOs.FeatureDTO> getRoutineRequiredFeatures(1: DTOs.TicketId ticketId)
 }

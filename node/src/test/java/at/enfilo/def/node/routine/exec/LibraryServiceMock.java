@@ -1,14 +1,10 @@
 package at.enfilo.def.node.routine.exec;
 
 import at.enfilo.def.communication.api.ticket.rest.ITicketService;
-import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.dto.TicketStatusDTO;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.LibraryInfoDTO;
 import at.enfilo.def.library.api.rest.ILibraryResponseService;
 import at.enfilo.def.library.api.rest.ILibraryService;
-import at.enfilo.def.transfer.dto.RoutineBinaryDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
+import at.enfilo.def.transfer.dto.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +39,7 @@ class LibraryServiceMock {
 		}
 
 		@Override
-		public String setDataEndpoint(ServiceEndpointDTO dataEndpoint) {
+		public String getRoutineBinaryChunk(String rbId, short chunk, int chunkSize) {
 			return null;
 		}
 	}
@@ -69,6 +65,11 @@ class LibraryServiceMock {
 
 		@Override
 		public RoutineBinaryDTO getRoutineBinary(String ticketId) {
+			return null;
+		}
+
+		@Override
+		public RoutineBinaryChunkDTO getRoutineBinaryChunk(String ticketId) {
 			return null;
 		}
 	}

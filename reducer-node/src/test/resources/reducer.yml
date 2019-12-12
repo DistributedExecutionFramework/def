@@ -17,3 +17,30 @@ def-servers:
 
 ticket-service:
   threads: 4
+
+# sample environment configuration:
+#
+environment:
+- name: java
+  version: 1.8.0.181
+  group: language
+  cmd: 'java ({rbs}:-cp {}) {arg0} {args} {pipes}'
+- name: python
+  version: 3.7
+  group: language
+  cmd: 'python3 {rbs} {args} {pipes}'
+  ext:
+  - name: numpy
+    version: 1.15.1
+- name: csharp
+  version: 5.10.1.47
+  group: language
+  cmd: 'mono {rbp} {rbs} {args} {pipes}'
+- name: 'matlab-runtime'
+  version: 9.4
+  group: language
+  cmd: '{rb} {args} {pipes}'
+  env:
+    LD_LIBRARY_PATH: '{$matlabPath}/runtime/glnxa64:{$matlabPath}/bin/glnxa64:{$matlabPath}/sys/os/glnxa64:{$matlabPath}/sys/opengl/lib/glnxa64'
+  var:
+    matlabPath: '/usr/local/MATLAB/MATLAB_Runtime/v94'

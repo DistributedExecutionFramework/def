@@ -1,5 +1,6 @@
 include "../transfer/DTOs.thrift"
 include "../library-api/LibraryService.thrift"
+include "../communication-api/CommunicationDTOs.thrift"
 
 namespace java at.enfilo.def.library.api.thrift
 
@@ -7,6 +8,17 @@ namespace java at.enfilo.def.library.api.thrift
 * Library Admin Service to manage Routines, Datatypes and Tags.
 */
 service LibraryAdminService extends LibraryService.LibraryService {
+    /**
+    * Sets the MasterLibrary endpoint of the library for pulling routines and binaries
+    **/
+    DTOs.TicketId setMasterLibrary(1: CommunicationDTOs.ServiceEndpointDTO serviceEndPoint)
+
+    /**
+    * Request the MasterLibrary endpoint. Returns null, if this Library is a MasterLibrary.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    */
+    DTOs.TicketId getMasterLibrary();
+
     /**
     * Request to find all registered Routine Ids including searchPattern in name or description.
     * Empty searchPattern match all.
@@ -33,16 +45,28 @@ service LibraryAdminService extends LibraryService.LibraryService {
     DTOs.TicketId updateRoutine(1: DTOs.RoutineDTO routineDTO);
 
     /**
-    * Upload a binary to the specified Routine.
+    * Create a binary to the specified Routine.
     * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
     */
-    DTOs.TicketId uploadRoutineBinary(
+    DTOs.TicketId createRoutineBinary(
         1: DTOs.Id rId,
-        2: string md5,
-        3: i64 sizeInBytes,
-        4: bool isPrimary,
-        5: binary data
+        2: string name,
+        3: string md5,
+        4: i64 sizeInBytes,
+        5: bool isPrimary
     );
+
+    /**
+    * Uploads a RoutineBinaryChunk to the given RoutineBinary (rbId).
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId uploadRoutineBinaryChunk(1: DTOs.Id rbId, 2: DTOs.RoutineBinaryChunkDTO chunk);
+
+    /**
+    * Verifies the given RoutineBinary: check size and md5 sum.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId verifyRoutineBinary(1: DTOs.Id rbId);
 
     /**
     * Remove a binary from specified Routine.
@@ -111,6 +135,12 @@ service LibraryAdminService extends LibraryService.LibraryService {
     * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
     */
     DTOs.TicketId getFeatures(1: string pattern)
+
+    /**
+    * Fetch a feature with a given name and version.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId getFeatureByNameAndVersion(1: string name, 2: string version)
 }
 
 
@@ -118,6 +148,11 @@ service LibraryAdminService extends LibraryService.LibraryService {
 * Library Service Response interface.
 **/
 service LibraryAdminResponseService extends LibraryService.LibraryResponseService {
+    /**
+    * Returns the MasterLibrary endpoint if is set, otherwise null.
+    **/
+    CommunicationDTOs.ServiceEndpointDTO getMasterLibrary(1: DTOs.TicketId ticketId);
+
     /**
     * Returns all registered Routine Ids
     **/
@@ -136,7 +171,12 @@ service LibraryAdminResponseService extends LibraryService.LibraryResponseServic
 	/**
 	 * Returns Id of newly uploaded RoutineBinary.
 	 */
-    DTOs.Id uploadRoutineBinary(1: DTOs.TicketId ticketId);
+    DTOs.Id createRoutineBinary(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns true if size and md5 sum matches.
+    **/
+    bool verifyRoutineBinary(1: DTOs.TicketId ticketId);
 
     /**
     * Returns all registered DataType Ids
@@ -172,4 +212,9 @@ service LibraryAdminResponseService extends LibraryService.LibraryResponseServic
     * Returns filtered features.
     */
     list<DTOs.FeatureDTO> getFeatures(1: DTOs.TicketId ticketId)
+
+    /**
+    * Returns feature with given name and version.
+    **/
+    DTOs.FeatureDTO getFeatureByNameAndVersion(1: DTOs.TicketId ticketId)
 }

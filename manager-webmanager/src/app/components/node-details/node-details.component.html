@@ -60,7 +60,7 @@
         <div class="progress">
           <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"
                [style.width]="getScheduledTasksPercent()+ '%'">
-            <span>{{this.node.numberOfQueuedTasks}}</span>
+            <span>{{this.node.numberOfQueuedElements}}</span>
           </div>
         </div>
 
@@ -68,7 +68,7 @@
         <div class="progress">
           <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"
                [style.width]="getRunningTasksPercent() + '%'">
-            <span>{{this.node.numberOfRunningTasks}}</span>
+            <span>{{this.node.numberOfRunningElements}}</span>
           </div>
         </div>
 
@@ -84,7 +84,7 @@
         <th>Task ID</th>
       </thead>
       <tbody *ngIf="this.hasTasks">
-        <tr *ngFor="let tId of this.node.runningTasks;">
+        <tr *ngFor="let tId of this.node.runningElements;">
           <td>{{tId}}</td>
         </tr>
       </tbody>

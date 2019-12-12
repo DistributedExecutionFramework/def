@@ -1,6 +1,7 @@
 package at.enfilo.def.communication.impl.ticket;
 
 import at.enfilo.def.communication.api.ticket.ITicket;
+import at.enfilo.def.config.server.core.DEFTicketServiceConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,7 +17,7 @@ public class TicketRegistryTest {
 
 	@Before
 	public void setUp() throws Exception {
-		ticketRegistry = new TicketRegistry();
+		ticketRegistry = new TicketRegistry(DEFTicketServiceConfiguration.getDefault());
 	}
 
 	@Test
@@ -37,11 +38,11 @@ public class TicketRegistryTest {
 
 	@Test
 	public void priorityTickets() throws InterruptedException {
-		ITicket<Void> t1 = ticketRegistry.createTicket(() -> {}, 0);
-		ITicket<Void> t2 = ticketRegistry.createTicket(() -> {}, 1);
-		ITicket<Void> t3 = ticketRegistry.createTicket(() -> {}, -1);
-		ITicket<Void> t4 = ticketRegistry.createTicket(() -> {}, -2);
-		ITicket<Void> t5 = ticketRegistry.createTicket(() -> {}, 2);
+		ITicket<Void> t1 = ticketRegistry.createTicket(() -> {}, (byte)0x20);
+		ITicket<Void> t2 = ticketRegistry.createTicket(() -> {}, (byte)0x30);
+		ITicket<Void> t3 = ticketRegistry.createTicket(() -> {}, (byte)0x10);
+		ITicket<Void> t4 = ticketRegistry.createTicket(() -> {}, (byte)0x00);
+		ITicket<Void> t5 = ticketRegistry.createTicket(() -> {}, (byte)0x40);
 		List<ITicket<Void>> tickets = new LinkedList<>();
 		tickets.add(t4);
 		tickets.add(t3);

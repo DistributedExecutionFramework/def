@@ -28,6 +28,9 @@
           <label class="desc">Reducer</label>
           <label>{{cluster.numberOfReducers}}</label>
 
+          <label class="desc">Client-Routine-Worker</label>
+          <label>{{cluster.numberOfClientRoutineWorkers}}</label>
+
           <label class="desc">Cores</label>
           <label>{{cluster.numberOfCores}}</label>
 
@@ -43,10 +46,10 @@
 
           <label class="desc">Tasks</label>
           <div class="progress"
-               tooltip="Running Tasks: {{cluster.numberOfRunningTasks}}, Queued Tasks: {{cluster.numberOfQueuedTasks}}">
+               tooltip="Running Tasks: {{cluster.numberOfRunningElements}}, Queued Tasks: {{cluster.numberOfQueuedElements}}">
             <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
                  [style.width.%]="getTasksPercent(cluster)">
-              <span>{{cluster.numberOfTasksToFinish}}</span>
+              <span>{{cluster.numberOfElementsToFinish}}</span>
             </div>
           </div>
         </div>

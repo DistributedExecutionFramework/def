@@ -1,5 +1,6 @@
 package at.enfilo.def.library.impl;
 
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ResponseService;
 import at.enfilo.def.library.api.rest.ILibraryAdminResponseService;
 import at.enfilo.def.library.api.rest.ILibraryResponseService;
@@ -9,11 +10,7 @@ import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 
-/**
- * Created by mase on 30.03.2017.
- */
-public class LibraryResponseServiceImpl extends ResponseService
-implements ILibraryResponseService, ILibraryAdminResponseService {
+public class LibraryResponseServiceImpl extends ResponseService implements ILibraryResponseService, ILibraryAdminResponseService {
 
 	private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(LibraryResponseServiceImpl.class);
 
@@ -45,7 +42,17 @@ implements ILibraryResponseService, ILibraryAdminResponseService {
 		return getResult(ticketId, RoutineBinaryDTO.class);
 	}
 
-    @SuppressWarnings("unchecked")
+	@Override
+	public RoutineBinaryChunkDTO getRoutineBinaryChunk(String ticketId) {
+		return getResult(ticketId, RoutineBinaryChunkDTO.class);
+	}
+
+	@Override
+	public ServiceEndpointDTO getMasterLibrary(String ticketId) {
+		return getResult(ticketId, ServiceEndpointDTO.class);
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<String> findRoutines(String ticketId) {
 		return getResult(ticketId, List.class);
@@ -62,8 +69,13 @@ implements ILibraryResponseService, ILibraryAdminResponseService {
 	}
 
 	@Override
-	public String uploadRoutineBinary(String ticketId) {
+	public String createRoutineBinary(String ticketId) {
 		return getResult(ticketId, String.class);
+	}
+
+	@Override
+	public boolean verifyRoutineBinary(String ticketId) {
+		return getResult(ticketId, Boolean.class);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -102,5 +114,10 @@ implements ILibraryResponseService, ILibraryAdminResponseService {
 	@Override
 	public List<FeatureDTO> getFeatures(String ticketId) {
 		return getResult(ticketId, List.class);
+	}
+
+	@Override
+	public FeatureDTO getFeatureByNameAndVersion(String ticketId) {
+		return getResult(ticketId, FeatureDTO.class);
 	}
 }

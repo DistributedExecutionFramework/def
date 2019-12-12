@@ -57,6 +57,12 @@ service ExecLogicService {
     DTOs.TicketId markProgramAsFinished(1: DTOs.Id pId);
 
     /**
+    * Attach client routine and run it.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    */
+    DTOs.TicketId startClientRoutine(1: DTOs.Id pId, 2: DTOs.Id crId);
+
+    /**
     * Request the list of Jobs (jId) for a given Program (pId).
     * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
     */

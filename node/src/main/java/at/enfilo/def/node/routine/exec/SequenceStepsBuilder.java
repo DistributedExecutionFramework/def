@@ -4,8 +4,7 @@ import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import at.enfilo.def.node.routine.factory.RoutineProcessBuilderFactory;
 import at.enfilo.def.node.util.NodeConfiguration;
 import at.enfilo.def.routine.util.Pipe;
-import at.enfilo.def.transfer.dto.RoutineType;
-import at.enfilo.def.transfer.dto.TaskDTO;
+import at.enfilo.def.transfer.dto.*;
 
 import java.nio.file.Paths;
 import java.util.LinkedList;
@@ -69,6 +68,30 @@ public class SequenceStepsBuilder {
 				configuration,
 				routineProcessBuilderFactory,
 				DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId())
+		);
+	}
+
+	public SequenceStepsExecutor build(ProgramDTO program, RoutineProcessBuilderFactory routineProcessBuilderFactory) {
+		return new SequenceStepsExecutor(
+				program.getId(),
+				steps,
+				null,
+				false,
+				configuration,
+				routineProcessBuilderFactory,
+				DEFLoggerFactory.createProgramContext(program.getId())
+		);
+	}
+
+	public SequenceStepsExecutor build(ReduceJobDTO reduceJob, RoutineProcessBuilderFactory routineProcessBuilderFactory) {
+		return new SequenceStepsExecutor(
+				reduceJob.getJobId(),
+				steps,
+				null,
+				true,
+				configuration,
+				routineProcessBuilderFactory,
+				DEFLoggerFactory.createJobContext(reduceJob.getJob().getProgramId(), reduceJob.getJobId())
 		);
 	}
 }

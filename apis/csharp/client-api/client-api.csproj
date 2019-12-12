@@ -1,134 +1,24 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{10374158-5033-4808-8F7A-6DD21493C6B7}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>client_api</RootNamespace>
-    <AssemblyName>client_api</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <DebugType></DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Folder Include="client\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\common\common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Class1.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Thrift45">
       <HintPath>..\packages\ApacheThrift.0.11.0\lib\net45\Thrift45.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="thrift\transfer\AuthDTO.cs" />
-    <Compile Include="thrift\transfer\CloudType.cs" />
-    <Compile Include="thrift\transfer\ClusterInfoDTO.cs" />
-    <Compile Include="thrift\transfer\DataTypeDTO.cs" />
-    <Compile Include="thrift\transfer\ExecutionState.cs" />
-    <Compile Include="thrift\transfer\FormalParameterDTO.cs" />
-    <Compile Include="thrift\transfer\JobDTO.cs" />
-    <Compile Include="thrift\transfer\Language.cs" />
-    <Compile Include="thrift\transfer\LibraryInfoDTO.cs" />
-    <Compile Include="thrift\transfer\LibraryType.cs" />
-    <Compile Include="thrift\transfer\NodeInfoDTO.cs" />
-    <Compile Include="thrift\transfer\NodeType.cs" />
-    <Compile Include="thrift\transfer\PeriodUnit.cs" />
-    <Compile Include="thrift\transfer\ProgramDTO.cs" />
-    <Compile Include="thrift\transfer\QueueInfoDTO.cs" />
-    <Compile Include="thrift\transfer\ResourceDTO.cs" />
-    <Compile Include="thrift\transfer\RoutineBinaryDTO.cs" />
-    <Compile Include="thrift\transfer\RoutineDTO.cs" />
-    <Compile Include="thrift\transfer\RoutineInstanceDTO.cs" />
-    <Compile Include="thrift\transfer\RoutineType.cs" />
-    <Compile Include="thrift\transfer\SortingCriterion.cs" />
-    <Compile Include="thrift\transfer\TagDTO.cs" />
-    <Compile Include="thrift\transfer\TaskDTO.cs" />
-    <Compile Include="thrift\manager\AuthResponseService.cs" />
-    <Compile Include="thrift\manager\AuthService.cs" />
-    <Compile Include="thrift\manager\ManagerResponseService.cs" />
-    <Compile Include="thrift\manager\ManagerService.cs" />
-    <Compile Include="thrift\exec-logic\ExecLogicResponseService.cs" />
-    <Compile Include="thrift\exec-logic\ExecLogicService.cs" />
-    <Compile Include="thrift\communication\MetaService.cs" />
-    <Compile Include="thrift\communication\Protocol.cs" />
-    <Compile Include="thrift\communication\ServiceEndpointDTO.cs" />
-    <Compile Include="thrift\communication\TicketService.cs" />
-    <Compile Include="thrift\communication\TicketStatusDTO.cs" />
-    <Compile Include="thrift\communication\TicketTypeDTO.cs" />
-    <Compile Include="thrift\cloud-communication\AWSSpecificationDTO.cs" />
-    <Compile Include="thrift\cloud-communication\CloudCommunicationResponseService.cs" />
-    <Compile Include="thrift\cloud-communication\CloudCommunicationService.cs" />
-    <Compile Include="thrift\cloud-communication\InstanceTypeDTO.cs" />
-    <Compile Include="thrift\cloud-communication\SupportedCloudEnvironment.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFBinary.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFBoolean.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFBooleanMatrix.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFBooleanVector.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFDouble.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFDoubleMatrix.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFDoubleVector.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFInteger.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFIntegerMatrix.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFIntegerVector.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFLong.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFLongMatrix.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFLongVector.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFString.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFStringMatrix.cs" />
-    <Compile Include="thrift\baseDatatypes\DEFStringVector.cs" />
-    <Compile Include="client\DEFClient.cs" />
-    <Compile Include="client\RoutineInstanceBuilder.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="thrift\" />
-    <Folder Include="thrift\baseDatatypes\" />
-    <Folder Include="thrift\communication\" />
-    <Folder Include="thrift\exec-logic\" />
-    <Folder Include="thrift\transfer\" />
-    <Folder Include="thrift\manager\" />
-    <Folder Include="thrift\cloud-communication\" />
-    <Folder Include="client\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\common\common.csproj">
-      <Project>{10374158-5033-4808-8F7A-6DD21493C6B7}</Project>
-      <Name>common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\common\common.csproj">
-      <Project>{10374158-5033-4808-8F7A-6DD21493C6B7}</Project>
-      <Name>common</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
 </Project>

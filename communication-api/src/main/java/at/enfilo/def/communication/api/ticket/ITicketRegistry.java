@@ -22,7 +22,7 @@ public interface ITicketRegistry {
 	 * @return - Ticket
 	 */
 	<T> ITicket<T> createTicket(Class<T> resultClass, Callable<T> operation);
-	<T> ITicket<T> createTicket(Class<T> resultClass, Callable<T> operation, int prio);
+	<T> ITicket<T> createTicket(Class<T> resultClass, Callable<T> operation, byte priority);
 
 	/**
 	 * Creates a normal ticket for business logic operation with no return.
@@ -30,7 +30,7 @@ public interface ITicketRegistry {
 	 * @return - Ticket
 	 */
 	ITicket<Void> createTicket(IVoidCallable operation);
-	ITicket<Void> createTicket(IVoidCallable operation, int prio);
+	ITicket<Void> createTicket(IVoidCallable operation, byte priority);
 
 	/**
 	 * Create a "already failed ticket".

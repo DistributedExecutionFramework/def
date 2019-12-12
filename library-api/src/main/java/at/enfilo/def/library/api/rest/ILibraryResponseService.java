@@ -1,11 +1,9 @@
 package at.enfilo.def.library.api.rest;
 
 import at.enfilo.def.communication.api.common.service.IResource;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.LibraryInfoDTO;
 import at.enfilo.def.library.api.thrift.LibraryResponseService;
-import at.enfilo.def.transfer.dto.RoutineBinaryDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
+import at.enfilo.def.transfer.dto.*;
+import org.apache.thrift.TException;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,8 +34,14 @@ public interface ILibraryResponseService extends LibraryResponseService.Iface, I
 	List<FeatureDTO> getRoutineRequiredFeatures(@QueryParam("ticketId") String ticketId);
 
 	@GET
-	@Path("/routineBinaries/rId")
+	@Path("/routines/rId/binaries/rbId")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	RoutineBinaryDTO getRoutineBinary(@QueryParam("ticketId") String ticketId);
+
+	@GET
+	@Path("/routines/binaries/rbId/chunks/chunk")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	RoutineBinaryChunkDTO getRoutineBinaryChunk(@QueryParam("ticketId") String ticketId) throws TException;
 }

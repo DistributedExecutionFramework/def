@@ -1,14 +1,11 @@
 package at.enfilo.def.library.api.client;
 
 import at.enfilo.def.communication.api.common.client.IServiceClient;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.library.api.ILibraryServiceClient;
-import at.enfilo.def.transfer.dto.DataTypeDTO;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
-import at.enfilo.def.transfer.dto.TagDTO;
+import at.enfilo.def.transfer.dto.*;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -19,14 +16,29 @@ import java.util.concurrent.Future;
 public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServiceClient {
 
 	/**
+	 * Sets the MasterLibrary endpoint for pulling routines and binaries
+	 *
+	 * @param masterLibraryEndpoint - endpoint of new MasterLibrary
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<Void> setMasterLibrary(ServiceEndpointDTO masterLibraryEndpoint) throws ClientCommunicationException;
+
+	/**
+	 * Returns the current set MasterLibrary enpoint.
+	 *
+	 * @return Endpoint of MasterLibrary
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<ServiceEndpointDTO> getMasterLibrary() throws ClientCommunicationException;
+
+	/**
 	 * Find all Routines by a given searchPattern. If searchPattern is empty, all Routine (Id's) will be returned.
 	 *
 	 * @param searchPattern - to find in name and description
 	 * @return List of Routine Id's as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<List<String>> findRoutines(String searchPattern)
-    throws ClientCommunicationException;
+	Future<List<String>> findRoutines(String searchPattern) throws ClientCommunicationException;
 
 	/**
 	 * Remove the given Routine from Library.
@@ -35,8 +47,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return TicketStatus as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<Void> removeRoutine(String rId)
-    throws ClientCommunicationException;
+	Future<Void> removeRoutine(String rId) throws ClientCommunicationException;
 
 	/**
 	 * Creates a new Routine.
@@ -45,8 +56,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return Id of Routine as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<String> createRoutine(RoutineDTO routineDTO)
-	throws ClientCommunicationException;
+	Future<String> createRoutine(RoutineDTO routineDTO) throws ClientCommunicationException;
 
 	/**
 	 * Update a specified Routine. An update creates a new Routine-Version.
@@ -55,26 +65,25 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return Id of new Routine-Version as Future.
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<String> updateRoutine(RoutineDTO routineDTO)
-    throws ClientCommunicationException;
+	Future<String> updateRoutine(RoutineDTO routineDTO) throws ClientCommunicationException;
 
 	/**
-	 * Uploads a binary to a specified Routine.
+	 * Create a binary to a specified Routine.
 	 *
 	 * @param rId - Routine
+	 * @param name - Routine binary name
      * @param md5 - Checksum as md5
      * @param sizeInBytes - Size in bytes
      * @param isPrimary - Is binary primary? (e.g. java -jar <primary.jar>)
-     * @param data - Binary data
 	 * @return RoutineBinary id as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<String> uploadRoutineBinary(
+	Future<String> createRoutineBinary(
         String rId,
+        String name,
         String md5,
         long sizeInBytes,
-        boolean isPrimary,
-        ByteBuffer data
+        boolean isPrimary
     )
 	throws ClientCommunicationException;
 
@@ -86,8 +95,26 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return TicketStatus as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<Void> removeRoutineBinary(String rId, String bId)
-	throws ClientCommunicationException;
+	Future<Void> removeRoutineBinary(String rId, String bId) throws ClientCommunicationException;
+
+	/**
+	 * Uploads a RoutineBinaryChunk to given RoutineBinary.
+	 *
+	 * @param rbId - RoutineBinary Id
+	 * @param chunk - Chunk to upload
+	 * @return TicketStatus as Feature
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<Void> uploadRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ClientCommunicationException;
+
+	/**
+	 * Verify the given RoutineBinary: check size and md5 sum.
+	 *
+	 * @param rbId - RoutineBinary Id to check
+	 * @return true if verification was successful, otherwise false
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<Boolean> verifyRoutineBinary(String rbId) throws ClientCommunicationException;
 
 	/**
 	 * Find all DataTypes which match the searchPattern. Empty searchPattern means all DataTypes.
@@ -96,8 +123,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return List of matching DataType Id's as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<List<String>> findDataTypes(String searchPattern)
-    throws ClientCommunicationException;
+	Future<List<String>> findDataTypes(String searchPattern) throws ClientCommunicationException;
 
 	/**
 	 * Create a new DataType.
@@ -107,8 +133,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return Id of new DataType as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<String> createDataType(String name, String schema)
-    throws ClientCommunicationException;
+	Future<String> createDataType(String name, String schema) throws ClientCommunicationException;
 
 	/**
 	 * Returns requested DataType Object.
@@ -117,8 +142,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return DataType as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<DataTypeDTO> getDataType(String dId)
-    throws ClientCommunicationException;
+	Future<DataTypeDTO> getDataType(String dId) throws ClientCommunicationException;
 
 	/**
 	 * Removes DataType from library.
@@ -127,8 +151,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return TicketStatus as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<Void> removeDataType(String dId)
-    throws ClientCommunicationException;
+	Future<Void> removeDataType(String dId) throws ClientCommunicationException;
 
 	/**
 	 * Find all Tags matching given searchPattern. Empty Search pattern means all Tags.
@@ -137,8 +160,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return List of all matched Tags as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<List<TagDTO>> findTags(String searchPattern)
-    throws ClientCommunicationException;
+	Future<List<TagDTO>> findTags(String searchPattern) throws ClientCommunicationException;
 
 	/**
 	 * Creates a new Tag.
@@ -148,8 +170,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return TicketStatus as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<Void> createTag(String label, String description)
-	throws ClientCommunicationException;
+	Future<Void> createTag(String label, String description) throws ClientCommunicationException;
 
 	/**
 	 * Remove a Tag from library.
@@ -158,8 +179,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return TicketStatus as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<Void> removeTag(String label)
-	throws ClientCommunicationException;
+	Future<Void> removeTag(String label) throws ClientCommunicationException;
 
 	/**
 	 * Create a feature.
@@ -170,8 +190,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return Feature id as Future
 	 * @throws ClientCommunicationException if some error occurred while communicating with service.
 	 */
-	Future<String> createFeature(String name, String group, String version)
-	throws ClientCommunicationException;
+	Future<String> createFeature(String name, String group, String version) throws ClientCommunicationException;
 
 	/**
 	 * Create an extension.
@@ -182,8 +201,7 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return Extension id as Future
 	 * @throws ClientCommunicationException if some error occurred while communicating with service.
 	 */
-	Future<String> addExtension(String featureId, String name, String version)
-	throws ClientCommunicationException;
+	Future<String> addExtension(String featureId, String name, String version) throws ClientCommunicationException;
 
 	/**
 	 * Get features from library.
@@ -192,6 +210,15 @@ public interface ILibraryAdminServiceClient extends ILibraryServiceClient, IServ
 	 * @return List of FeatureDTOs as Future
 	 * @throws ClientCommunicationException if some error occurred while communicate with service.
 	 */
-	Future<List<FeatureDTO>> getFeatures(String pattern)
-	throws ClientCommunicationException;
+	Future<List<FeatureDTO>> getFeatures(String pattern) throws ClientCommunicationException;
+
+	/**
+	 * Return request feature if name and version match.
+	 *
+	 * @param name - name of feature
+	 * @param version - version of feature
+	 * @return FeatureDTO or null
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<FeatureDTO> getFeatureByNameAndVersion(String name, String version) throws ClientCommunicationException;
 }

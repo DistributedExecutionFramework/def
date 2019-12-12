@@ -4,7 +4,6 @@ import at.enfilo.def.communication.api.common.client.IClient;
 import at.enfilo.def.communication.api.ticket.builder.TicketFutureBuilder;
 import at.enfilo.def.communication.api.ticket.service.ITicketServiceClient;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
-import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.node.api.thrift.NodeResponseService;
@@ -13,8 +12,6 @@ import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 import java.util.concurrent.Future;
-
-import static at.enfilo.def.communication.dto.TicketStatusDTO.DONE;
 
 public class NodeServiceClient<T extends NodeService.Iface, R extends NodeResponseService.Iface>
 implements INodeServiceClient {
@@ -114,10 +111,67 @@ implements INodeServiceClient {
 	}
 
 	@Override
+	public Future<Void> setStoreRoutine(String routineId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.setStoreRoutine(routineId));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<String> getStoreRoutine() throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.getStoreRoutine());
+		return new TicketFutureBuilder<R, String>()
+				.dataTicket(ticketId, ticketClient)
+				.request(R::getStoreRoutine)
+				.via(responseClient);
+	}
+
+	@Override
 	public void shutdown()
 	throws ClientCommunicationException {
 		String ticketId = requestClient.execute(T::shutdown);
 		new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<List<String>> getQueueIds() throws ClientCommunicationException {
+		String ticketId = requestClient.execute(T::getQueueIds);
+		return new TicketFutureBuilder<R, List<String>>()
+				.dataTicket(ticketId, ticketClient)
+				.request(R::getQueueIds)
+				.via(responseClient);
+	}
+
+	@Override
+	public Future<QueueInfoDTO> getQueueInfo(String qId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.getQueueInfo(qId));
+		return new TicketFutureBuilder<R, QueueInfoDTO>()
+				.dataTicket(ticketId, ticketClient)
+				.request(R::getQueueInfo)
+				.via(responseClient);
+	}
+
+	@Override
+	public Future<Void> createQueue(String qId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.createQueue(qId));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<Void> deleteQueue(String qId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.deleteQueue(qId));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<Void> pauseQueue(String qId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.pauseQueue(qId));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<Void> releaseQueue(String qId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(c -> c.releaseQueue(qId));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
 	}
 
 	@Override

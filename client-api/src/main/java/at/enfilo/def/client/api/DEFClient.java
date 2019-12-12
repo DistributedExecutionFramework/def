@@ -6,21 +6,30 @@ import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.execlogic.api.IExecLogicServiceClient;
 import at.enfilo.def.manager.api.IManagerServiceClient;
 import at.enfilo.def.transfer.dto.*;
+import at.enfilo.def.transfer.util.RoutineBinaryFactory;
 import org.apache.thrift.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 class DEFClient implements IDEFClient {
 	private static final TDeserializer DESERIALIZER = new TDeserializer();
 	private static final TSerializer SERIALIZER = new TSerializer();
 	private static final String DEFAULT_KEY = "DEFAULT";
+	private static final int DEFAULT_CHUNK_SIZE_BYTES = 1000 * 1000; // 1MB
 
 	private final IManagerServiceClient managerServiceClient;
 	private final IExecLogicServiceClient execLogicServiceClient;
 
-	public DEFClient(IManagerServiceClient managerServiceClient, IExecLogicServiceClient execLogicServiceClient) {
+	DEFClient(IManagerServiceClient managerServiceClient, IExecLogicServiceClient execLogicServiceClient) {
 		this.managerServiceClient = managerServiceClient;
 		this.execLogicServiceClient = execLogicServiceClient;
 	}
@@ -42,7 +51,19 @@ class DEFClient implements IDEFClient {
 
 	@Override
 	public Future<Void> deleteProgram(String pId) throws ClientCommunicationException {
-		return execLogicServiceClient.deleteProgram(pId);
+		try {
+			ProgramDTO program = getProgram(pId).get();
+			if (program.getClientRoutineId() != null && !program.getClientRoutineId().isEmpty()) {
+				managerServiceClient.removeClientRoutine(program.getClientRoutineId()).get();
+			}
+			return execLogicServiceClient.deleteProgram(pId);
+
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new ClientCommunicationException("Error while deleting program", e);
+		} catch (ExecutionException e) {
+			throw new ClientCommunicationException("Error while deleting program", e);
+		}
 	}
 
 	@Override
@@ -58,6 +79,66 @@ class DEFClient implements IDEFClient {
 	@Override
 	public Future<Void> updateProgramDescription(String pId, String description) throws ClientCommunicationException {
 		return execLogicServiceClient.updateProgramDescription(pId, description);
+	}
+
+	@Override
+	public Future<Void> startClientRoutine(String pId, String crId) throws ClientCommunicationException {
+		return execLogicServiceClient.startClientRoutine(pId, crId);
+	}
+
+	@Override
+	public <T extends TBase> Future<Void> attachAndStartClientRoutine(
+	        String pId,
+            List<Path> fileBinaries,
+            List<FeatureDTO> requiredFeatures,
+            List<String> arguments
+        ) throws ClientCommunicationException, ExecutionException {
+		try {
+			// 1. Create new ClientRoutine
+			String name = String.format("ClientRoutine for Program %s", pId);
+			RoutineDTO routine = new RoutineDTO();
+			routine.setName(name);
+			routine.setRequiredFeatures(requiredFeatures);
+			routine.setArguments(arguments);
+			Future<String> frId = managerServiceClient.createClientRoutine(routine);
+			String rId = frId.get();
+
+			// 2. Upload Binaries
+			boolean primary = true; // convention, first file is primary
+			for (Path binaryFilePath : fileBinaries) {
+				// 2.1. Create RoutineBinary
+				File routineBinaryFile = binaryFilePath.toFile();
+				RoutineBinaryDTO binary = RoutineBinaryFactory.createFromFile(routineBinaryFile, primary, routineBinaryFile.getName());
+				Future<String> future = managerServiceClient.createClientRoutineBinary(
+						rId,
+						routineBinaryFile.getName(),
+						binary.getMd5(),
+						binary.getSizeInBytes(),
+						binary.isPrimary()
+				);
+				String rbId = future.get();
+
+				// 2.2. Upload chunks
+				short chunks = RoutineBinaryFactory.calculateChunks(routineBinaryFile, DEFAULT_CHUNK_SIZE_BYTES);
+				for (short c = 0; c < chunks; c++) {
+					RoutineBinaryChunkDTO chunk = RoutineBinaryFactory.readChunk(routineBinaryFile, c, DEFAULT_CHUNK_SIZE_BYTES);
+					Future<Void> f = managerServiceClient.uploadClientRoutineBinaryChunk(rbId, chunk);
+					f.get(); // wait for upload
+				}
+			}
+
+			// 3. Attach and start client routine
+			return execLogicServiceClient.startClientRoutine(pId, rId);
+
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new ClientCommunicationException(e);
+		} catch (IOException | ExecutionException e) {
+			throw new ClientCommunicationException(e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new ExecutionException(e);
+		}
+
 	}
 
 	@Override
@@ -159,12 +240,9 @@ class DEFClient implements IDEFClient {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T extends TBase> Future<String> createSharedResource(String pId, T value) throws TException, ClientCommunicationException {
-		TFieldIdEnum idField = value.fieldForId((short)1); // Convention: field with id 1 is '_id'
-		String dataTypeId = value.getFieldValue(idField).toString();
 		ByteBuffer bb = ByteBuffer.wrap(SERIALIZER.serialize(value));
-		return createSharedResource(pId, dataTypeId, bb);
+		return createSharedResource(pId, extractDataTypeId(value), bb);
 	}
 
 	@Override
@@ -177,7 +255,26 @@ class DEFClient implements IDEFClient {
 		throw new ExtractDataTypeException("Result not found with key " + key);
 	}
 
-	private <T extends TBase> T extractValueFromResource(ResourceDTO resource, Class<T> dataType) throws ExtractDataTypeException {
+    @Override
+    public <T extends TBase> T extractResult(ProgramDTO program, Class<T> dataType, String key) throws ExtractDataTypeException {
+        for (Map.Entry<String, ResourceDTO> entry: program.getResults().entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(key)) {
+                return extractValueFromResource(entry.getValue(), dataType);
+            }
+        }
+        throw new ExtractDataTypeException(String.format("Result not found with key %s", key));
+    }
+
+    @Override
+    public <T extends TBase> Map<String, T> extractResults(ProgramDTO program, Class<T> dataType) throws ExtractDataTypeException {
+        Map<String, T> results = new HashMap<>();
+        for (Map.Entry<String, ResourceDTO> entry: program.getResults().entrySet()) {
+            results.put(entry.getKey(), extractValueFromResource(entry.getValue(), dataType));
+        }
+        return results;
+    }
+
+    private <T extends TBase> T extractValueFromResource(ResourceDTO resource, Class<T> dataType) throws ExtractDataTypeException {
 		try {
 			T value = dataType.newInstance();
 			DESERIALIZER.deserialize(value, resource.data.array());
@@ -185,6 +282,12 @@ class DEFClient implements IDEFClient {
 		} catch (IllegalAccessException | InstantiationException | TException e) {
 			throw new ExtractDataTypeException(e);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private String extractDataTypeId(TBase dataType) {
+		TFieldIdEnum idField = dataType.fieldForId((short) 1); // Convention: field with id 1 is '_id'
+		return dataType.getFieldValue(idField).toString();
 	}
 
 	@Override
@@ -263,8 +366,38 @@ class DEFClient implements IDEFClient {
 	}
 
 	@Override
+	public Future<String> createClientRoutine(RoutineDTO routine) throws ClientCommunicationException {
+		return managerServiceClient.createClientRoutine(routine);
+	}
+
+	@Override
+	public Future<String> createClientRoutineBinary(String rId, String binaryName, String md5, long sizeInBytes, boolean isPrimary) throws ClientCommunicationException {
+		return managerServiceClient.createClientRoutineBinary(rId, binaryName, md5, sizeInBytes, isPrimary);
+	}
+
+	@Override
+	public Future<Void> uploadClientRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ClientCommunicationException {
+		return managerServiceClient.uploadClientRoutineBinaryChunk(rbId, chunk);
+	}
+
+	@Override
+	public Future<Void> removeClientRoutine(String rId) throws ClientCommunicationException {
+		return managerServiceClient.removeClientRoutine(rId);
+	}
+
+	@Override
+	public Future<FeatureDTO> getFeatureByNameAndVersion(String name, String version) throws ClientCommunicationException {
+		return managerServiceClient.getFeatureByNameAndVersion(name, version);
+	}
+
+	@Override
 	public JobDTO waitForJob(String pId, String jId) throws ClientCommunicationException, InterruptedException {
 		return execLogicServiceClient.waitForJob(pId, jId);
+	}
+
+	@Override
+	public ProgramDTO waitForProgram(String pId) throws ClientCommunicationException, InterruptedException {
+		return execLogicServiceClient.waitForProgram(pId);
 	}
 
 	@Override

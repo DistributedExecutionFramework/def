@@ -6,10 +6,10 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public interface ITicket<T> {
-	int SERVICE_PRIORITY = -2;
-	int NORMAL_PRIORITY = 0;
-	int HIGHER_THAN_NORMAL_PRIORITY = -1;
-	int LOWER_THAN_NORMAL_PRIORITY = 1;
+	byte SERVICE_PRIORITY = 0x00;
+	byte HIGHER_THAN_NORMAL_PRIORITY = 0x10;
+	byte NORMAL_PRIORITY = 0x20;
+	byte LOWER_THAN_NORMAL_PRIORITY = 0x30;
 
 	UUID getId();
 
@@ -25,7 +25,7 @@ public interface ITicket<T> {
 
 	void clean();
 
-	int getPriority();
+	byte getPriority();
 
 	void waitForComplete() throws InterruptedException;
 }

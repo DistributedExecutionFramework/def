@@ -1,6 +1,8 @@
 dependencies {
     compile project(':base-datatypes')
     compile project(':logging')
+    compile project(':execlogic-api')
+    compile project(':parameter-server-api')
 
     testCompile project(':transfer')
 }

@@ -1,21 +1,19 @@
 package at.enfilo.def.library.api;
 
 import at.enfilo.def.communication.api.ticket.thrift.TicketService;
-import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.library.api.client.factory.LibraryServiceClientFactory;
 import at.enfilo.def.library.api.thrift.LibraryResponseService;
 import at.enfilo.def.library.api.thrift.LibraryService;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.LibraryInfoDTO;
-import at.enfilo.def.transfer.dto.RoutineBinaryDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
+import at.enfilo.def.transfer.dto.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -94,31 +92,41 @@ public class LibraryServiceClientTest {
 	}
 
 	@Test
-	public void setDataEndpoint() throws Exception {
-		String ticketId = UUID.randomUUID().toString();
-		ServiceEndpointDTO serviceEndpointDTO = new ServiceEndpointDTO();
-
-		when(requestServiceMock.setDataEndpoint(serviceEndpointDTO)).thenReturn(ticketId);
-		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
-
-		Future<Void> futureResult = client.setDataEndpoint(serviceEndpointDTO);
-		assertNull(futureResult.get());
-	}
-
-	@Test
 	public void getRoutineBinary() throws Exception {
-		String rbId = UUID.randomUUID().toString();
+		String routineId = UUID.randomUUID().toString();
+		String routineBinaryId = UUID.randomUUID().toString();
+		String routineBinaryName = "binaryName";
 		RoutineBinaryDTO routineBinaryDTO = new RoutineBinaryDTO();
-		routineBinaryDTO.setId(rbId);
+		routineBinaryDTO.setId(routineBinaryId);
+		routineBinaryDTO.setName(routineBinaryName);
 		String ticketId = UUID.randomUUID().toString();
 
 		// Set up mock methods
-		when(requestServiceMock.getRoutineBinary(rbId)).thenReturn(ticketId);
+		when(requestServiceMock.getRoutineBinary(routineBinaryId)).thenReturn(ticketId);
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		when(responseServiceMock.getRoutineBinary(ticketId)).thenReturn(routineBinaryDTO);
 
-		Future<RoutineBinaryDTO> futureRoutineBinary = client.getRoutineBinary(rbId);
+		Future<RoutineBinaryDTO> futureRoutineBinary = client.getRoutineBinary(routineBinaryId);
 
 		assertEquals(routineBinaryDTO, futureRoutineBinary.get());
+	}
+
+	@Test
+	public void getRoutineBinaryChunk() throws Exception {
+		Random rnd = new Random();
+		String rbId = UUID.randomUUID().toString();
+		short chunk = (short)rnd.nextInt();
+		int chunkSize = rnd.nextInt();
+		String ticketId = UUID.randomUUID().toString();
+		RoutineBinaryChunkDTO chunkDTO = new RoutineBinaryChunkDTO(chunk, chunk, chunkSize, ByteBuffer.wrap(new byte[1]));
+
+		// Set up mock methods
+		when(requestServiceMock.getRoutineBinaryChunk(rbId, chunk, chunkSize)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(responseServiceMock.getRoutineBinaryChunk(ticketId)).thenReturn(chunkDTO);
+
+		Future<RoutineBinaryChunkDTO> futureRoutineBinaryChunk = client.getRoutineBinaryChunk(rbId, chunk, chunkSize);
+
+		assertEquals(chunkDTO, futureRoutineBinaryChunk.get());
 	}
 }

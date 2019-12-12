@@ -6,16 +6,16 @@ import at.enfilo.def.cloud.communication.dto.AWSSpecificationDTO;
 import at.enfilo.def.cloud.communication.dto.InstanceTypeDTO;
 import at.enfilo.def.cluster.api.ClusterServiceClientFactory;
 import at.enfilo.def.cluster.api.IClusterServiceClient;
+import at.enfilo.def.common.exception.NotInitializedException;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.communication.exception.TakeControlException;
-import at.enfilo.def.library.api.ILibraryServiceClient;
-import at.enfilo.def.library.api.client.factory.LibraryServiceClientFactory;
+import at.enfilo.def.library.api.client.ILibraryAdminServiceClient;
+import at.enfilo.def.library.api.client.factory.LibraryAdminServiceClientFactory;
 import at.enfilo.def.manager.server.Manager;
 import at.enfilo.def.manager.util.ProgramClusterRegistry;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +37,9 @@ public class ManagerController {
 	private final String managerId;
 	private final ProgramClusterRegistry registry;
 	private final ClusterServiceClientFactory clusterServiceClientFactory;
-	private ICloudCommunicationServiceClient cloudCommunicationServiceClient;
+	private final ILibraryAdminServiceClient libraryServiceClient;
 	private final Map<String, String> clusterIdToCloudClusterIdMap;
+	private final ICloudCommunicationServiceClient cloudCommunicationServiceClient;
 
 	/**
 	 * Private class to provide thread safe singleton
@@ -55,7 +57,8 @@ public class ManagerController {
 		this(
 				ProgramClusterRegistry.getInstance(),
 				new ClusterServiceClientFactory(),
-				null
+				null, // null means the client will be created based on the configuration
+				null // null means the client will be created based on the configuration
 		);
 	}
 
@@ -65,22 +68,33 @@ public class ManagerController {
 	protected ManagerController(
 		ProgramClusterRegistry registry,
 		ClusterServiceClientFactory clusterServiceClientFactory,
+		ILibraryAdminServiceClient libraryAdminServiceClient,
 		ICloudCommunicationServiceClient cloudCommunicationServiceClient
 	) {
 		this.managerId = Manager.getInstance().getConfiguration().getId();
 		this.registry = registry;
 		this.clusterServiceClientFactory = clusterServiceClientFactory;
 		this.clusterIdToCloudClusterIdMap = new HashMap<>();
-		this.cloudCommunicationServiceClient = cloudCommunicationServiceClient;
 
 		try {
 			if (cloudCommunicationServiceClient == null) {
 				this.cloudCommunicationServiceClient = new CloudCommunicationServiceClientFactory().createClient(
-						Manager.getInstance().getConfiguration().getCloudCommunicationEndpoint()
+					Manager.getInstance().getConfiguration().getCloudCommunicationEndpoint()
 				);
+			} else {
+				this.cloudCommunicationServiceClient = cloudCommunicationServiceClient;
 			}
+			if (libraryAdminServiceClient == null) {
+				this.libraryServiceClient = new LibraryAdminServiceClientFactory().createClient(
+					Manager.getInstance().getConfiguration().getLibraryEndpoint()
+				);
+			} else {
+				this.libraryServiceClient = libraryAdminServiceClient;
+			}
+
 		} catch (ClientCreationException e) {
-			LOGGER.error("Error while creating ICloudCommunicationServiceClient.", e);
+			LOGGER.error("Error while creating CloudCommunicationService- or LibraryService-Client", e);
+			throw new NotInitializedException(e);
 		}
 	}
 
@@ -215,30 +229,30 @@ public class ManagerController {
 			String cloudClusterId,
 			int numberOfWorkers,
 			int numberOfReducers,
-			LibraryServiceClientFactory libraryServiceClientFactory)
+			LibraryAdminServiceClientFactory libraryAdminServiceClientFactory)
 	throws InterruptedException, ExecutionException, ClientCreationException, TakeControlException, ClientCommunicationException {
 
 		String clusterInstanceId = this.cloudCommunicationServiceClient.bootClusterInstance(cloudClusterId).get();
 		String clusterInstanceIPAddress = this.cloudCommunicationServiceClient.getPrivateIPAddressOfCloudInstance(cloudClusterId, clusterInstanceId).get();
 
-		ServiceEndpointDTO clusterEndpoint = Manager.getInstance().getConfiguration().getClusterEndpoint();
+		ServiceEndpointDTO clusterEndpoint = Manager.getInstance().getConfiguration().getCloudClusterEndpoint();
 		clusterEndpoint.setHost(clusterInstanceIPAddress);
 		IClusterServiceClient clusterServiceClient = this.clusterServiceClientFactory.createClient(clusterEndpoint);
 		String defClusterId = addCluster(clusterServiceClient);
 		this.cloudCommunicationServiceClient.mapDEFIdToCloudInstanceId(cloudClusterId, defClusterId, clusterInstanceId);
 		mapClusterIdToCloudClusterId(defClusterId, cloudClusterId);
 
-		ServiceEndpointDTO managerLibraryEndpoint = Manager.getInstance().getConfiguration().getLibraryEndpoint();
+		ServiceEndpointDTO managerLibraryEndpoint = Manager.getInstance().getConfiguration().getCloudLibraryEndpoint();
 		String vpnIp = Manager.getInstance().getConfiguration().getVpnIp();
 		managerLibraryEndpoint.setHost(vpnIp);
 
 		ServiceEndpointDTO clusterLibraryEndpoint = clusterServiceClient.getLibraryEndpointConfiguration().get();
 		clusterLibraryEndpoint.setHost(clusterInstanceIPAddress);
-		if (libraryServiceClientFactory == null) {
-			libraryServiceClientFactory = new LibraryServiceClientFactory();
+		if (libraryAdminServiceClientFactory == null) {
+			libraryAdminServiceClientFactory = new LibraryAdminServiceClientFactory();
 		}
-		ILibraryServiceClient clusterLibraryServiceClient = libraryServiceClientFactory.createClient(clusterLibraryEndpoint);
-		clusterLibraryServiceClient.setDataEndpoint(managerLibraryEndpoint);
+		ILibraryAdminServiceClient clusterAdminLibraryServiceClient = libraryAdminServiceClientFactory.createClient(clusterLibraryEndpoint);
+		clusterAdminLibraryServiceClient.setMasterLibrary(managerLibraryEndpoint);
 
 		bootNodeInstancesInCluster(cloudClusterId, clusterServiceClient, clusterLibraryEndpoint, null, InstanceTypeDTO.WORKER, numberOfWorkers);
 		bootNodeInstancesInCluster(cloudClusterId, clusterServiceClient, clusterLibraryEndpoint, null, InstanceTypeDTO.REDUCER, numberOfReducers);
@@ -250,7 +264,7 @@ public class ManagerController {
 			String cloudClusterId,
 			IClusterServiceClient clusterServiceClient,
 			ServiceEndpointDTO clusterLibraryEndpoint,
-			LibraryServiceClientFactory libraryServiceClientFactory,
+			LibraryAdminServiceClientFactory libraryAdminServiceClientFactory,
 			InstanceTypeDTO instanceType,
 			int nrOfNodes) {
 
@@ -269,8 +283,8 @@ public class ManagerController {
 				}
 				ServiceEndpointDTO nodeEndpointConfiguration = clusterServiceClient.getNodeServiceEndpointConfiguration(nodeType).get();
 				ServiceEndpointDTO libraryEndpointConfiguration = clusterServiceClient.getLibraryEndpointConfiguration().get();
-				if (libraryServiceClientFactory == null) {
-					libraryServiceClientFactory = new LibraryServiceClientFactory();
+				if (libraryAdminServiceClientFactory == null) {
+					libraryAdminServiceClientFactory = new LibraryAdminServiceClientFactory();
 				}
 
 				for (String nodeId: nodeIds) {
@@ -297,7 +311,7 @@ public class ManagerController {
 
 					ServiceEndpointDTO nodeLibraryEndpoint = new ServiceEndpointDTO(libraryEndpointConfiguration);
 					nodeLibraryEndpoint.setHost(nodeIPAddress);
-					libraryServiceClientFactory.createClient(nodeLibraryEndpoint).setDataEndpoint(clusterLibraryEndpoint);
+					libraryAdminServiceClientFactory.createClient(nodeLibraryEndpoint).setMasterLibrary(clusterLibraryEndpoint);
 				}
 			} catch (ClientCommunicationException | ClientCreationException | InterruptedException | ExecutionException e) {
 				LOGGER.error(MessageFormat.format("Error while booting node instances of type {0} in cloud cluster with id {1}.", instanceType, cloudClusterId), e);
@@ -415,5 +429,103 @@ public class ManagerController {
 
 	protected void mapClusterIdToCloudClusterId(String cId, String cloudClusterId) {
 		this.clusterIdToCloudClusterIdMap.put(cId, cloudClusterId);
+	}
+
+	/**
+	 * Delegate delete/remove ClientRoutine to the Managers Library instance.
+	 * @param rId - ClientRoutine id to remove.
+	 */
+	void removeClientRoutine(String rId) throws ExecutionException {
+		try {
+			LOGGER.debug("Remove ClientRoutine {}.", rId);
+			Future<Void> future = libraryServiceClient.removeRoutine(rId);
+			future.get(); // Wait for ticket
+			LOGGER.info("ClientRoutine {} removed successfully.", rId);
+		} catch (ClientCommunicationException e) {
+			LOGGER.error("Error while remove ClientRoutine {}.", rId, e);
+			throw new ExecutionException(e);
+		} catch (InterruptedException e) {
+			LOGGER.error("Interrupted while remove ClientRoutine {}.", rId, e);
+			Thread.currentThread().interrupt();
+			throw new ExecutionException(e);
+		}
+	}
+
+	/**
+	 * Creates a new ClientRoutine.
+	 * @param routine - {@link RoutineDTO} with all required attributes set
+	 * @return Id of created ClientRoutine
+	 */
+	String createClientRoutine(RoutineDTO routine) throws ExecutionException {
+		try {
+			LOGGER.debug("Create new ClientRoutine with name '{}'.", routine.getName());
+			routine.setId(UUID.randomUUID().toString());
+			routine.setRevision((short)1);
+			routine.setType(RoutineType.CLIENT);
+
+			Future<String> future = libraryServiceClient.createRoutine(routine);
+			String rId = future.get();
+			LOGGER.debug("ClientRoutine {} with name '{}' successful created.", rId, routine.getName());
+			return rId;
+
+		} catch (ClientCommunicationException e) {
+			LOGGER.error("Error while create ClientRoutine.", e);
+			throw new ExecutionException(e);
+		} catch (InterruptedException e) {
+			LOGGER.error("Interrupted while create ClientRoutine.", e);
+			Thread.currentThread().interrupt();
+			throw new ExecutionException(e);
+		}
+	}
+
+	String createClientRoutineBinary(String rId, String binaryName, String md5, long sizeInBytes, boolean isPrimary) throws ExecutionException {
+		try {
+			LOGGER.debug("Create ClientRoutineBinary for ClientRoutine {}.", rId);
+			Future<String> future = libraryServiceClient.createRoutineBinary(rId, binaryName, md5, sizeInBytes, isPrimary);
+			String rbId = future.get();
+			LOGGER.info("Created ClientRoutineBinary {} for ClientRoutine {} successfully.", rbId, rId);
+			return rbId;
+
+		} catch (ClientCommunicationException e) {
+			LOGGER.error("Error while create ClientRoutineBinary for Routine {}.", rId, e);
+			throw new ExecutionException(e);
+		} catch (InterruptedException e) {
+			LOGGER.error("Interrupted while create ClientRoutineBinary for Routine {}.", rId, e);
+			Thread.currentThread().interrupt();
+			throw new ExecutionException(e);
+		}
+	}
+
+	void uploadClientRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ExecutionException {
+		try {
+			LOGGER.debug("Upload Chunk for ClientRoutineBinary {}.", rbId);
+			Future<Void> future = libraryServiceClient.uploadRoutineBinaryChunk(rbId, chunk);
+			LOGGER.info("Uploaded Chunk {}/{} for ClientRoutineBinary {} successfully.", chunk.getChunk(), chunk.getTotalChunks(), rbId);
+			future.get();
+
+		} catch (ClientCommunicationException e) {
+			LOGGER.error("Error while upload Chunk for ClientRoutineBinary {}.", rbId, e);
+			throw new ExecutionException(e);
+		} catch (InterruptedException e) {
+			LOGGER.error("Interrupted while upload Chunk to ClientRoutineBinary {}.", rbId, e);
+			Thread.currentThread().interrupt();
+			throw new ExecutionException(e);
+		}
+	}
+
+	FeatureDTO getFeatureByNameAndVersion(String name, String version) throws ExecutionException {
+		try {
+			LOGGER.debug("Fetching feature with name {} and version {}.", name, version);
+			Future<FeatureDTO> future = libraryServiceClient.getFeatureByNameAndVersion(name, version);
+			FeatureDTO feature = future.get();
+			LOGGER.info("Fetched feature with name {} and version {} successfully.", name, version);
+			return feature;
+		} catch (ClientCommunicationException e) {
+			LOGGER.error("Error while fetching feature with name {} and version {}.", name, version);
+			throw new ExecutionException(e);
+		} catch (InterruptedException e) {
+			LOGGER.error("Interrupted while fetching feature with name {} and version {}.", name, version, e);
+			throw new ExecutionException(e);
+		}
 	}
 }

@@ -18,6 +18,7 @@ public class ClusterServiceRESTTest extends ClusterServiceTest {
 		webResources.add(new ClusterServiceImpl(
             workerController,
 			reducerController,
+			clientRoutineWorkerController,
 			clusterResource,
 			execLogicController
 		));

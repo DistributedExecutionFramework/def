@@ -34,15 +34,27 @@ public interface ILibraryService extends IResource {
 	void removeRoutine(@PathParam("rId") final String rId) throws ManagerWebserviceException;
 
 	@POST
-	@Path("/routines/{rId}/binaries")
+	@Path("/routines/{rId}/binary")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	String uploadRoutineBinary(@PathParam("rId") final String rId,
+	String createRoutineBinary(@PathParam("rId") final String rId,
+							   @QueryParam("name") final String name,
 							   @QueryParam("md5") final String md5,
 							   @QueryParam("primary") final Boolean primary,
-							   @QueryParam("sizeInBytes") final Long sizeInBytes,
-							   byte[] data)
+							   @QueryParam("sizeInBytes") final Long sizeInBytes)
 			throws ManagerWebserviceException;
+
+	@POST
+	@Path("/routines/binaries/{rbId}/chunks")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	void uploadRoutineBinaryChunk(
+			@PathParam("rbId") final String rbId,
+			@QueryParam("chunk") final short chunk,
+			@QueryParam("totalChunks") final short totalChunks,
+			@QueryParam("chunkSize") final int chunkSize,
+			byte[] data
+	) throws ManagerWebserviceException;
 
 	@GET
 	@Path("/tags")

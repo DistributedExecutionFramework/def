@@ -74,6 +74,11 @@ public interface IClusterService extends IResource {
     List<NodeInfoDTO> getAllReducersOfCluster(@PathParam("cId") String cId);
 
     @GET
+    @Path("/clusters/{cId}/clientRoutineWorkers")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<NodeInfoDTO> getAllClientRoutineWorkersOfCluster(@PathParam("cId") String cId);
+
+    @GET
     @Path("/clusters/{cId}/nodes/{nId}")
     @Produces(MediaType.APPLICATION_JSON)
     NodeInfoDTO getNodeInfo(@PathParam("cId") String cId, @PathParam("nId") String nId);

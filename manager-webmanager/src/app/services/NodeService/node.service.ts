@@ -5,9 +5,9 @@ import {BaseService} from '../base.service';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs/internal/Observable';
 import {catchError, map} from 'rxjs/operators';
-import {NodeType} from "../../enums/node-type.enum";
-import {Feature} from "../../entities/feature";
-import {LibraryService} from "../LibraryService/library.service";
+import {NodeType} from '../../enums/node-type.enum';
+import {Feature} from '../../entities/feature';
+import {LibraryService} from '../LibraryService/library.service';
 
 @Injectable()
 export class NodeService extends BaseService {
@@ -48,7 +48,7 @@ export class NodeService extends BaseService {
   /* MAX NUMBER OF TASKS FOR NODES OF CLUSTER */
   hasMaxNumberOfTasksForNodesOfCluster(clusterId: string, nodeType: NodeType): boolean {
     if (this.maxNumberOfTasksForNodesPerCluster.has(clusterId)) {
-      let clusterValues = this.maxNumberOfTasksForNodesPerCluster.get(clusterId);
+      const clusterValues = this.maxNumberOfTasksForNodesPerCluster.get(clusterId);
       return clusterValues.has(nodeType);
     }
     return false;
@@ -97,7 +97,7 @@ export class NodeService extends BaseService {
   private getMaxNumberOfTasksOfNodes(nodes: NodeInfo[]): number {
     let maxNumberOfTasks = 0;
     for (const node of nodes) {
-      maxNumberOfTasks = Math.max(maxNumberOfTasks, node.numberOfTasksToFinish);
+      maxNumberOfTasks = Math.max(maxNumberOfTasks, node.numberOfElementsToFinish);
     }
     return maxNumberOfTasks;
   }
@@ -123,6 +123,14 @@ export class NodeService extends BaseService {
     return this.httpClient.get<object[]>(url).pipe(
       map(json => this.mapNodeInfos(json)),
       catchError(this.handleError<NodeInfo[]>('getAllReducersOfCluster(cId)'))
+    );
+  }
+
+  getAllClientRoutineWorkersOfCluster(cId: string): Observable<NodeInfo[]> {
+    const url = this.appConfig.serviceConfig.getUrlForFetchingAllClientRoutineWorkers(cId);
+    return this.httpClient.get<object[]>(url).pipe(
+      map(json => this.mapNodeInfos(json)),
+      catchError(this.handleError<NodeInfo[]>('getAllClientRoutineWorkersOfCluster(cId)'))
     );
   }
 

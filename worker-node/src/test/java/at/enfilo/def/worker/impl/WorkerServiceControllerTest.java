@@ -2,19 +2,18 @@ package at.enfilo.def.worker.impl;
 
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.dto.TicketStatusDTO;
-import at.enfilo.def.dto.cache.DTOCache;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.node.api.QueueNotExistsException;
 import at.enfilo.def.node.observer.api.client.INodeObserverServiceClient;
 import at.enfilo.def.node.observer.api.client.factory.NodeObserverServiceClientFactory;
+import at.enfilo.def.node.queue.QueuePriorityWrapper;
+import at.enfilo.def.node.util.NodeConfiguration;
 import at.enfilo.def.transfer.UnknownTaskException;
 import at.enfilo.def.transfer.dto.ExecutionState;
 import at.enfilo.def.transfer.dto.JobDTO;
 import at.enfilo.def.transfer.dto.TaskDTO;
 import at.enfilo.def.worker.api.IWorkerServiceClient;
 import at.enfilo.def.worker.api.WorkerServiceClientFactory;
-import at.enfilo.def.worker.queue.QueuePriorityWrapper;
 import at.enfilo.def.worker.queue.TaskQueue;
 import at.enfilo.def.worker.server.Worker;
 import at.enfilo.def.worker.util.WorkerConfiguration;
@@ -28,16 +27,13 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 public class WorkerServiceControllerTest {
 
 	private WorkerServiceController controller;
-	private QueuePriorityWrapper queuePriorityWrapper;
+	private QueuePriorityWrapper<TaskDTO> queuePriorityWrapper;
 	private List<INodeObserverServiceClient> observers;
 	private WorkerServiceClientFactory workerServiceClientFactory;
 	private Set<String> finishedTasks;
@@ -45,7 +41,7 @@ public class WorkerServiceControllerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		queuePriorityWrapper = new QueuePriorityWrapper();
+		queuePriorityWrapper = new QueuePriorityWrapper<>(NodeConfiguration.getDefault());
 		finishedTasks = new HashSet<>();
 		observers = new LinkedList<>();
 		workerServiceClientFactory = Mockito.mock(WorkerServiceClientFactory.class);
@@ -67,64 +63,10 @@ public class WorkerServiceControllerTest {
 			observers,
 			workerServiceClientFactory,
 			Worker.getInstance().getConfiguration(),
-				nodeObserverServiceClientFactory,
+			nodeObserverServiceClientFactory,
 			DEFLoggerFactory.getLogger(this.getClass())
 		);
 	}
-
-	@Test
-	public void createQueue() throws Exception {
-		assertTrue(controller.getQueues().isEmpty());
-
-		// Create first queue
-		String pId = UUID.randomUUID().toString();
-		String jId1 = UUID.randomUUID().toString();
-		JobDTO j1 = new JobDTO(jId1, pId, ExecutionState.SCHEDULED, 0, 0, 0, 0, 0, 0, 0, "");
-		controller.createQueue(jId1);
-		assertEquals(1, controller.getQueues().size());
-		assertTrue(controller.getQueues().contains(jId1));
-
-		// Create second queue
-		String jId2 = UUID.randomUUID().toString();
-		JobDTO j2 = new JobDTO(jId2, pId, ExecutionState.SCHEDULED, 0, 0, 0, 0, 0, 0, 0, "");
-		controller.createQueue(jId2);
-		assertEquals(2, controller.getQueues().size());
-		assertTrue(controller.getQueues().contains(jId2));
-
-		// Create second queue again
-		controller.createQueue(jId2);
-		assertEquals(2, controller.getQueues().size());
-
-		try {
-			controller.getQueuedTasks(UUID.randomUUID().toString());
-			fail();
-		} catch (QueueNotExistsException e) {
-			// Expected.
-		}
-	}
-
-	@Test
-	public void deleteQueue() throws Exception {
-		assertTrue(controller.getQueues().isEmpty());
-
-		String pId = UUID.randomUUID().toString();
-		String jId1 = UUID.randomUUID().toString();
-		String jId2 = UUID.randomUUID().toString();
-		String jId3 = UUID.randomUUID().toString();
-		TaskQueue tq1 = new TaskQueue(jId1);
-		queuePriorityWrapper.addQueue(tq1);
-		TaskQueue tq2 = new TaskQueue(jId2);
-		queuePriorityWrapper.addQueue(tq2);
-		TaskQueue tq3 = new TaskQueue(jId3);
-		queuePriorityWrapper.addQueue(tq3);
-
-		assertEquals(3, controller.getQueues().size());
-
-		controller.deleteQueue(jId2);
-		assertEquals(2, controller.getQueues().size());
-		assertFalse(controller.getQueues().contains(jId2));
-	}
-
 
 	@Test
 	public void queueTask() throws Exception {
@@ -155,31 +97,23 @@ public class WorkerServiceControllerTest {
 		TaskDTO t2 = new TaskDTO(t2Id, jId2, pId, ExecutionState.FAILED, rnd.nextInt(), rnd.nextInt(), rnd.nextInt(), null, null, null, null, null, rnd.nextLong());
 		tasks2.add(t2);
 
-		controller.queueTasks(jId1, tasks1);
-		controller.queueTasks(jId2, tasks2);
+		controller.queueElements(jId1, tasks1);
+		controller.queueElements(jId2, tasks2);
 
-		assertEquals(2, controller.getQueuedTasks(jId1).size());
+		assertEquals(2, controller.getQueuedElements(jId1).size());
 		assertEquals(2, controller.getQueueInfo(jId1).getNumberOfTasks());
-		assertTrue(controller.getQueuedTasks(jId1).contains(t11Id));
-		assertTrue(controller.getQueuedTasks(jId1).contains(t12Id));
-		assertTrue(controller.getQueuedTasks(jId2).contains(t2Id));
-		assertFalse(controller.getQueuedTasks(jId1).contains(t2Id));
+		assertTrue(controller.getQueuedElements(jId1).contains(t11Id));
+		assertTrue(controller.getQueuedElements(jId1).contains(t12Id));
+		assertTrue(controller.getQueuedElements(jId2).contains(t2Id));
+		assertFalse(controller.getQueuedElements(jId1).contains(t2Id));
 
 		verify(observerClient).notifyTasksReceived(anyString(), eq(tasks1.stream().map(TaskDTO::getId).collect(Collectors.toList())));
 		verify(observerClient).notifyTasksReceived(anyString(), eq(tasks2.stream().map(TaskDTO::getId).collect(Collectors.toList())));
 		verify(observerClient, times(2)).notifyTasksReceived(anyString(), anyObject());
 	}
 
-	@Test(expected = QueueNotExistsException.class)
-	public void queueTaskUnknownQueue() throws Exception {
-		List<TaskDTO> tasks = new LinkedList<>();
-		tasks.add(new TaskDTO());
-		controller.queueTasks(UUID.randomUUID().toString(), tasks);
-	}
-
 	@Test
 	public void pauseAndReleaseQueue() throws Exception {
-		String pId = UUID.randomUUID().toString();
 		String jId1 = UUID.randomUUID().toString();
 		TaskQueue tq1 = new TaskQueue(jId1);
 		queuePriorityWrapper.addQueue(tq1);
@@ -198,16 +132,6 @@ public class WorkerServiceControllerTest {
 		controller.pauseQueue(jId2);
 		assertFalse(controller.getQueueInfo(jId1).isReleased());
 		assertFalse(controller.getQueueInfo(jId2).isReleased());
-	}
-
-	@Test(expected = QueueNotExistsException.class)
-	public void releaseUnknownQueue() throws Exception {
-		controller.releaseQueue(UUID.randomUUID().toString());
-	}
-
-	@Test(expected = QueueNotExistsException.class)
-	public void pauseUnknownQueue() throws Exception {
-		controller.pauseQueue(UUID.randomUUID().toString());
 	}
 
 	@Test
@@ -237,9 +161,9 @@ public class WorkerServiceControllerTest {
 		tq.queue(t2);
 		tq.queue(t3);
 
-		assertTrue(controller.getQueuedTasks(jId).contains(t1Id));
-		assertTrue(controller.getQueuedTasks(jId).contains(t2Id));
-		assertTrue(controller.getQueuedTasks(jId).contains(t3Id));
+		assertTrue(controller.getQueuedElements(jId).contains(t1Id));
+		assertTrue(controller.getQueuedElements(jId).contains(t2Id));
+		assertTrue(controller.getQueuedElements(jId).contains(t3Id));
 
 		// Prepare destination endpoints and mocks
 		ServiceEndpointDTO endpoint = new ServiceEndpointDTO();
@@ -258,28 +182,19 @@ public class WorkerServiceControllerTest {
 		when(ticketMock.get()).thenReturn(null);
 
 		// Verify number of tasks
-		assertEquals(3, controller.getNumberOfQueuedTasks());
+		assertEquals(3, controller.getQueuePriorityWrapper().getNumberOfQueuedElements());
 
 		// Move tasks
-		controller.moveTasks(jId, tIdsToMove, endpoint);
-		assertFalse(controller.getQueuedTasks(jId).contains(t1Id));
-		assertTrue(controller.getQueuedTasks(jId).contains(t2Id));
-		assertFalse(controller.getQueuedTasks(jId).contains(t3Id));
+		controller.moveElements(jId, tIdsToMove, endpoint);
+		assertFalse(controller.getQueuedElements(jId).contains(t1Id));
+		assertTrue(controller.getQueuedElements(jId).contains(t2Id));
+		assertFalse(controller.getQueuedElements(jId).contains(t3Id));
 
 		verify(clientMock).queueTasks(jId, tasksToMove);
 
 		// Verify observer
-		assertEquals(1, controller.getNumberOfQueuedTasks());
+		assertEquals(1, controller.getQueuePriorityWrapper().getNumberOfQueuedElements());
 		verify(observerClient).notifyNodeInfo(anyString(), anyObject());
-	}
-
-	@Test(expected = QueueNotExistsException.class)
-	public void moveTasksUnknownQueue() throws Exception {
-		List<String> tIdsToMove = new LinkedList<>();
-		tIdsToMove.add(UUID.randomUUID().toString());
-		ServiceEndpointDTO endpoint = new ServiceEndpointDTO();
-
-		controller.moveTasks(UUID.randomUUID().toString(), tIdsToMove, endpoint);
 	}
 
 	@Test
@@ -318,10 +233,10 @@ public class WorkerServiceControllerTest {
 		tq2.queue(t21);
 		tq2.queue(t22);
 
-		assertTrue(controller.getQueuedTasks(jId1).contains(t11Id));
-		assertTrue(controller.getQueuedTasks(jId1).contains(t12Id));
-		assertTrue(controller.getQueuedTasks(jId2).contains(t21Id));
-		assertTrue(controller.getQueuedTasks(jId2).contains(t22Id));
+		assertTrue(controller.getQueuedElements(jId1).contains(t11Id));
+		assertTrue(controller.getQueuedElements(jId1).contains(t12Id));
+		assertTrue(controller.getQueuedElements(jId2).contains(t21Id));
+		assertTrue(controller.getQueuedElements(jId2).contains(t22Id));
 
 		// Prepare destination endpoints and mocks
 		ServiceEndpointDTO endpoint = new ServiceEndpointDTO();
@@ -331,108 +246,20 @@ public class WorkerServiceControllerTest {
 		when(clientMock.queueTasks(anyString(), anyList())).thenReturn(ticketMock);
 		when(ticketMock.get()).thenReturn(null);
 
-		controller.moveAllTasks(endpoint);
+		controller.moveAllElements(endpoint);
 
 		verify(clientMock, times(1)).queueTasks(eq(jId1), anyList());
 		verify(clientMock, times(1)).queueTasks(eq(jId2), anyList());
 
 		// Verify observer
-		assertEquals(0, controller.getNumberOfQueuedTasks());
+		assertEquals(0, controller.getQueuePriorityWrapper().getNumberOfQueuedElements());
 		verify(observerClient).notifyNodeInfo(anyString(), anyObject());
 	}
 
 
 	@Test(expected = UnknownTaskException.class)
 	public void fetchFinishedUnknownTask() throws Exception {
-		controller.fetchFinishedTask(UUID.randomUUID().toString());
-	}
-
-	@Test
-	public void fetchFinishedTask() throws Exception {
-		// Prepare finished tasks
-		String t1Id = UUID.randomUUID().toString();
-		String t2Id = UUID.randomUUID().toString();
-		String t3Id = UUID.randomUUID().toString();
-		TaskDTO t1 = new TaskDTO();
-		t1.setId(t1Id);
-		TaskDTO t2 = new TaskDTO();
-		t2.setId(t2Id);
-		TaskDTO t3 = new TaskDTO();
-		t3.setId(t3Id);
-
-		DTOCache<TaskDTO> cache =  DTOCache.getInstance(WorkerServiceController.DTO_TASK_CACHE_CONTEXT, TaskDTO.class);
-		finishedTasks.add(t1Id);
-		cache.cache(t1.getId(), t1);
-		finishedTasks.add(t2Id);
-		cache.cache(t2.getId(), t2);
-		finishedTasks.add(t3Id);
-		cache.cache(t3.getId(), t3);
-
-		TaskDTO t1Finished = controller.fetchFinishedTask(t1Id);
-		assertEquals(t1, t1Finished);
-		TaskDTO t3Finished = controller.fetchFinishedTask(t3Id);
-		assertEquals(t3, t3Finished);
-
-		assertEquals(1, finishedTasks.size());
-	}
-
-
-	@Test
-	public void notifyTaskSuccess() throws Exception {
-		// Prepare task
-		String t1Id = UUID.randomUUID().toString();
-		TaskDTO t1 = new TaskDTO();
-		t1.setId(t1Id);
-		List<String> notifyTaskIds = new LinkedList<>();
-		notifyTaskIds.add(t1Id);
-
-		// Prepare observers
-		INodeObserverServiceClient observer = Mockito.mock(INodeObserverServiceClient.class);
-		observers.add(observer);
-
-		assertTrue(finishedTasks.isEmpty());
-		controller.notifyStateChanged(t1Id, ExecutionState.RUN, ExecutionState.SUCCESS);
-
-		assertTrue(finishedTasks.contains(t1Id));
-		verify(observer).notifyTasksNewState(anyString(), eq(notifyTaskIds), eq(ExecutionState.SUCCESS));
-	}
-
-	@Test
-	public void notifyTaskFailed() throws Exception {
-		// Prepare task
-		String t1Id = UUID.randomUUID().toString();
-		TaskDTO t1 = new TaskDTO();
-		t1.setId(t1Id);
-		List<String> notifyTaskIds = new LinkedList<>();
-		notifyTaskIds.add(t1Id);
-
-		// Prepare observers
-		INodeObserverServiceClient observer = Mockito.mock(INodeObserverServiceClient.class);
-		observers.add(observer);
-
-		assertTrue(finishedTasks.isEmpty());
-		controller.notifyStateChanged(t1Id, ExecutionState.RUN, ExecutionState.FAILED);
-
-		assertTrue(finishedTasks.contains(t1Id));
-		verify(observer).notifyTasksNewState(anyString(), eq(notifyTaskIds), eq(ExecutionState.FAILED));
-	}
-
-	@Test
-	public void notifyTaskRun() throws Exception {
-		// Prepare task
-		String t1Id = UUID.randomUUID().toString();
-		TaskDTO t1 = new TaskDTO();
-		t1.setId(t1Id);
-		List<String> notifyTaskIds = new LinkedList<>();
-		notifyTaskIds.add(t1Id);
-
-		// Prepare observers
-		INodeObserverServiceClient observer = Mockito.mock(INodeObserverServiceClient.class);
-		observers.add(observer);
-
-		controller.notifyStateChanged(t1Id, ExecutionState.SCHEDULED, ExecutionState.RUN);
-
-		verify(observer).notifyTasksNewState(anyString(), eq(notifyTaskIds), eq(ExecutionState.RUN));
+		controller.fetchFinishedElement(UUID.randomUUID().toString());
 	}
 
 	@Test
@@ -442,6 +269,31 @@ public class WorkerServiceControllerTest {
 		String id = UUID.randomUUID().toString();
 		controller.setStoreRoutineId(id);
 		assertEquals(id, controller.getStoreRoutineId());
+	}
+
+	@Test
+	public void getQueueIds() throws Exception {
+		String queueId = UUID.randomUUID().toString();
+		TaskQueue queue = new TaskQueue(queueId);
+		queuePriorityWrapper.addQueue(queue);
+
+		List<String> queueIds = controller.getQueueIds();
+
+		assertEquals(1, queueIds.size());
+		assertTrue(queueIds.contains(queueId));
+	}
+
+	@Test
+	public void abortTask() throws Exception {
+		TaskDTO task = new TaskDTO();
+		String taskId = UUID.randomUUID().toString();
+		task.setId(taskId);
+		task.setState(ExecutionState.SCHEDULED);
+		controller.getTaskCache().cache(taskId, task);
+
+		controller.abortTask(taskId);
+
+		assertTrue(task.getMessages().size() > 0);
 	}
 }
 

@@ -86,25 +86,30 @@ public class ClusterResourceTest {
 
 	@Test
 	public void getSetReducerSchedulerService() throws Exception {
-		getSetSchedulerService(NodeType.REDUCER);
-	}
-
-	@Test
-	public void getSetWorkerSchedulerService() throws Exception {
-		getSetSchedulerService(NodeType.WORKER);
-	}
-
-	public void getSetSchedulerService(NodeType nodeType) throws Exception {
-		assertNotNull(clusterResource.getSchedulerServiceClient(nodeType));
+		assertNotNull(clusterResource.getReducerSchedulerServiceClient());
 
 		ServiceEndpointDTO endpoint = new ServiceEndpointDTO(
 				UUID.randomUUID().toString(),
 				new Random().nextInt(),
 				Protocol.REST);
 
-		clusterResource.setSchedulerService(nodeType, endpoint);
+		clusterResource.setSchedulerService(NodeType.REDUCER, endpoint);
 
-		assertEquals(endpoint, clusterResource.getSchedulerServiceClient(nodeType).getServiceEndpoint());
+		assertEquals(endpoint, clusterResource.getReducerSchedulerServiceClient().getServiceEndpoint());
+	}
+
+	@Test
+	public void getSetWorkerSchedulerService() throws Exception {
+		assertNotNull(clusterResource.getWorkerSchedulerServiceClient());
+
+		ServiceEndpointDTO endpoint = new ServiceEndpointDTO(
+				UUID.randomUUID().toString(),
+				new Random().nextInt(),
+				Protocol.REST);
+
+		clusterResource.setSchedulerService(NodeType.WORKER, endpoint);
+
+		assertEquals(endpoint, clusterResource.getWorkerSchedulerServiceClient().getServiceEndpoint());
 	}
 
 	@Test

@@ -78,7 +78,9 @@ public class ConfigReader {
         String configFileName, Class<?> baseClass, Class<T> configurationClass, ObjectMapper mapper
     ) throws IOException {
 
-        return mapper.readValue(fetchResourceURL(configFileName, baseClass), configurationClass);
+    	URL configFileUrl = fetchResourceURL(configFileName, baseClass);
+    	LOGGER.info("Use configuration file: \"{}\"", configFileUrl);
+        return mapper.readValue(configFileUrl, configurationClass);
     }
 
     /**

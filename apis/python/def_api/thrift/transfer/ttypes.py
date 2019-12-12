@@ -79,14 +79,14 @@ class RoutineType(object):
     MAP = 1
     STORE = 2
     REDUCE = 3
-    MASTER = 4
+    CLIENT = 4
 
     _VALUES_TO_NAMES = {
         0: "OBJECTIVE",
         1: "MAP",
         2: "STORE",
         3: "REDUCE",
-        4: "MASTER",
+        4: "CLIENT",
     }
 
     _NAMES_TO_VALUES = {
@@ -94,34 +94,7 @@ class RoutineType(object):
         "MAP": 1,
         "STORE": 2,
         "REDUCE": 3,
-        "MASTER": 4,
-    }
-
-
-class Language(object):
-    JAVA = 0
-    PYTHON = 1
-    MATLAB = 2
-    OCTAVE = 3
-    CPP = 4
-    CSHARP = 5
-
-    _VALUES_TO_NAMES = {
-        0: "JAVA",
-        1: "PYTHON",
-        2: "MATLAB",
-        3: "OCTAVE",
-        4: "CPP",
-        5: "CSHARP",
-    }
-
-    _NAMES_TO_VALUES = {
-        "JAVA": 0,
-        "PYTHON": 1,
-        "MATLAB": 2,
-        "OCTAVE": 3,
-        "CPP": 4,
-        "CSHARP": 5,
+        "CLIENT": 4,
     }
 
 
@@ -149,15 +122,18 @@ class CloudType(object):
 class NodeType(object):
     WORKER = 0
     REDUCER = 1
+    CLIENT = 2
 
     _VALUES_TO_NAMES = {
         0: "WORKER",
         1: "REDUCER",
+        2: "CLIENT",
     }
 
     _NAMES_TO_VALUES = {
         "WORKER": 0,
         "REDUCER": 1,
+        "CLIENT": 2,
     }
 
 
@@ -654,16 +630,17 @@ class JobDTO(object):
      - startTime
      - finishTime
      - scheduledTasks
-     - runningTasks
+     - runningElements
      - successfulTasks
      - failedTasks
      - mapRoutineId
      - reduceRoutineId
      - reducedResults
+     - messages
     """
 
 
-    def __init__(self, id=None, programId=None, state=None, createTime=None, startTime=None, finishTime=None, scheduledTasks=None, runningTasks=None, successfulTasks=None, failedTasks=None, mapRoutineId=None, reduceRoutineId=None, reducedResults=None,):
+    def __init__(self, id=None, programId=None, state=None, createTime=None, startTime=None, finishTime=None, scheduledTasks=None, runningTasks=None, successfulTasks=None, failedTasks=None, mapRoutineId=None, reduceRoutineId=None, reducedResults=None, messages=None,):
         self.id = id
         self.programId = programId
         self.state = state
@@ -677,6 +654,7 @@ class JobDTO(object):
         self.mapRoutineId = mapRoutineId
         self.reduceRoutineId = reduceRoutineId
         self.reducedResults = reducedResults
+        self.messages = messages
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -758,6 +736,16 @@ class JobDTO(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 14:
+                if ftype == TType.LIST:
+                    self.messages = []
+                    (_etype39, _size36) = iprot.readListBegin()
+                    for _i40 in range(_size36):
+                        _elem41 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.messages.append(_elem41)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -797,7 +785,7 @@ class JobDTO(object):
             oprot.writeI32(self.scheduledTasks)
             oprot.writeFieldEnd()
         if self.runningTasks is not None:
-            oprot.writeFieldBegin('runningTasks', TType.I32, 8)
+            oprot.writeFieldBegin('runningElements', TType.I32, 8)
             oprot.writeI32(self.runningTasks)
             oprot.writeFieldEnd()
         if self.successfulTasks is not None:
@@ -819,8 +807,15 @@ class JobDTO(object):
         if self.reducedResults is not None:
             oprot.writeFieldBegin('reducedResults', TType.LIST, 13)
             oprot.writeListBegin(TType.STRUCT, len(self.reducedResults))
-            for iter36 in self.reducedResults:
-                iter36.write(oprot)
+            for iter42 in self.reducedResults:
+                iter42.write(oprot)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.messages is not None:
+            oprot.writeFieldBegin('messages', TType.LIST, 14)
+            oprot.writeListBegin(TType.STRING, len(self.messages))
+            for iter43 in self.messages:
+                oprot.writeString(iter43.encode('utf-8') if sys.version_info[0] == 2 else iter43)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -848,24 +843,30 @@ class ProgramDTO(object):
      - state
      - createTime
      - finishTime
-     - masterLibraryRoutine
      - userId
      - name
      - description
      - nrOfJobs
+     - sharedResources
+     - clientRoutindId
+     - results
+     - messages
     """
 
 
-    def __init__(self, id=None, state=None, createTime=None, finishTime=None, masterLibraryRoutine=False, userId=None, name=None, description=None, nrOfJobs=None,):
+    def __init__(self, id=None, state=None, createTime=None, finishTime=None, userId=None, name=None, description=None, nrOfJobs=None, sharedResources=None, clientRoutindId=None, results=None, messages=None,):
         self.id = id
         self.state = state
         self.createTime = createTime
         self.finishTime = finishTime
-        self.masterLibraryRoutine = masterLibraryRoutine
         self.userId = userId
         self.name = name
         self.description = description
         self.nrOfJobs = nrOfJobs
+        self.sharedResources = sharedResources
+        self.clientRoutindId = clientRoutindId
+        self.results = results
+        self.messages = messages
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -896,11 +897,6 @@ class ProgramDTO(object):
                     self.finishTime = iprot.readI64()
                 else:
                     iprot.skip(ftype)
-            elif fid == 5:
-                if ftype == TType.BOOL:
-                    self.masterLibraryRoutine = iprot.readBool()
-                else:
-                    iprot.skip(ftype)
             elif fid == 6:
                 if ftype == TType.STRING:
                     self.userId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
@@ -919,6 +915,44 @@ class ProgramDTO(object):
             elif fid == 9:
                 if ftype == TType.I32:
                     self.nrOfJobs = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 10:
+                if ftype == TType.MAP:
+                    self.sharedResources = {}
+                    (_ktype45, _vtype46, _size44) = iprot.readMapBegin()
+                    for _i48 in range(_size44):
+                        _key49 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val50 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.sharedResources[_key49] = _val50
+                    iprot.readMapEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 11:
+                if ftype == TType.STRING:
+                    self.clientRoutindId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 12:
+                if ftype == TType.MAP:
+                    self.results = {}
+                    (_ktype52, _vtype53, _size51) = iprot.readMapBegin()
+                    for _i55 in range(_size51):
+                        _key56 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val57 = ResourceDTO()
+                        _val57.read(iprot)
+                        self.results[_key56] = _val57
+                    iprot.readMapEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 13:
+                if ftype == TType.LIST:
+                    self.messages = []
+                    (_etype61, _size58) = iprot.readListBegin()
+                    for _i62 in range(_size58):
+                        _elem63 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.messages.append(_elem63)
+                    iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
             else:
@@ -947,10 +981,6 @@ class ProgramDTO(object):
             oprot.writeFieldBegin('finishTime', TType.I64, 4)
             oprot.writeI64(self.finishTime)
             oprot.writeFieldEnd()
-        if self.masterLibraryRoutine is not None:
-            oprot.writeFieldBegin('masterLibraryRoutine', TType.BOOL, 5)
-            oprot.writeBool(self.masterLibraryRoutine)
-            oprot.writeFieldEnd()
         if self.userId is not None:
             oprot.writeFieldBegin('userId', TType.STRING, 6)
             oprot.writeString(self.userId.encode('utf-8') if sys.version_info[0] == 2 else self.userId)
@@ -966,6 +996,153 @@ class ProgramDTO(object):
         if self.nrOfJobs is not None:
             oprot.writeFieldBegin('nrOfJobs', TType.I32, 9)
             oprot.writeI32(self.nrOfJobs)
+            oprot.writeFieldEnd()
+        if self.sharedResources is not None:
+            oprot.writeFieldBegin('sharedResources', TType.MAP, 10)
+            oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.sharedResources))
+            for kiter64, viter65 in self.sharedResources.items():
+                oprot.writeString(kiter64.encode('utf-8') if sys.version_info[0] == 2 else kiter64)
+                oprot.writeString(viter65.encode('utf-8') if sys.version_info[0] == 2 else viter65)
+            oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.clientRoutindId is not None:
+            oprot.writeFieldBegin('clientRoutindId', TType.STRING, 11)
+            oprot.writeString(self.clientRoutindId.encode('utf-8') if sys.version_info[0] == 2 else self.clientRoutindId)
+            oprot.writeFieldEnd()
+        if self.results is not None:
+            oprot.writeFieldBegin('results', TType.MAP, 12)
+            oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.results))
+            for kiter66, viter67 in self.results.items():
+                oprot.writeString(kiter66.encode('utf-8') if sys.version_info[0] == 2 else kiter66)
+                viter67.write(oprot)
+            oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.messages is not None:
+            oprot.writeFieldBegin('messages', TType.LIST, 13)
+            oprot.writeListBegin(TType.STRING, len(self.messages))
+            for iter68 in self.messages:
+                oprot.writeString(iter68.encode('utf-8') if sys.version_info[0] == 2 else iter68)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class ReduceJobDTO(object):
+    """
+    Attributes:
+     - jobId
+     - job
+     - state
+     - startTime
+     - finishTime
+     - messages
+    """
+
+
+    def __init__(self, jobId=None, job=None, state=None, startTime=None, finishTime=None, messages=None,):
+        self.jobId = jobId
+        self.job = job
+        self.state = state
+        self.startTime = startTime
+        self.finishTime = finishTime
+        self.messages = messages
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.jobId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRUCT:
+                    self.job = JobDTO()
+                    self.job.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I32:
+                    self.state = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.I64:
+                    self.startTime = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 5:
+                if ftype == TType.I64:
+                    self.finishTime = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 6:
+                if ftype == TType.LIST:
+                    self.messages = []
+                    (_etype72, _size69) = iprot.readListBegin()
+                    for _i73 in range(_size69):
+                        _elem74 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.messages.append(_elem74)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('ReduceJobDTO')
+        if self.jobId is not None:
+            oprot.writeFieldBegin('jobId', TType.STRING, 1)
+            oprot.writeString(self.jobId.encode('utf-8') if sys.version_info[0] == 2 else self.jobId)
+            oprot.writeFieldEnd()
+        if self.job is not None:
+            oprot.writeFieldBegin('job', TType.STRUCT, 2)
+            self.job.write(oprot)
+            oprot.writeFieldEnd()
+        if self.state is not None:
+            oprot.writeFieldBegin('state', TType.I32, 3)
+            oprot.writeI32(self.state)
+            oprot.writeFieldEnd()
+        if self.startTime is not None:
+            oprot.writeFieldBegin('startTime', TType.I64, 4)
+            oprot.writeI64(self.startTime)
+            oprot.writeFieldEnd()
+        if self.finishTime is not None:
+            oprot.writeFieldBegin('finishTime', TType.I64, 5)
+            oprot.writeI64(self.finishTime)
+            oprot.writeFieldEnd()
+        if self.messages is not None:
+            oprot.writeFieldBegin('messages', TType.LIST, 6)
+            oprot.writeListBegin(TType.STRING, len(self.messages))
+            for iter75 in self.messages:
+                oprot.writeString(iter75.encode('utf-8') if sys.version_info[0] == 2 else iter75)
+            oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -1172,26 +1349,26 @@ class RoutineDTO(object):
      - description
      - revision
      - type
-     - language
      - inParameters
      - outParameter
      - routineBinaries
      - arguments
+     - requiredFeatures
     """
 
 
-    def __init__(self, id=None, privateRoutine=None, name=None, description=None, revision=None, type=None, language=None, inParameters=None, outParameter=None, routineBinaries=None, arguments=None,):
+    def __init__(self, id=None, privateRoutine=None, name=None, description=None, revision=None, type=None, inParameters=None, outParameter=None, routineBinaries=None, arguments=None, requiredFeatures=None,):
         self.id = id
         self.privateRoutine = privateRoutine
         self.name = name
         self.description = description
         self.revision = revision
         self.type = type
-        self.language = language
         self.inParameters = inParameters
         self.outParameter = outParameter
         self.routineBinaries = routineBinaries
         self.arguments = arguments
+        self.requiredFeatures = requiredFeatures
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -1232,19 +1409,14 @@ class RoutineDTO(object):
                     self.type = iprot.readI32()
                 else:
                     iprot.skip(ftype)
-            elif fid == 7:
-                if ftype == TType.I32:
-                    self.language = iprot.readI32()
-                else:
-                    iprot.skip(ftype)
             elif fid == 8:
                 if ftype == TType.LIST:
                     self.inParameters = []
-                    (_etype40, _size37) = iprot.readListBegin()
-                    for _i41 in range(_size37):
-                        _elem42 = FormalParameterDTO()
-                        _elem42.read(iprot)
-                        self.inParameters.append(_elem42)
+                    (_etype79, _size76) = iprot.readListBegin()
+                    for _i80 in range(_size76):
+                        _elem81 = FormalParameterDTO()
+                        _elem81.read(iprot)
+                        self.inParameters.append(_elem81)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -1257,21 +1429,32 @@ class RoutineDTO(object):
             elif fid == 10:
                 if ftype == TType.SET:
                     self.routineBinaries = set()
-                    (_etype46, _size43) = iprot.readSetBegin()
-                    for _i47 in range(_size43):
-                        _elem48 = RoutineBinaryDTO()
-                        _elem48.read(iprot)
-                        self.routineBinaries.add(_elem48)
+                    (_etype85, _size82) = iprot.readSetBegin()
+                    for _i86 in range(_size82):
+                        _elem87 = RoutineBinaryDTO()
+                        _elem87.read(iprot)
+                        self.routineBinaries.add(_elem87)
                     iprot.readSetEnd()
                 else:
                     iprot.skip(ftype)
             elif fid == 11:
                 if ftype == TType.LIST:
                     self.arguments = []
-                    (_etype52, _size49) = iprot.readListBegin()
-                    for _i53 in range(_size49):
-                        _elem54 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.arguments.append(_elem54)
+                    (_etype91, _size88) = iprot.readListBegin()
+                    for _i92 in range(_size88):
+                        _elem93 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.arguments.append(_elem93)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 12:
+                if ftype == TType.LIST:
+                    self.requiredFeatures = []
+                    (_etype97, _size94) = iprot.readListBegin()
+                    for _i98 in range(_size94):
+                        _elem99 = FeatureDTO()
+                        _elem99.read(iprot)
+                        self.requiredFeatures.append(_elem99)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -1309,15 +1492,11 @@ class RoutineDTO(object):
             oprot.writeFieldBegin('type', TType.I32, 6)
             oprot.writeI32(self.type)
             oprot.writeFieldEnd()
-        if self.language is not None:
-            oprot.writeFieldBegin('language', TType.I32, 7)
-            oprot.writeI32(self.language)
-            oprot.writeFieldEnd()
         if self.inParameters is not None:
             oprot.writeFieldBegin('inParameters', TType.LIST, 8)
             oprot.writeListBegin(TType.STRUCT, len(self.inParameters))
-            for iter55 in self.inParameters:
-                iter55.write(oprot)
+            for iter100 in self.inParameters:
+                iter100.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.outParameter is not None:
@@ -1327,15 +1506,22 @@ class RoutineDTO(object):
         if self.routineBinaries is not None:
             oprot.writeFieldBegin('routineBinaries', TType.SET, 10)
             oprot.writeSetBegin(TType.STRUCT, len(self.routineBinaries))
-            for iter56 in self.routineBinaries:
-                iter56.write(oprot)
+            for iter101 in self.routineBinaries:
+                iter101.write(oprot)
             oprot.writeSetEnd()
             oprot.writeFieldEnd()
         if self.arguments is not None:
             oprot.writeFieldBegin('arguments', TType.LIST, 11)
             oprot.writeListBegin(TType.STRING, len(self.arguments))
-            for iter57 in self.arguments:
-                oprot.writeString(iter57.encode('utf-8') if sys.version_info[0] == 2 else iter57)
+            for iter102 in self.arguments:
+                oprot.writeString(iter102.encode('utf-8') if sys.version_info[0] == 2 else iter102)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.requiredFeatures is not None:
+            oprot.writeFieldBegin('requiredFeatures', TType.LIST, 12)
+            oprot.writeListBegin(TType.STRUCT, len(self.requiredFeatures))
+            for iter103 in self.requiredFeatures:
+                iter103.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -1588,22 +1774,22 @@ class RoutineInstanceDTO(object):
             elif fid == 2:
                 if ftype == TType.MAP:
                     self.inParameters = {}
-                    (_ktype59, _vtype60, _size58) = iprot.readMapBegin()
-                    for _i62 in range(_size58):
-                        _key63 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val64 = ResourceDTO()
-                        _val64.read(iprot)
-                        self.inParameters[_key63] = _val64
+                    (_ktype105, _vtype106, _size104) = iprot.readMapBegin()
+                    for _i108 in range(_size104):
+                        _key109 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val110 = ResourceDTO()
+                        _val110.read(iprot)
+                        self.inParameters[_key109] = _val110
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.LIST:
                     self.missingParameters = []
-                    (_etype68, _size65) = iprot.readListBegin()
-                    for _i69 in range(_size65):
-                        _elem70 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.missingParameters.append(_elem70)
+                    (_etype114, _size111) = iprot.readListBegin()
+                    for _i115 in range(_size111):
+                        _elem116 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.missingParameters.append(_elem116)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -1624,16 +1810,136 @@ class RoutineInstanceDTO(object):
         if self.inParameters is not None:
             oprot.writeFieldBegin('inParameters', TType.MAP, 2)
             oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.inParameters))
-            for kiter71, viter72 in self.inParameters.items():
-                oprot.writeString(kiter71.encode('utf-8') if sys.version_info[0] == 2 else kiter71)
-                viter72.write(oprot)
+            for kiter117, viter118 in self.inParameters.items():
+                oprot.writeString(kiter117.encode('utf-8') if sys.version_info[0] == 2 else kiter117)
+                viter118.write(oprot)
             oprot.writeMapEnd()
             oprot.writeFieldEnd()
         if self.missingParameters is not None:
             oprot.writeFieldBegin('missingParameters', TType.LIST, 3)
             oprot.writeListBegin(TType.STRING, len(self.missingParameters))
-            for iter73 in self.missingParameters:
-                oprot.writeString(iter73.encode('utf-8') if sys.version_info[0] == 2 else iter73)
+            for iter119 in self.missingParameters:
+                oprot.writeString(iter119.encode('utf-8') if sys.version_info[0] == 2 else iter119)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class FeatureDTO(object):
+    """
+    Attributes:
+     - id
+     - baseId
+     - name
+     - group
+     - version
+     - extensions
+    """
+
+
+    def __init__(self, id=None, baseId=None, name=None, group=None, version=None, extensions=None,):
+        self.id = id
+        self.baseId = baseId
+        self.name = name
+        self.group = group
+        self.version = version
+        self.extensions = extensions
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.id = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.baseId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.STRING:
+                    self.name = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.group = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 5:
+                if ftype == TType.STRING:
+                    self.version = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 6:
+                if ftype == TType.LIST:
+                    self.extensions = []
+                    (_etype123, _size120) = iprot.readListBegin()
+                    for _i124 in range(_size120):
+                        _elem125 = FeatureDTO()
+                        _elem125.read(iprot)
+                        self.extensions.append(_elem125)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('FeatureDTO')
+        if self.id is not None:
+            oprot.writeFieldBegin('id', TType.STRING, 1)
+            oprot.writeString(self.id.encode('utf-8') if sys.version_info[0] == 2 else self.id)
+            oprot.writeFieldEnd()
+        if self.baseId is not None:
+            oprot.writeFieldBegin('baseId', TType.STRING, 2)
+            oprot.writeString(self.baseId.encode('utf-8') if sys.version_info[0] == 2 else self.baseId)
+            oprot.writeFieldEnd()
+        if self.name is not None:
+            oprot.writeFieldBegin('name', TType.STRING, 3)
+            oprot.writeString(self.name.encode('utf-8') if sys.version_info[0] == 2 else self.name)
+            oprot.writeFieldEnd()
+        if self.group is not None:
+            oprot.writeFieldBegin('group', TType.STRING, 4)
+            oprot.writeString(self.group.encode('utf-8') if sys.version_info[0] == 2 else self.group)
+            oprot.writeFieldEnd()
+        if self.version is not None:
+            oprot.writeFieldBegin('version', TType.STRING, 5)
+            oprot.writeString(self.version.encode('utf-8') if sys.version_info[0] == 2 else self.version)
+            oprot.writeFieldEnd()
+        if self.extensions is not None:
+            oprot.writeFieldBegin('extensions', TType.LIST, 6)
+            oprot.writeListBegin(TType.STRUCT, len(self.extensions))
+            for iter126 in self.extensions:
+                iter126.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -1723,11 +2029,11 @@ class NodeInfoDTO(object):
             elif fid == 7:
                 if ftype == TType.MAP:
                     self.parameters = {}
-                    (_ktype75, _vtype76, _size74) = iprot.readMapBegin()
-                    for _i78 in range(_size74):
-                        _key79 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val80 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.parameters[_key79] = _val80
+                    (_ktype128, _vtype129, _size127) = iprot.readMapBegin()
+                    for _i131 in range(_size127):
+                        _key132 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val133 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.parameters[_key132] = _val133
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
@@ -1773,9 +2079,9 @@ class NodeInfoDTO(object):
         if self.parameters is not None:
             oprot.writeFieldBegin('parameters', TType.MAP, 7)
             oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.parameters))
-            for kiter81, viter82 in self.parameters.items():
-                oprot.writeString(kiter81.encode('utf-8') if sys.version_info[0] == 2 else kiter81)
-                oprot.writeString(viter82.encode('utf-8') if sys.version_info[0] == 2 else viter82)
+            for kiter134, viter135 in self.parameters.items():
+                oprot.writeString(kiter134.encode('utf-8') if sys.version_info[0] == 2 else kiter134)
+                oprot.writeString(viter135.encode('utf-8') if sys.version_info[0] == 2 else viter135)
             oprot.writeMapEnd()
             oprot.writeFieldEnd()
         if self.host is not None:
@@ -1800,10 +2106,88 @@ class NodeInfoDTO(object):
         return not (self == other)
 
 
+class NodeEnvironmentDTO(object):
+    """
+    NodeEnvironment Data Transfer Object.
+    Contains all node features.
+
+    Attributes:
+     - id
+     - environment
+    """
+
+
+    def __init__(self, id=None, environment=None,):
+        self.id = id
+        self.environment = environment
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.id = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.LIST:
+                    self.environment = []
+                    (_etype139, _size136) = iprot.readListBegin()
+                    for _i140 in range(_size136):
+                        _elem141 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.environment.append(_elem141)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('NodeEnvironmentDTO')
+        if self.id is not None:
+            oprot.writeFieldBegin('id', TType.STRING, 1)
+            oprot.writeString(self.id.encode('utf-8') if sys.version_info[0] == 2 else self.id)
+            oprot.writeFieldEnd()
+        if self.environment is not None:
+            oprot.writeFieldBegin('environment', TType.LIST, 2)
+            oprot.writeListBegin(TType.STRING, len(self.environment))
+            for iter142 in self.environment:
+                oprot.writeString(iter142.encode('utf-8') if sys.version_info[0] == 2 else iter142)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
 class QueueInfoDTO(object):
     """
     QueueInfo Data Transfer Object.
-    Contains all relevant queuePriorityWrapper information.
+    Contains all relevant Task-Queue information.
 
     Attributes:
      - id
@@ -1892,13 +2276,14 @@ class ClusterInfoDTO(object):
      - activePrograms
      - numberOfWorkers
      - numberOfReducers
+     - numberOfClientRoutineWorkers
      - defaultMapRoutineId
      - storeRoutineId
      - host
     """
 
 
-    def __init__(self, id=None, name=None, managerId=None, cloudType=None, startTime=None, activePrograms=None, numberOfWorkers=None, numberOfReducers=None, defaultMapRoutineId=None, storeRoutineId=None, host=None,):
+    def __init__(self, id=None, name=None, managerId=None, cloudType=None, startTime=None, activePrograms=None, numberOfWorkers=None, numberOfReducers=None, numberOfClientRoutineWorkers=None, defaultMapRoutineId=None, storeRoutineId=None, host=None,):
         self.id = id
         self.name = name
         self.managerId = managerId
@@ -1907,6 +2292,7 @@ class ClusterInfoDTO(object):
         self.activePrograms = activePrograms
         self.numberOfWorkers = numberOfWorkers
         self.numberOfReducers = numberOfReducers
+        self.numberOfClientRoutineWorkers = numberOfClientRoutineWorkers
         self.defaultMapRoutineId = defaultMapRoutineId
         self.storeRoutineId = storeRoutineId
         self.host = host
@@ -1948,10 +2334,10 @@ class ClusterInfoDTO(object):
             elif fid == 6:
                 if ftype == TType.LIST:
                     self.activePrograms = []
-                    (_etype86, _size83) = iprot.readListBegin()
-                    for _i87 in range(_size83):
-                        _elem88 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.activePrograms.append(_elem88)
+                    (_etype146, _size143) = iprot.readListBegin()
+                    for _i147 in range(_size143):
+                        _elem148 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.activePrograms.append(_elem148)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -1966,16 +2352,21 @@ class ClusterInfoDTO(object):
                 else:
                     iprot.skip(ftype)
             elif fid == 9:
-                if ftype == TType.STRING:
-                    self.defaultMapRoutineId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                if ftype == TType.I32:
+                    self.numberOfClientRoutineWorkers = iprot.readI32()
                 else:
                     iprot.skip(ftype)
             elif fid == 10:
                 if ftype == TType.STRING:
-                    self.storeRoutineId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.defaultMapRoutineId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 11:
+                if ftype == TType.STRING:
+                    self.storeRoutineId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 12:
                 if ftype == TType.STRING:
                     self.host = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
@@ -2013,8 +2404,8 @@ class ClusterInfoDTO(object):
         if self.activePrograms is not None:
             oprot.writeFieldBegin('activePrograms', TType.LIST, 6)
             oprot.writeListBegin(TType.STRING, len(self.activePrograms))
-            for iter89 in self.activePrograms:
-                oprot.writeString(iter89.encode('utf-8') if sys.version_info[0] == 2 else iter89)
+            for iter149 in self.activePrograms:
+                oprot.writeString(iter149.encode('utf-8') if sys.version_info[0] == 2 else iter149)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.numberOfWorkers is not None:
@@ -2025,16 +2416,20 @@ class ClusterInfoDTO(object):
             oprot.writeFieldBegin('numberOfReducers', TType.I32, 8)
             oprot.writeI32(self.numberOfReducers)
             oprot.writeFieldEnd()
+        if self.numberOfClientRoutineWorkers is not None:
+            oprot.writeFieldBegin('numberOfClientRoutineWorkers', TType.I32, 9)
+            oprot.writeI32(self.numberOfClientRoutineWorkers)
+            oprot.writeFieldEnd()
         if self.defaultMapRoutineId is not None:
-            oprot.writeFieldBegin('defaultMapRoutineId', TType.STRING, 9)
+            oprot.writeFieldBegin('defaultMapRoutineId', TType.STRING, 10)
             oprot.writeString(self.defaultMapRoutineId.encode('utf-8') if sys.version_info[0] == 2 else self.defaultMapRoutineId)
             oprot.writeFieldEnd()
         if self.storeRoutineId is not None:
-            oprot.writeFieldBegin('storeRoutineId', TType.STRING, 10)
+            oprot.writeFieldBegin('storeRoutineId', TType.STRING, 11)
             oprot.writeString(self.storeRoutineId.encode('utf-8') if sys.version_info[0] == 2 else self.storeRoutineId)
             oprot.writeFieldEnd()
         if self.host is not None:
-            oprot.writeFieldBegin('host', TType.STRING, 11)
+            oprot.writeFieldBegin('host', TType.STRING, 12)
             oprot.writeString(self.host.encode('utf-8') if sys.version_info[0] == 2 else self.host)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -2100,12 +2495,13 @@ JobDTO.thrift_spec = (
     (5, TType.I64, 'startTime', None, None, ),  # 5
     (6, TType.I64, 'finishTime', None, None, ),  # 6
     (7, TType.I32, 'scheduledTasks', None, None, ),  # 7
-    (8, TType.I32, 'runningTasks', None, None, ),  # 8
+    (8, TType.I32, 'runningElements', None, None, ),  # 8
     (9, TType.I32, 'successfulTasks', None, None, ),  # 9
     (10, TType.I32, 'failedTasks', None, None, ),  # 10
     (11, TType.STRING, 'mapRoutineId', 'UTF8', None, ),  # 11
     (12, TType.STRING, 'reduceRoutineId', 'UTF8', None, ),  # 12
     (13, TType.LIST, 'reducedResults', (TType.STRUCT, [ResourceDTO, None], False), None, ),  # 13
+    (14, TType.LIST, 'messages', (TType.STRING, 'UTF8', False), None, ),  # 14
 )
 all_structs.append(ProgramDTO)
 ProgramDTO.thrift_spec = (
@@ -2114,11 +2510,25 @@ ProgramDTO.thrift_spec = (
     (2, TType.I32, 'state', None, None, ),  # 2
     (3, TType.I64, 'createTime', None, None, ),  # 3
     (4, TType.I64, 'finishTime', None, None, ),  # 4
-    (5, TType.BOOL, 'masterLibraryRoutine', None, False, ),  # 5
+    None,  # 5
     (6, TType.STRING, 'userId', 'UTF8', None, ),  # 6
     (7, TType.STRING, 'name', 'UTF8', None, ),  # 7
     (8, TType.STRING, 'description', 'UTF8', None, ),  # 8
     (9, TType.I32, 'nrOfJobs', None, None, ),  # 9
+    (10, TType.MAP, 'sharedResources', (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), None, ),  # 10
+    (11, TType.STRING, 'clientRoutindId', 'UTF8', None, ),  # 11
+    (12, TType.MAP, 'results', (TType.STRING, 'UTF8', TType.STRUCT, [ResourceDTO, None], False), None, ),  # 12
+    (13, TType.LIST, 'messages', (TType.STRING, 'UTF8', False), None, ),  # 13
+)
+all_structs.append(ReduceJobDTO)
+ReduceJobDTO.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'jobId', 'UTF8', None, ),  # 1
+    (2, TType.STRUCT, 'job', [JobDTO, None], None, ),  # 2
+    (3, TType.I32, 'state', None, None, ),  # 3
+    (4, TType.I64, 'startTime', None, None, ),  # 4
+    (5, TType.I64, 'finishTime', None, None, ),  # 5
+    (6, TType.LIST, 'messages', (TType.STRING, 'UTF8', False), None, ),  # 6
 )
 all_structs.append(DataTypeDTO)
 DataTypeDTO.thrift_spec = (
@@ -2146,11 +2556,12 @@ RoutineDTO.thrift_spec = (
     (4, TType.STRING, 'description', 'UTF8', None, ),  # 4
     (5, TType.I16, 'revision', None, None, ),  # 5
     (6, TType.I32, 'type', None, None, ),  # 6
-    (7, TType.I32, 'language', None, None, ),  # 7
+    None,  # 7
     (8, TType.LIST, 'inParameters', (TType.STRUCT, [FormalParameterDTO, None], False), None, ),  # 8
     (9, TType.STRUCT, 'outParameter', [FormalParameterDTO, None], None, ),  # 9
     (10, TType.SET, 'routineBinaries', (TType.STRUCT, [RoutineBinaryDTO, None], False), None, ),  # 10
     (11, TType.LIST, 'arguments', (TType.STRING, 'UTF8', False), None, ),  # 11
+    (12, TType.LIST, 'requiredFeatures', (TType.STRUCT, [FeatureDTO, None], False), None, ),  # 12
 )
 all_structs.append(FormalParameterDTO)
 FormalParameterDTO.thrift_spec = (
@@ -2177,6 +2588,16 @@ RoutineInstanceDTO.thrift_spec = (
     (2, TType.MAP, 'inParameters', (TType.STRING, 'UTF8', TType.STRUCT, [ResourceDTO, None], False), None, ),  # 2
     (3, TType.LIST, 'missingParameters', (TType.STRING, 'UTF8', False), None, ),  # 3
 )
+all_structs.append(FeatureDTO)
+FeatureDTO.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'id', 'UTF8', None, ),  # 1
+    (2, TType.STRING, 'baseId', 'UTF8', None, ),  # 2
+    (3, TType.STRING, 'name', 'UTF8', None, ),  # 3
+    (4, TType.STRING, 'group', 'UTF8', None, ),  # 4
+    (5, TType.STRING, 'version', 'UTF8', None, ),  # 5
+    (6, TType.LIST, 'extensions', (TType.STRUCT, [FeatureDTO, None], False), None, ),  # 6
+)
 all_structs.append(NodeInfoDTO)
 NodeInfoDTO.thrift_spec = (
     None,  # 0
@@ -2188,6 +2609,12 @@ NodeInfoDTO.thrift_spec = (
     (6, TType.I64, 'timeStamp', None, None, ),  # 6
     (7, TType.MAP, 'parameters', (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), None, ),  # 7
     (8, TType.STRING, 'host', 'UTF8', None, ),  # 8
+)
+all_structs.append(NodeEnvironmentDTO)
+NodeEnvironmentDTO.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'id', 'UTF8', None, ),  # 1
+    (2, TType.LIST, 'environment', (TType.STRING, 'UTF8', False), None, ),  # 2
 )
 all_structs.append(QueueInfoDTO)
 QueueInfoDTO.thrift_spec = (
@@ -2207,9 +2634,10 @@ ClusterInfoDTO.thrift_spec = (
     (6, TType.LIST, 'activePrograms', (TType.STRING, 'UTF8', False), None, ),  # 6
     (7, TType.I32, 'numberOfWorkers', None, None, ),  # 7
     (8, TType.I32, 'numberOfReducers', None, None, ),  # 8
-    (9, TType.STRING, 'defaultMapRoutineId', 'UTF8', None, ),  # 9
-    (10, TType.STRING, 'storeRoutineId', 'UTF8', None, ),  # 10
-    (11, TType.STRING, 'host', 'UTF8', None, ),  # 11
+    (9, TType.I32, 'numberOfClientRoutineWorkers', None, None, ),  # 9
+    (10, TType.STRING, 'defaultMapRoutineId', 'UTF8', None, ),  # 10
+    (11, TType.STRING, 'storeRoutineId', 'UTF8', None, ),  # 11
+    (12, TType.STRING, 'host', 'UTF8', None, ),  # 12
 )
 fix_spec(all_structs)
 del all_structs

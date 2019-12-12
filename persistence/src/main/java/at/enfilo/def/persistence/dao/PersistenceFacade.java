@@ -31,21 +31,6 @@ public class PersistenceFacade implements IPersistenceFacade {
         return new GroupDAO();
     }
 
-    @Override
-    public IProgramDAO getNewProgramDAO() {
-        return new ProgramDAO();
-    }
-
-    @Override
-    public IJobDAO getNewJobDAO() {
-        return new JobDAO();
-    }
-
-    @Override
-    public ITaskDAO getNewTaskDAO() {
-        return new TaskDAO();
-    }
-
 	@Override
 	public IRoutineDAO getNewRoutineDAO() {
 		return new RoutineDAO();

@@ -82,9 +82,9 @@
         <label class="desc">Tasks</label>
         <div>
           <label
-            tooltip="Open total: {{this.cluster.numberOfTasksToFinish}}, Scheduled: {{this.cluster.numberOfQueuedTasks}}, Running: {{this.cluster.numberOfRunningTasks}}">
-            {{this.cluster.numberOfTasksToFinish}} / {{this.cluster.numberOfQueuedTasks}} /
-            {{this.cluster.numberOfRunningTasks}}
+            tooltip="Open total: {{this.cluster.numberOfElementsToFinish}}, Scheduled: {{this.cluster.numberOfQueuedElements}}, Running: {{this.cluster.numberOfRunningElements}}">
+            {{this.cluster.numberOfElementsToFinish}} / {{this.cluster.numberOfQueuedElements}} /
+            {{this.cluster.numberOfRunningElements}}
           </label>
         </div>
 
@@ -133,10 +133,10 @@
 
             <label class="desc">Tasks</label>
             <div class="progress"
-                 tooltip="Open total: {{worker.numberOfTasksToFinish}}, Scheduled: {{worker.numberOfQueuedTasks}}, Running: {{worker.numberOfRunningTasks}}">
+                 tooltip="Open total: {{worker.numberOfElementsToFinish}}, Scheduled: {{worker.numberOfQueuedElements}}, Running: {{worker.numberOfRunningElements}}">
               <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
                    [style.width.%]="this.getTasksPercentForNode(worker, this.workerType)">
-                <span>{{worker.numberOfTasksToFinish}}</span>
+                <span>{{worker.numberOfElementsToFinish}}</span>
               </div>
             </div>
           </div>
@@ -210,12 +210,12 @@
               </div>
             </div>
 
-            <label class="desc">Tasks</label>
+            <label class="desc">Reduce Jobs</label>
             <div class="progress"
-                 tooltip="Open total: {{reducer.numberOfTasksToFinish}}, Scheduled: {{reducer.numberOfQueuedTasks}}, Running: {{reducer.numberOfRunningTasks}}">
+                 tooltip="Open total: {{reducer.numberOfElementsToFinish}}, Scheduled: {{reducer.numberOfQueuedElements}}, Running: {{reducer.numberOfRunningElements}}">
               <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
                    [style.width.%]="this.getTasksPercentForNode(reducer, this.reducerType)">
-                <span>{{reducer.numberOfTasksToFinish}}</span>
+                <span>{{reducer.numberOfElementsToFinish}}</span>
               </div>
             </div>
           </div>
@@ -245,6 +245,81 @@
         No reducers registered
       </div>
 
+    </div>
+  </div>
+
+  <!-- CLIENT ROUTINE WORKERS -->
+  <div class="node-area client-routine-worker-area">
+    <div class="node-heading">
+      <h4>Client-Routine-Workers</h4>
+    </div>
+
+    <div *ngIf="this.clientRoutineWorkersLoading" class="loading">
+      <ngx-loading [show]="this.clientRoutineWorkersLoading"></ngx-loading>
+    </div>
+
+    <div *ngIf="!this.clientRoutineWorkersLoading && this.cluster">
+      <div *ngIf="this.clientRoutineWorkers.length > 0" class="nodes">
+        <div class="card node-card" *ngFor="let crWorker of this.clientRoutineWorkers">
+          <div class="card-header d-flex align-items-center justify-content-between" (click)="openDetailsView(crWorker)">
+            <fa-icon [icon]="['fa', 'microchip']" size="1x"></fa-icon>
+            <div class="float-right w-50 text-monospace text-truncate" tooltip="{{crWorker.id}}">{{crWorker.id}}</div>
+          </div>
+
+          <div class="card-body pb-1" (click)="openDetailsView(crWorker)">
+            <label class="desc">IP</label>
+            <label>{{crWorker.host}}</label>
+
+            <label class="desc">Cores</label>
+            <label>{{crWorker.numberOfCores}}</label>
+
+            <label class="desc">Queues</label>
+            <label>{{crWorker.numberOfQueues}}</label>
+
+            <label class="desc">Load</label>
+            <div class="progress" tooltip="Load: {{crWorker.load | number:'.2-2'}}, Cores: {{crWorker.numberOfCores}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getLoadPercentForNode(crWorker, this.workerType)">
+                <span>{{crWorker.load | number:'.2-2'}}</span>
+                <div class="progress-bar-marker bg-dark"
+                     [style.left.%]="this.getNumberOfCoresPercentForNode(crWorker, this.workerType)"></div>
+              </div>
+            </div>
+
+            <label class="desc">Programs</label>
+            <div class="progress"
+                 tooltip="Open total: {{crWorker.numberOfElementsToFinish}}, Scheduled: {{crWorker.numberOfQueuedElements}}, Running: {{crWorker.numberOfRunningElements}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getTasksPercentForNode(crWorker, this.workerType)">
+                <span>{{crWorker.numberOfElementsToFinish}}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body pt-0" style="cursor: default;">
+            <label class="desc" style="cursor: default;">Features</label>
+            <div class="pl-3">
+              <div class="float-right">
+                <a routerLink="." (click)="this.toggleShowNodeFeatures(crWorker)">
+                  <fa-icon *ngIf="!this.showNodeFeatures.get(crWorker.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
+                  <fa-icon *ngIf="this.showNodeFeatures.get(crWorker.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                </a>
+              </div>
+              <div *ngIf="this.showNodeFeatures.get(crWorker.id)">
+                <div *ngIf="this.nodeFeaturesLoading.get(crWorker.id)" class="loading">
+                  <ngx-loading [show]="this.nodeFeaturesLoading.get(crWorker.id)"></ngx-loading>
+                </div>
+                <app-feature-list [features]="crWorker.features"></app-feature-list>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="this.workers.length === 0" class="missing-info">
+          No workers registered
+        </div>
+
+      </div>
     </div>
   </div>
 

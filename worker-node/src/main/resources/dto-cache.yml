@@ -1,0 +1,4 @@
+base-url: file:/home/def/cache
+driver: at.enfilo.def.dto.cache.impl.DTODiskPersistenceDriver
+expiration-time: 10
+expiration-time-unit: SECONDS

@@ -5,6 +5,7 @@ dependencies {
     compile project(':cluster-api')
     compile project(':reducer-node-api')
     compile project(':worker-node-api')
+    compile project(':client-routine-worker-api')
     compile project(':communication')
 }
 

@@ -5,7 +5,6 @@ import at.enfilo.def.communication.api.ticket.ITicketRegistry;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ticket.TicketRegistry;
 import at.enfilo.def.node.impl.NodeServiceImpl;
-import at.enfilo.def.transfer.dto.QueueInfoDTO;
 import at.enfilo.def.transfer.dto.TaskDTO;
 import at.enfilo.def.worker.api.rest.IWorkerService;
 import at.enfilo.def.worker.api.thrift.WorkerService;
@@ -33,60 +32,10 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 	}
 
 	@Override
-	public String getQueues() {
-		ITicket ticket = ticketRegistry.createTicket(
-				List.class,
-				controller::getQueues
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String getQueueInfo(String qId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				QueueInfoDTO.class,
-				() -> controller.getQueueInfo(qId)
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String createQueue(String qId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.createQueue(qId)
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String pauseQueue(String qId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.pauseQueue(qId)
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String deleteQueue(String qId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.deleteQueue(qId)
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String releaseQueue(String qId) {
-		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.releaseQueue(qId)
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
 	public String getQueuedTasks(String qId) {
 		ITicket ticket = ticketRegistry.createTicket(
 				List.class,
-				() -> controller.getQueuedTasks(qId)
+				() -> controller.getQueuedElements(qId)
 		);
 		return ticket.getId().toString();
 	}
@@ -94,7 +43,7 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 	@Override
 	public String queueTasks(String qId, List<TaskDTO> taskList) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.queueTasks(qId, taskList)
+				() -> controller.queueElements(qId, taskList)
 		);
 		return ticket.getId().toString();
 	}
@@ -106,7 +55,7 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 			ServiceEndpointDTO targetNodeEndpoint
 	) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.moveTasks(
+				() -> controller.moveElements(
 						qId,
 						taskIds,
 						targetNodeEndpoint
@@ -118,7 +67,7 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 	@Override
 	public String moveAllTasks(ServiceEndpointDTO targetNodeEndpoint) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> controller.moveAllTasks(targetNodeEndpoint),
+				() -> controller.moveAllElements(targetNodeEndpoint),
 				ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
@@ -128,7 +77,7 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 	public String fetchFinishedTask(String tId) {
 		ITicket ticket = ticketRegistry.createTicket(
 				TaskDTO.class,
-				() -> controller.fetchFinishedTask(tId)
+				() -> controller.fetchFinishedElement(tId)
 		);
 		return ticket.getId().toString();
 	}
@@ -139,21 +88,6 @@ public class WorkerServiceImpl extends NodeServiceImpl implements WorkerService.
 				() -> controller.abortTask(tId),
 				ITicket.SERVICE_PRIORITY
 		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String getStoreRoutine() {
-		ITicket ticket = ticketRegistry.createTicket(
-			String.class,
-			controller::getStoreRoutineId
-		);
-		return ticket.getId().toString();
-	}
-
-	@Override
-	public String setStoreRoutine(String routineId) {
-		ITicket ticket = ticketRegistry.createTicket(() -> controller.setStoreRoutineId(routineId));
 		return ticket.getId().toString();
 	}
 }

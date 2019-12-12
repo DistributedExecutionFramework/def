@@ -26,6 +26,17 @@ public interface IFeatureDAO extends IGenericDAO<Feature, String> {
     throws PersistenceException;
 
     /**
+     * Returns instance of {@link Feature} with a given name and version.
+     *
+     * @param name      name of the feature
+     * @param version   version of the feature
+     * @return          instance of {@link Feature} for given name and version.
+     * @throws PersistenceException
+     */
+    List<Feature> findByNameAndVersion(String name, String version)
+    throws PersistenceException;
+
+    /**
      * Returns all instances of {@see Feature}s that are base features.
      * Extensions are eagerly fetched and can be accessed through the base feature.
      *

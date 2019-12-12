@@ -1,6 +1,5 @@
 package at.enfilo.def.manager.impl;
 
-import at.enfilo.def.cloud.communication.api.CloudCommunicationServiceClient;
 import at.enfilo.def.cloud.communication.api.ICloudCommunicationServiceClient;
 import at.enfilo.def.cloud.communication.dto.AWSSpecificationDTO;
 import at.enfilo.def.cloud.communication.dto.InstanceTypeDTO;
@@ -10,23 +9,19 @@ import at.enfilo.def.communication.dto.Protocol;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.communication.exception.TakeControlException;
-import at.enfilo.def.library.api.ILibraryServiceClient;
-import at.enfilo.def.library.api.client.factory.LibraryServiceClientFactory;
+import at.enfilo.def.library.api.client.ILibraryAdminServiceClient;
+import at.enfilo.def.library.api.client.factory.LibraryAdminServiceClientFactory;
 import at.enfilo.def.manager.impl.mocks.ManagerControllerMock;
 import at.enfilo.def.manager.util.ProgramClusterRegistry;
 import at.enfilo.def.node.api.INodeServiceClient;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Constructor;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -39,6 +34,7 @@ public class ManagerControllerTest {
 	private ManagerController controller;
 	private ClusterServiceClientFactory clusterServiceClientFactory;
 	private ICloudCommunicationServiceClient cloudCommunicationServiceClient;
+	private ILibraryAdminServiceClient libraryAdminServiceClient;
 	private ProgramClusterRegistry programClusterRegistry;
 
 	private List<String> allNodesList;
@@ -47,17 +43,20 @@ public class ManagerControllerTest {
 	public void setUp() throws Exception {
 		clusterServiceClientFactory = Mockito.mock(ClusterServiceClientFactory.class);
 		programClusterRegistry = Mockito.mock(ProgramClusterRegistry.class);
-		cloudCommunicationServiceClient = Mockito.mock(CloudCommunicationServiceClient.class);
+		cloudCommunicationServiceClient = Mockito.mock(ICloudCommunicationServiceClient.class);
+		libraryAdminServiceClient = Mockito.mock(ILibraryAdminServiceClient.class);
 
 		Constructor<ManagerController> constructor = ManagerController.class.getDeclaredConstructor(
 			ProgramClusterRegistry.class,
 			ClusterServiceClientFactory.class,
-				ICloudCommunicationServiceClient.class
+			ILibraryAdminServiceClient.class,
+			ICloudCommunicationServiceClient.class
 		);
 		constructor.setAccessible(true);
 		controller = constructor.newInstance(
 			programClusterRegistry,
 			clusterServiceClientFactory,
+			libraryAdminServiceClient,
 			cloudCommunicationServiceClient
 		);
 		this.allNodesList = new LinkedList<>();
@@ -148,8 +147,8 @@ public class ManagerControllerTest {
 		serviceEndpointDTO.setHost("127.0.0.1");
 		serviceEndpointDTO.setPort(1234);
 		serviceEndpointDTO.setProtocol(Protocol.THRIFT_TCP);
-		LibraryServiceClientFactory libraryServiceClientFactory = Mockito.mock(LibraryServiceClientFactory.class);
-		ILibraryServiceClient libraryServiceClient = Mockito.mock(ILibraryServiceClient.class);
+		LibraryAdminServiceClientFactory libraryAdminServiceClientFactory = Mockito.mock(LibraryAdminServiceClientFactory.class);
+		ILibraryAdminServiceClient libraryAdminServiceClient = Mockito.mock(ILibraryAdminServiceClient.class);
 
 		when(futureString.get()).thenReturn(UUID.randomUUID().toString());
 		when(futureServiceEndpoint.get()).thenReturn(serviceEndpointDTO);
@@ -159,18 +158,18 @@ public class ManagerControllerTest {
 		when(clusterServiceClientFactory.createClient((ServiceEndpointDTO)notNull())).thenReturn(clusterServiceClient);
 		when(cloudCommunicationServiceClient.mapDEFIdToCloudInstanceId(anyString(), anyString(), anyString())).thenReturn(null);
 		when(clusterServiceClient.getLibraryEndpointConfiguration()).thenReturn(futureServiceEndpoint);
-		when(libraryServiceClientFactory.createClient((ServiceEndpointDTO)notNull())).thenReturn(libraryServiceClient);
-		when(libraryServiceClient.setDataEndpoint((ServiceEndpointDTO)notNull())).thenReturn(null);
+		when(libraryAdminServiceClientFactory.createClient((ServiceEndpointDTO)notNull())).thenReturn(libraryAdminServiceClient);
+		when(libraryAdminServiceClient.setMasterLibrary((ServiceEndpointDTO)notNull())).thenReturn(null);
 
-		managerControllerMock.createCluster(UUID.randomUUID().toString(), 2, 1, libraryServiceClientFactory);
+		managerControllerMock.createCluster(UUID.randomUUID().toString(), 2, 1, libraryAdminServiceClientFactory);
 
 		verify(cloudCommunicationServiceClient, times(1)).bootClusterInstance(anyString());
 		verify(cloudCommunicationServiceClient, times(1)).getPrivateIPAddressOfCloudInstance(anyString(), anyString());
 		verify(clusterServiceClientFactory, times(1)).createClient((ServiceEndpointDTO)notNull());
 		verify(cloudCommunicationServiceClient, times(1)).mapDEFIdToCloudInstanceId(anyString(), anyString(), anyString());
 		verify(clusterServiceClient, times(1)).getLibraryEndpointConfiguration();
-		verify(libraryServiceClientFactory, times(1)).createClient((ServiceEndpointDTO)notNull());
-		verify(libraryServiceClient, times(1)).setDataEndpoint((ServiceEndpointDTO)notNull());
+		verify(libraryAdminServiceClientFactory, times(1)).createClient((ServiceEndpointDTO)notNull());
+		verify(libraryAdminServiceClient, times(1)).setMasterLibrary((ServiceEndpointDTO)notNull());
 	}
 
 	@Test
@@ -325,8 +324,8 @@ public class ManagerControllerTest {
 		Future<NodeInfoDTO> futureNodeInfo = Mockito.mock(Future.class);
 		NodeInfoDTO nodeInfoDTO = new NodeInfoDTO();
 		nodeInfoDTO.setId(UUID.randomUUID().toString());
-		LibraryServiceClientFactory libraryServiceClientFactory = Mockito.mock(LibraryServiceClientFactory.class);
-		ILibraryServiceClient libraryServiceClient = Mockito.mock(ILibraryServiceClient.class);
+		LibraryAdminServiceClientFactory libraryAdminServiceClientFactory = Mockito.mock(LibraryAdminServiceClientFactory.class);
+		ILibraryAdminServiceClient libraryAdminServiceClient = Mockito.mock(ILibraryAdminServiceClient.class);
 		Future<List<String>> futureAllNodes = Mockito.mock(Future.class);
 
 		when(futureNodeIds.get()).thenReturn(nodeIds);
@@ -346,10 +345,10 @@ public class ManagerControllerTest {
 		when(clusterServiceClient.addNode((ServiceEndpointDTO)notNull(), (NodeType)notNull())).thenReturn(null);
 		when(clusterServiceClient.getAllNodes((NodeType)notNull())).thenReturn(futureAllNodes);
 		when(nodeServiceClient.getInfo()).thenReturn(futureNodeInfo);
-		when(libraryServiceClientFactory.createClient((ServiceEndpointDTO)notNull())).thenReturn(libraryServiceClient);
-		when(libraryServiceClient.setDataEndpoint((ServiceEndpointDTO)notNull())).thenReturn(null);
+		when(libraryAdminServiceClientFactory.createClient((ServiceEndpointDTO)notNull())).thenReturn(libraryAdminServiceClient);
+		when(libraryAdminServiceClient.setMasterLibrary((ServiceEndpointDTO)notNull())).thenReturn(null);
 
-		controller.bootNodeInstancesInCluster(UUID.randomUUID().toString(), clusterServiceClient, serviceEndpointDTO, libraryServiceClientFactory, InstanceTypeDTO.WORKER, nrOfNodeIs);
+		controller.bootNodeInstancesInCluster(UUID.randomUUID().toString(), clusterServiceClient, serviceEndpointDTO, libraryAdminServiceClientFactory, InstanceTypeDTO.WORKER, nrOfNodeIs);
 
 		verify(cloudCommunicationServiceClient, times(1)).bootNodes(anyString(), (InstanceTypeDTO)notNull(), anyInt());
 		verify(cloudCommunicationServiceClient, times(nrOfNodeIs)).mapDEFIdToCloudInstanceId(anyString(), anyString(), anyString());
@@ -357,7 +356,7 @@ public class ManagerControllerTest {
 		verify(clusterServiceClient, times(1)).getNodeServiceEndpointConfiguration((NodeType)notNull());
 		verify(clusterServiceClient, times(1)).getLibraryEndpointConfiguration();
 		verify(clusterServiceClient, times(nrOfNodeIs)).addNode((ServiceEndpointDTO)notNull(), (NodeType)notNull());
-		verify(libraryServiceClientFactory, times(nrOfNodeIs)).createClient((ServiceEndpointDTO)notNull());
+		verify(libraryAdminServiceClientFactory, times(nrOfNodeIs)).createClient((ServiceEndpointDTO)notNull());
 	}
 
 	@Test
@@ -455,6 +454,80 @@ public class ManagerControllerTest {
 		controller.getClusterIds();
 
 		verify(programClusterRegistry).getClusterIds();
+	}
+
+	@Test
+	public void createClientRoutine() throws Exception {
+		String name = UUID.randomUUID().toString();
+		String expectedRoutineId = UUID.randomUUID().toString();
+		FeatureDTO javaFeature = new FeatureDTO();
+		javaFeature.setGroup("language");
+		javaFeature.setName("java");
+		javaFeature.setVersion("1.8");
+		List<FeatureDTO> requiredFeatures = Arrays.asList(javaFeature);
+		List<String> arguments = Arrays.asList("argument");
+		RoutineDTO routine = new RoutineDTO();
+		routine.setName(name);
+		routine.setRequiredFeatures(requiredFeatures);
+		routine.setArguments(arguments);
+
+		Future<String> frId = Mockito.mock(Future.class);
+		when(frId.get()).thenReturn(expectedRoutineId);
+		when(libraryAdminServiceClient.createRoutine(any())).thenReturn(frId);
+
+		String rId = controller.createClientRoutine(routine);
+
+		assertEquals(expectedRoutineId, rId);
+	}
+
+	@Test
+	public void createClientRoutineBinary() throws Exception {
+		String rId = UUID.randomUUID().toString();
+		String rbName = "name";
+		Random rnd = new Random();
+		long sizeInBytes = rnd.nextInt();
+		String md5 = UUID.randomUUID().toString();
+		boolean isPrimary = rnd.nextBoolean();
+		String rbId = UUID.randomUUID().toString();
+
+		Future<String> frbId = Mockito.mock(Future.class);
+		when(frbId.get()).thenReturn(rbId);
+		when(libraryAdminServiceClient.createRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary)).thenReturn(frbId);
+
+		String routineBinaryId = controller.createClientRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary);
+
+		assertEquals(rbId, routineBinaryId);
+	}
+
+	@Test
+	public void uploadClientRoutineBinaryChunk() throws Exception {
+		String rbId = UUID.randomUUID().toString();
+		Random rnd = new Random();
+		RoutineBinaryChunkDTO chunk = new RoutineBinaryChunkDTO();
+		chunk.setChunkSize(rnd.nextInt());
+		chunk.setChunk((short)rnd.nextInt());
+		chunk.setTotalChunks((short)rnd.nextInt());
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(libraryAdminServiceClient.uploadRoutineBinaryChunk(rbId, chunk)).thenReturn(future);
+
+		controller.uploadClientRoutineBinaryChunk(rbId, chunk);
+
+		verify(libraryAdminServiceClient).uploadRoutineBinaryChunk(rbId, chunk);
+	}
+
+	@Test
+	public void removeClientRoutine() throws Exception {
+		String rId = UUID.randomUUID().toString();
+
+		Future<Void> futureRemoveRoutine = Mockito.mock(Future.class);
+		when(futureRemoveRoutine.get()).thenReturn(null);
+		when(libraryAdminServiceClient.removeRoutine(rId)).thenReturn(futureRemoveRoutine);
+
+		controller.removeClientRoutine(rId);
+
+		verify(libraryAdminServiceClient).removeRoutine(rId);
 	}
 
 	private void prepareAllNodesList() {

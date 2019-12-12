@@ -1,4 +1,4 @@
-import {SortingCriterion} from "../enums/sorting-criterion.enum";
+import {SortingCriterion} from '../enums/sorting-criterion.enum';
 
 export class ServiceConfig {
 
@@ -72,7 +72,13 @@ export class ServiceConfig {
       '/abort';
   }
 
-  public getUrlForFetchingTasksWithState(pId: string, jId: string, state: string, sortingCriterion: SortingCriterion, nrOfTasks: number): string {
+  public getUrlForFetchingTasksWithState(
+    pId: string,
+    jId: string,
+    state: string,
+    sortingCriterion: SortingCriterion,
+    nrOfTasks: number
+  ): string {
     return this.getConnectionUrl() +
       '/programs/' + pId +
       '/jobs/' + jId +
@@ -132,6 +138,12 @@ export class ServiceConfig {
     return this.getConnectionUrl() +
       '/clusters/' + cId +
       '/reducers';
+  }
+
+  public getUrlForFetchingAllClientRoutineWorkers(cId: string): string {
+    return this.getConnectionUrl() +
+      '/clusters/' + cId +
+      '/clientRoutineWorkers';
   }
 
   public getUrlForFetchingClusterEnvironment(cId: string): string {
@@ -199,12 +211,21 @@ export class ServiceConfig {
       '/library/datatypes/generate?language=' + language;
   }
 
-  public getUrlForUploadRoutineBinary(rId: string, md5: string, sizeInBytes: number, primary: boolean): string {
+  public getUrlForCreateRoutineBinary(rId: string, name: string, md5: string, sizeInBytes: number, primary: boolean): string {
     return this.getConnectionUrl() +
       '/library/routines/' + rId +
-      '/binaries?md5=' + md5 +
+      '/binary?name=' + name +
+      '&md5=' + md5 +
       '&sizeInBytes=' + sizeInBytes +
       '&primary=' + primary;
+  }
+
+  public getUrlForUploadRoutineBinaryChunk(rbId: string, chunk: number, totalChunks: number, chunkSize: number): string {
+    return this.getConnectionUrl() +
+      '/library/routines/binaries/' + rbId + '/chunks' +
+      '?chunk=' + chunk +
+      '&totalChunks=' + totalChunks +
+      '&chunkSize=' + chunkSize;
   }
 
   public getUrlForFetchingDataValueOfTaskInputParameter(pId: string, jId: string, tId: string, inParamName: string): string {

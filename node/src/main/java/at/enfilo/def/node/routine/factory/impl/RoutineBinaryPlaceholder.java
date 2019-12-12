@@ -24,12 +24,12 @@ class RoutineBinaryPlaceholder implements IPlaceholder {
             for (RoutineBinaryDTO binary : binaries) {
                 if (binary.isPrimary()) {
                     hasPrimary = true;
-                    this.binaries.add(resolvePath(binary.getUrl(), parseBinaryURL));
+                    this.binaries.add(resolvePath(binary.getExecutionUrl(), parseBinaryURL));
                 }
             }
             for (RoutineBinaryDTO binary : binaries) {
                 if (!binary.isPrimary()) {
-                    this.binaries.add(resolvePath(binary.getUrl(), parseBinaryURL));
+                    this.binaries.add(resolvePath(binary.getExecutionUrl(), parseBinaryURL));
                 }
             }
         }

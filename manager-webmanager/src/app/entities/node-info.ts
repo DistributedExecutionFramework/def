@@ -11,10 +11,10 @@ export class NodeInfo {
   timestamp: number;
   host: string;
   numberOfQueues: number;
-  numberOfRunningTasks: number;
-  numberOfQueuedTasks: number;
-  runningTasks: string[];
-  numberOfTasksToFinish: number;
+  numberOfRunningElements: number;
+  numberOfQueuedElements: number;
+  runningElements: string[];
+  numberOfElementsToFinish: number;
   storeRoutineId: string;
   features: Feature[];
 
@@ -30,15 +30,15 @@ export class NodeInfo {
     this.timestamp = jsonData.timeStamp || '';
     this.host = jsonData.host || '';
     this.numberOfQueues = jsonData.parameters['numberOfQueues'] && +jsonData.parameters['numberOfQueues'] || 0;
-    this.numberOfRunningTasks = jsonData.parameters['numberOfRunningTasks'] && +jsonData.parameters['numberOfRunningTasks'] || 0;
-    this.numberOfQueuedTasks = jsonData.parameters['numberOfQueuedTasks'] && +jsonData.parameters['numberOfQueuedTasks'] || 0;
-    if (jsonData.parameters['runningTasks']) {
-      this.runningTasks = jsonData.parameters['runningTasks'].split(' ');
+    this.numberOfRunningElements = jsonData.parameters['numberOfRunningElements'] && +jsonData.parameters['numberOfRunningElements'] || 0;
+    this.numberOfQueuedElements = jsonData.parameters['numberOfQueuedElements'] && +jsonData.parameters['numberOfQueuedElements'] || 0;
+    if (jsonData.parameters['runningElements']) {
+      this.runningElements = jsonData.parameters['runningElements'].split(' ');
     } else {
-      this.runningTasks = [];
+      this.runningElements = [];
     }
     this.storeRoutineId = jsonData.parameters['storeRoutineId'] || '';
-    this.numberOfTasksToFinish = this.numberOfRunningTasks + this.numberOfQueuedTasks;
+    this.numberOfElementsToFinish = this.numberOfRunningElements + this.numberOfQueuedElements;
     this.features = [];
   }
 }

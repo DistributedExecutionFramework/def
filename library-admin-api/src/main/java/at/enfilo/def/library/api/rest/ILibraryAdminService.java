@@ -1,15 +1,30 @@
 package at.enfilo.def.library.api.rest;
 
 import at.enfilo.def.communication.api.common.service.IResource;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.library.api.thrift.LibraryAdminService;
+import at.enfilo.def.transfer.dto.RoutineBinaryChunkDTO;
 import at.enfilo.def.transfer.dto.RoutineDTO;
+import org.apache.thrift.TException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.nio.ByteBuffer;
 
 @Path("/library")
 public interface ILibraryAdminService extends ILibraryService, LibraryAdminService.Iface, IResource {
+	@POST
+	@Path("/masterLibrary")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	String setMasterLibrary(ServiceEndpointDTO serviceEndPoint);
+
+	@GET
+	@Path("/masterLibrary")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	String getMasterLibrary();
 
 	@GET
 	@Path("/routines")
@@ -37,27 +52,38 @@ public interface ILibraryAdminService extends ILibraryService, LibraryAdminServi
 	@Override
 	String updateRoutine(RoutineDTO routineDTO);
 
-	@PUT
-	@Path("/routines/{rId}/binary")
+	@POST
+	@Path("/routines/{rId}/binaries")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
-	String uploadRoutineBinary(
+	String createRoutineBinary(
 		@PathParam("rId") String rId,
+		@QueryParam("name") String name,
 		@QueryParam("md5") String md5,
         @QueryParam("sizeInBytes") long sizeInBytes,
-		@QueryParam("isPrimary") boolean isPrimary,
-		ByteBuffer data
+		@QueryParam("isPrimary") boolean isPrimary
 	);
 
+	@POST
+	@Path("/routines/binaries/{rbId}/chunks")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	String uploadRoutineBinaryChunk(@PathParam("rbId") String rbId, RoutineBinaryChunkDTO chunk);
+
+	@GET
+	@Path("/routines/binaries/{rbId}/verify")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	String verifyRoutineBinary(String rbId) throws TException;
+
 	@DELETE
-	@Path("/routines/{rId}/binary/{rbId}")
+	@Path("/routines/{rId}/binaries/{rbId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String removeRoutineBinary(
-		@PathParam("rId") String rId,
-		@PathParam("rbId") String bId
-	);
+	String removeRoutineBinary(@PathParam("rId") String rId, @PathParam("rbId") String bId);
 
 	@GET
 	@Path("/datatypes")
@@ -132,4 +158,10 @@ public interface ILibraryAdminService extends ILibraryService, LibraryAdminServi
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	String getFeatures(@QueryParam("pattern") String pattern);
+
+	@GET
+	@Path("/features/{name}/{version}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	String getFeatureByNameAndVersion(@PathParam("name") String name, @PathParam("version") String version);
 }

@@ -1,15 +1,16 @@
 package at.enfilo.def.cluster.impl;
 
+import at.enfilo.def.cluster.api.NodeCreationException;
+import at.enfilo.def.cluster.api.NodeExecutionException;
 import at.enfilo.def.cluster.api.UnknownNodeException;
 import at.enfilo.def.cluster.server.Cluster;
-import at.enfilo.def.cluster.util.WorkersConfiguration;
+import at.enfilo.def.cluster.util.configuration.WorkersConfiguration;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.transfer.dto.ExecutionState;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.NodeInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.scheduler.worker.api.IWorkerSchedulerServiceClient;
+import at.enfilo.def.transfer.dto.*;
 import at.enfilo.def.worker.api.IWorkerServiceClient;
 import at.enfilo.def.worker.api.WorkerServiceClientFactory;
 
@@ -17,23 +18,24 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-class WorkerController extends NodeController<IWorkerServiceClient, WorkerServiceClientFactory> {
+public class WorkerController extends NodeController<IWorkerServiceClient, WorkerServiceClientFactory> {
 	private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(WorkerController.class);
 
 	private static WorkerController instance;
 
 	private final Map<String, Set<String>> workerTaskAssignment;
+	private final IWorkerSchedulerServiceClient workerSchedulerServiceClient;
+
+	private static final Object INSTANCE_LOCK = new Object();
 	private final Object assignmentLock;
-	private final WorkersConfiguration workersConfiguration;
-
-	private String storeRoutineId;
-
 
 	public static WorkerController getInstance() {
-		if (instance == null) {
-			instance = new WorkerController();
+		synchronized (INSTANCE_LOCK) {
+			if (instance == null) {
+				instance = new WorkerController();
+			}
+			return instance;
 		}
-		return instance;
 	}
 
 	private WorkerController() {
@@ -72,33 +74,37 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 		super(
 				NodeType.WORKER,
 				workerServiceClientFactory,
-				workers,  workerInstanceMap,
+				workers,
+				workerInstanceMap,
 				workerConnectionMap,
 				workerInfoMap,
 				workerFeatureMap,
-				workersConfiguration
+				workersConfiguration,
+				workersConfiguration.getStoreRoutineId()
 		);
 		this.assignmentLock = new Object();
 		this.workerTaskAssignment = workerTaskAssignment;
-		this.workersConfiguration = workersConfiguration;
-		this.storeRoutineId = workersConfiguration.getStoreRoutineId();
+		this.workerSchedulerServiceClient = ClusterResource.getInstance().getWorkerSchedulerServiceClient();
 	}
 
-	/**
-	 * Notification that a node is "down".
-	 * This notification is triggered by timeout map, if a node does not send an update periodically.
-	 *
-	 * @param nId - Node id
-	 * @param nodeInfo
-	 */
-	@Override
-	protected void notifyNodeDown(String nId, NodeInfoDTO nodeInfo) {
-		LOGGER.info("Notification: Node ({}) down. Remove Worker and re-schedule Tasks.", nId);
-		try {
-			removeNode(nId);
-		} catch (UnknownNodeException e) {
-			LOGGER.error("Worker {} was already removed.", nId, e);
-		}
+	public String addWorker(ServiceEndpointDTO serviceEndpoint) throws NodeCreationException {
+		return super.addNode(serviceEndpoint);
+	}
+
+	public String getStoreRoutineId() {
+		return super.getStoreRoutineId();
+	}
+
+	public void distributeSharedResource(ResourceDTO sharedResource) {
+		super.distributeSharedResource(sharedResource);
+	}
+
+	public void removeSharedResources(List<String> sharedResources) {
+		super.removeSharedResources(sharedResources);
+	}
+
+	public void setStoreRoutineId(String storeRoutineId) {
+		super.setStoreRoutineId(storeRoutineId);
 	}
 
 	/**
@@ -109,11 +115,9 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 	 * @throws UnknownNodeException - if Node id not known
 	 */
 	@Override
-	protected void removeNode(String nId) throws UnknownNodeException {
-		// Remove node from internal structures and inform scheduler
-		super.removeNode(nId);
-
+	protected void removeNodeAssignments(String nId) throws UnknownNodeException {
 		// Re-schedule tasks if needed
+		LOGGER.debug("Removing node {}.", nId);
 		Set<String> taskIds = new HashSet<>();
 		synchronized (assignmentLock) {
 			if (workerTaskAssignment.containsKey(nId)) {
@@ -122,18 +126,24 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 			}
 		}
 		if (!taskIds.isEmpty()) {
-			ClusterExecLogicController.getInstance().reSchedule(taskIds);
+			LOGGER.info("Re-scheduling tasks of worker {}.", nId);
+			ClusterExecLogicController.getInstance().reScheduleTasks(taskIds);
 		}
+	}
+
+	public void removeNode(String nId) throws UnknownNodeException {
+		super.removeNode(nId, true);
 	}
 
 	/**
 	 * Notification from a worker about new received tasks.
 	 *
 	 * @param wId - worker id
-	 * @param taskIds - list of taks ids
+	 * @param taskIds - list of task ids
 	 * @throws UnknownNodeException
 	 */
 	void notifyTasksReceived(String wId, List<String> taskIds) throws UnknownNodeException {
+		LOGGER.debug("{} tasks received from worker {}.", taskIds.size(), wId);
 		setupWorkerTaskAssignment(wId);
 		synchronized (assignmentLock) {
 			taskIds.forEach(workerTaskAssignment.get(wId)::add);
@@ -160,29 +170,6 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 		}
 	}
 
-
-	public String getStoreRoutineId() {
-		return storeRoutineId;
-	}
-
-	/**
-	 * Set StoreRoutineId.
-	 * Updates StoreRoutineId on every registered worker.
-	 * @param routineId - new StoreRoutineId
-	 */
-	void setStoreRoutineId(String routineId) {
-		this.storeRoutineId = routineId;
-		LOGGER.info("Update StoreRoutine on all Workers to {}.", routineId);
-		execOnAllNodes(nodeServiceClient -> {
-			try {
-				return nodeServiceClient.setStoreRoutine(routineId);
-			} catch (ClientCommunicationException e) {
-				LOGGER.error("Error while update StoreRoutine on Worker.", e);
-				return null;
-			}
-		});
-	}
-
 	/**
 	 * Notification from a worker about new task state
 	 *
@@ -192,7 +179,7 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 	 * @throws UnknownNodeException
 	 */
 	void notifyTasksNewState(String wId, List<String> taskIds, ExecutionState newState) throws UnknownNodeException {
-		LOGGER.debug("Notify Tasks have new state {}. Source Worker with id {}.", newState, wId);
+		LOGGER.debug("Notify tasks have new state {} from worker {}.");
 		switch (newState) {
 			case SUCCESS:
 			case FAILED:
@@ -201,7 +188,6 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 					taskIds.forEach(workerTaskAssignment.get(wId)::remove);
 				}
 				break;
-
 			case SCHEDULED:
 			case RUN:
 			default:
@@ -214,7 +200,8 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 	 * Abort the given task.
 	 * @param tId - task id to abort
 	 */
-	void abortTask(String tId) {
+	public void abortTask(String tId) throws NodeExecutionException {
+		LOGGER.debug(DEFLoggerFactory.createTaskContext(tId), "Aborting task on worker.");
 		String wId = null;
 		synchronized (assignmentLock) {
 			for (Map.Entry<String, Set<String>> e : workerTaskAssignment.entrySet()) {
@@ -226,15 +213,107 @@ class WorkerController extends NodeController<IWorkerServiceClient, WorkerServic
 		}
 
 		if (wId != null) {
-			synchronized (nodeLock) {
-				try {
-					Future<Void> futureAbortTask = nodeConnectionMap.get(wId).abortTask(tId);
-					futureAbortTask.get(); // wait for ticket to finish
-					LOGGER.info(DEFLoggerFactory.createTaskContext(tId), "Aborted Task on Worker {}.", wId);
-				} catch (ClientCommunicationException | ExecutionException | InterruptedException e) {
-					LOGGER.error(DEFLoggerFactory.createTaskContext(tId), "Error while send abort Task to Worker {}.", wId, e);
-				}
+			try {
+				Future<Void> future = workerSchedulerServiceClient.abortTask(wId, tId);
+				future.get(); // Wait for done
+
+			} catch (ExecutionException | ClientCommunicationException e) {
+				LOGGER.error(DEFLoggerFactory.createTaskContext(tId), "Error while send abort Task to Worker {}.", wId, e);
+				throw new NodeExecutionException(e);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				LOGGER.error(DEFLoggerFactory.createTaskContext(tId), "Error while send abort Task to Worker {}. Interrupted.", wId, e);
+				throw new NodeExecutionException(e);
 			}
+		}
+	}
+
+	public void runTask(TaskDTO task) throws NodeExecutionException {
+		if (task != null) {
+			LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Scheduling task to workers.");
+			try {
+				Future<Void> future = workerSchedulerServiceClient.scheduleTask(task.getJobId(), task);
+				future.get(); // wait for done
+			} catch (ExecutionException | ClientCommunicationException e) {
+				LOGGER.error(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Error while scheduling task.", e);
+				throw new NodeExecutionException(e);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				LOGGER.error(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Error while scheduling task. Interrupted.", e);
+				throw new NodeExecutionException(e);
+			}
+		} else {
+			String msg = "Cannot run/schedule Task. Task is null.";
+			LOGGER.error(msg);
+			throw new NodeExecutionException(msg);
+		}
+	}
+
+	public void addJob(String jId) throws NodeExecutionException {
+		LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Adding job to workers.");
+		try {
+			Future<Void> future = workerSchedulerServiceClient.addJob(jId);
+			future.get(); // Wait for done.
+		} catch (ExecutionException | ClientCommunicationException e) {
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while adding a new job.", e);
+			throw new NodeExecutionException(e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while adding a new job. Interrupted.", e);
+			throw new NodeExecutionException(e);
+		}
+	}
+
+	public void deleteJob(String jId) throws NodeExecutionException {
+		LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Removing job from workers.");
+		try {
+			Future<Void> future = workerSchedulerServiceClient.removeJob(jId);
+			future.get();
+
+		} catch (ExecutionException | ClientCommunicationException e) {
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while removing job.");
+			throw new NodeExecutionException(e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while removing job. Interrupted.");
+			throw new NodeExecutionException(e);
+		}
+	}
+
+	public void pauseQueue(String jId) {
+		LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Pause queue on workers.");
+		execOnAllNodes(workerServiceClient -> {
+			try {
+				return workerServiceClient.pauseQueue(jId);
+			} catch (ClientCommunicationException e) {
+				LOGGER.error("Error while pause queue {} on worker.", jId);
+				return null;
+			}
+		});
+	}
+
+	public void markJobAsComplete(String jId) throws NodeExecutionException {
+		LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Marking job as complete on workers.");
+		try {
+			Future<Void> future = workerSchedulerServiceClient.markJobAsComplete(jId);
+			future.get(); // wait for done
+		} catch (ExecutionException | ClientCommunicationException e) {
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while marking job as complete.");
+			throw new NodeExecutionException(e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while marking job as complete. Interrupted.");
+			throw new NodeExecutionException(e);
+		}
+	}
+
+	public TaskDTO fetchFinishedTask(String wId, String tId) throws UnknownNodeException, NodeExecutionException {
+		LOGGER.debug(DEFLoggerFactory.createTaskContext(tId), "Fetching finished task.");
+		try {
+			return getServiceClient(wId).fetchFinishedTask(tId).get();
+		} catch (ClientCommunicationException | InterruptedException | ExecutionException e) {
+			LOGGER.error(DEFLoggerFactory.createTaskContext(tId), "Error while fetching finished task from worker.");
+			throw new NodeExecutionException(e);
 		}
 	}
 }

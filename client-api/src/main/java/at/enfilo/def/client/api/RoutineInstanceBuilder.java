@@ -11,12 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RoutineInstanceBuilder {
-	private static final TSerializer SERIALIZER = new TSerializer();
-
+	private final TSerializer serializer;
 	private RoutineInstanceDTO routineInstance;
 	private Map<String, ResourceDTO> inParams;
 
 	public RoutineInstanceBuilder(String routineId) {
+		serializer = new TSerializer();
 		routineInstance = new RoutineInstanceDTO();
 		routineInstance.setRoutineId(routineId);
 		inParams = new HashMap<>();
@@ -27,7 +27,7 @@ public class RoutineInstanceBuilder {
 		TFieldIdEnum idField = value.fieldForId((short)1); // Convention: field with id 1 is '_id'
 		String dataTypeId = value.getFieldValue(idField).toString();
 		resource.setDataTypeId(dataTypeId);
-		resource.setData(SERIALIZER.serialize(value));
+		resource.setData(serializer.serialize(value));
 		inParams.put(name, resource);
 		return this;
 	}

@@ -4,8 +4,12 @@ import at.enfilo.def.cluster.server.Cluster;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.communication.exception.TakeControlException;
-import at.enfilo.def.scheduler.api.ISchedulerServiceClient;
-import at.enfilo.def.scheduler.api.SchedulerServiceClientFactory;
+import at.enfilo.def.scheduler.clientroutineworker.api.ClientRoutineWorkerSchedulerServiceClientFactory;
+import at.enfilo.def.scheduler.clientroutineworker.api.IClientRoutineWorkerSchedulerServiceClient;
+import at.enfilo.def.scheduler.reducer.api.IReducerSchedulerServiceClient;
+import at.enfilo.def.scheduler.reducer.api.ReducerSchedulerServiceClientFactory;
+import at.enfilo.def.scheduler.worker.api.IWorkerSchedulerServiceClient;
+import at.enfilo.def.scheduler.worker.api.WorkerSchedulerServiceClientFactory;
 import at.enfilo.def.transfer.dto.CloudType;
 import at.enfilo.def.transfer.dto.NodeType;
 import org.slf4j.Logger;
@@ -31,8 +35,9 @@ public class ClusterResource {
 	private String managerId;
 	private String name;
 	private CloudType cloudType;
-	private ISchedulerServiceClient reducerSchedulerService;
-	private ISchedulerServiceClient workerSchedulerService;
+	private IReducerSchedulerServiceClient reducerSchedulerService;
+	private IWorkerSchedulerServiceClient workerSchedulerService;
+	private IClientRoutineWorkerSchedulerServiceClient clientRoutineWorkerSchedulerSerivce;
 	private String defaultMapRoutineId;
 
 
@@ -44,12 +49,16 @@ public class ClusterResource {
 		this.startTime = Instant.now();
 
 		try {
-			this.reducerSchedulerService = new SchedulerServiceClientFactory().createClient(
+			this.reducerSchedulerService = new ReducerSchedulerServiceClientFactory().createClient(
 				Cluster.getInstance().getConfiguration().getReducerSchedulerEndpoint()
 			);
 
-			this.workerSchedulerService = new SchedulerServiceClientFactory().createClient(
+			this.workerSchedulerService = new WorkerSchedulerServiceClientFactory().createClient(
 				Cluster.getInstance().getConfiguration().getWorkerSchedulerEndpoint()
+			);
+
+			this.clientRoutineWorkerSchedulerSerivce = new ClientRoutineWorkerSchedulerServiceClientFactory().createClient(
+					Cluster.getInstance().getConfiguration().getClientRoutineWorkerSchedulerEndpoint()
 			);
 		} catch (ClientCreationException e) {
 			LOGGER.error("Error while creating scheduler clients", e);
@@ -112,35 +121,28 @@ public class ClusterResource {
 		this.cloudType = cloudType;
 	}
 
-	public ISchedulerServiceClient getReducerSchedulerServiceClient() {
+	public IReducerSchedulerServiceClient getReducerSchedulerServiceClient() {
 		return reducerSchedulerService;
 	}
 
-	public void setReducerSchedulerServiceClient(ISchedulerServiceClient reducerSchedulerService) {
+	public void setReducerSchedulerServiceClient(IReducerSchedulerServiceClient reducerSchedulerService) {
 		this.reducerSchedulerService = reducerSchedulerService;
 	}
 
-	public ISchedulerServiceClient getWorkerSchedulerServiceClient() {
+	public IWorkerSchedulerServiceClient getWorkerSchedulerServiceClient() {
 		return workerSchedulerService;
 	}
 
-	public void setWorkerSchedulerServiceClient(ISchedulerServiceClient workerSchedulerService) {
+	public void setWorkerSchedulerServiceClient(IWorkerSchedulerServiceClient workerSchedulerService) {
 		this.workerSchedulerService = workerSchedulerService;
 	}
 
-	public ISchedulerServiceClient getSchedulerServiceClient(NodeType nodeType)
-	throws IllegalArgumentException {
-		switch (nodeType) {
-			case REDUCER: {
-				return reducerSchedulerService;
-			}
+	public IClientRoutineWorkerSchedulerServiceClient getClientRoutineWorkerSchedulerSerivceClient() {
+		return clientRoutineWorkerSchedulerSerivce;
+	}
 
-			case WORKER: {
-				return workerSchedulerService;
-			}
-
-			default: throw new IllegalArgumentException("Can't return scheduler client for unknown ClusterNodeType.");
-		}
+	public void setClientRoutineWorkerSchedulerSerivceClient(IClientRoutineWorkerSchedulerServiceClient clientRoutineWorkerSchedulerService) {
+		this.clientRoutineWorkerSchedulerSerivce = clientRoutineWorkerSchedulerService;
 	}
 
 	public void setSchedulerService(NodeType nodeType, ServiceEndpointDTO endpoint)
@@ -149,11 +151,15 @@ public class ClusterResource {
 
 		switch (nodeType) {
 			case REDUCER: {
-				this.reducerSchedulerService = new SchedulerServiceClientFactory().createClient(endpoint);
+				this.reducerSchedulerService = new ReducerSchedulerServiceClientFactory().createClient(endpoint);
 				break;
 			}
 			case WORKER: {
-				this.workerSchedulerService = new SchedulerServiceClientFactory().createClient(endpoint);
+				this.workerSchedulerService = new WorkerSchedulerServiceClientFactory().createClient(endpoint);
+				break;
+			}
+			case CLIENT: {
+				this.clientRoutineWorkerSchedulerSerivce = new ClientRoutineWorkerSchedulerServiceClientFactory().createClient(endpoint);
 				break;
 			}
 			default: throw new ClientCreationException(new IllegalArgumentException(

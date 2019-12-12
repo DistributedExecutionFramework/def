@@ -1,4 +1,5 @@
 export enum NodeType {
   WORKER,
-  REDUCER
+  REDUCER,
+  CLIENT_ROUTINE_WORKER
 }

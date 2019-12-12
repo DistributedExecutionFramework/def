@@ -1,8 +1,8 @@
 package at.enfilo.def.cluster;
 
 import at.enfilo.def.cluster.server.Cluster;
-import at.enfilo.def.cluster.util.ClusterConfiguration;
-import at.enfilo.def.cluster.util.WorkersConfiguration;
+import at.enfilo.def.cluster.util.configuration.ClusterConfiguration;
+import at.enfilo.def.cluster.util.configuration.WorkersConfiguration;
 import at.enfilo.def.communication.dto.Protocol;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.transfer.dto.CloudType;

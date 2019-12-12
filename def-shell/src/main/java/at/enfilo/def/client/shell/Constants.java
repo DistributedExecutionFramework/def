@@ -14,7 +14,7 @@ class Constants {
 			" ██████╔╝███████╗██║     \n" +
 			" ╚═════╝ ╚══════╝╚═╝     \n";
 	final static String WELCOME_MSG = "Welcome to DEFShell.";
-	final static String VERSION = "1.4.6";
+	final static String VERSION = "1.5.0";
 	final static String BANNER_PROVIDER_NAME = "DEFShell";
 
 	final static String HISTORY_FILE_NAME = "defshell.log";
@@ -35,6 +35,8 @@ class Constants {
 	final static String OPT_NODE_ID = "nodeId";
 	final static String OPT_NAME = "name";
 	final static String OPT_TYPE = "type";
+	final static String OPT_VERSION = "version";
+	final static String OPT_GROUP = "group";
 	final static String OPT_PERIODICALLY = "periodically";
 	final static String OPT_PERIOD_DURATION = "periodDuration";
 	final static String OPT_PERIOD_UNIT = "periodUnit";
@@ -46,6 +48,7 @@ class Constants {
 	final static String OPT_USER_ID = "userId";
 	final static String OPT_PROGRAM_ID = "pId";
 	final static String OPT_JOB_ID = "jId";
+	final static String OPT_FEATURE_ID = "fId";
     final static String OPT_ROUTINE_INSTANCE = "routineInstance";
     final static String OPT_ROUTINE_ID = "routineId";
     final static String OPT_ROUTINE_BINARY_ID = "routineBinaryId";
@@ -146,7 +149,12 @@ class Constants {
 	final static String CMD_LIBRARY_TAG_FIND = CMD_LIBRARY_PREFIX + " " + "tag find";
 	final static String CMD_LIBRARY_TAG_CREATE = CMD_LIBRARY_PREFIX + " " + "tag create";
 	final static String CMD_LIBRARY_TAG_REMOVE = CMD_LIBRARY_PREFIX + " " + "tag remove";
-	final static String CMD_LIBRARY_SET_DATA_ENDPOINT = CMD_LIBRARY_PREFIX + " " + "dataEndpoint add";
+	final static String CMD_LIBRARY_MASTER_LIBRARY_SET = CMD_LIBRARY_PREFIX + " " + "master-library set";
+	final static String CMD_LIBRARY_MASTER_LIBRARY_SHOW = CMD_LIBRARY_PREFIX + " " + "master-library show";
+	final static String CMD_LIBRARY_FEATURE_CREATE = CMD_LIBRARY_PREFIX + " " + "feature create";
+	final static String CMD_LIBRARY_FEATURE_FIND = CMD_LIBRARY_PREFIX + " " + "feature find";
+	final static String CMD_LIBRARY_FEATURE_SHOW = CMD_LIBRARY_PREFIX + " " + "feature show";
+	final static String CMD_LIBRARY_EXTENSION_CREATE = CMD_LIBRARY_PREFIX + " " + "extension create";
 
 	final static String MESSAGE_LIBRARY_ROUTINE_CREATED = "Routine successful created with Routine-Id %s.";
 	final static String MESSAGE_LIBRARY_ROUTINE_REMOVE = "Routine remove done";
@@ -157,7 +165,9 @@ class Constants {
 	final static String MESSAGE_LIBRARY_DATA_TYPE_REMOVE = "DataType remove done";
 	final static String MESSAGE_LIBRARY_TAG_CREATED = "Tag %s create done";
 	final static String MESSAGE_LIBRARY_TAG_REMOVE = "Tag %s remove done";
-	final static String MESSAGE_LIBRARY_DATA_ENDPOINT_SET = "Data endpoint of library change done.";
+	final static String MESSAGE_LIBRARY_DATA_ENDPOINT_SET = "MasterLibrary endpoint of library change done.";
+	final static String MESSAGE_LIBRARY_FEATURE_CREATED = "Feature with id %s created.";
+	final static String MESSAGE_LIBRARY_EXTENSION_CREATED = "Extension with id %s created.";
 
 	// Manager Service
 

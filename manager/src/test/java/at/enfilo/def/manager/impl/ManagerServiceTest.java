@@ -9,20 +9,20 @@ import at.enfilo.def.config.server.core.DEFTicketServiceConfiguration;
 import at.enfilo.def.manager.api.IManagerServiceClient;
 import at.enfilo.def.manager.api.ManagerServiceClientFactory;
 import at.enfilo.def.transfer.dto.ClusterInfoDTO;
+import at.enfilo.def.transfer.dto.FeatureDTO;
+import at.enfilo.def.transfer.dto.RoutineBinaryChunkDTO;
+import at.enfilo.def.transfer.dto.RoutineDTO;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -122,7 +122,6 @@ public abstract class ManagerServiceTest {
 		Future<Void> futureDeleteCluster = client.deleteCluster(cId);
 		await().atMost(10, TimeUnit.SECONDS).until(futureDeleteCluster::isDone);
 
-		assertNull(futureDeleteCluster.get());
 		verify(managerController).destroyCluster(cId);
 	}
 
@@ -133,7 +132,73 @@ public abstract class ManagerServiceTest {
 		Future<Void> futureAddCluster = client.addCluster(endpoint);
 		await().atMost(10, TimeUnit.SECONDS).until(futureAddCluster::isDone);
 
-		assertNull(futureAddCluster.get());
 		verify(managerController).addCluster(endpoint);
+	}
+
+	@Test
+	public void createClientRoutine() throws Exception {
+		String name = UUID.randomUUID().toString();
+		List<FeatureDTO> requiredFeatures = Arrays.asList(new FeatureDTO());
+		List<String> arguments = Arrays.asList("argument");
+		RoutineDTO routine = new RoutineDTO();
+		routine.setName(name);
+		routine.setRequiredFeatures(requiredFeatures);
+		routine.setArguments(arguments);
+		String rId = UUID.randomUUID().toString();
+
+		when(managerController.createClientRoutine(routine)).thenReturn(rId);
+
+		Future<String> futureRoutineId = client.createClientRoutine(routine);
+		await().atMost(10, TimeUnit.SECONDS).until(futureRoutineId::isDone);
+
+		assertEquals(rId, futureRoutineId.get());
+	}
+
+	@Test
+	public void createClientRoutineBinary() throws Exception {
+		String rId = UUID.randomUUID().toString();
+		String rbName = "name";
+		Random rnd = new Random();
+		boolean isPrimary = rnd.nextBoolean();
+		String rbId = UUID.randomUUID().toString();
+		String md5 = UUID.randomUUID().toString();
+		long sizeInBytes = rnd.nextInt();
+
+		when(managerController.createClientRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary)).thenReturn(rbId);
+
+		Future<String> futureRoutineBinaryId = client.createClientRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary);
+		await().atMost(10, TimeUnit.SECONDS).until(futureRoutineBinaryId::isDone);
+
+		assertEquals(rbId, futureRoutineBinaryId.get());
+	}
+
+	@Test
+	public void uploadClientRoutineBinaryChunk() throws Exception {
+		String rbId = UUID.randomUUID().toString();
+		Random rnd = new Random();
+		RoutineBinaryChunkDTO chunk = new RoutineBinaryChunkDTO();
+		chunk.setChunkSize(rnd.nextInt());
+		chunk.setChunk((short)rnd.nextInt());
+		chunk.setTotalChunks((short)rnd.nextInt());
+		byte[] data = new byte[16];
+		rnd.nextBytes(data);
+		chunk.setData(data);
+
+
+		Future<Void> future = client.uploadClientRoutineBinaryChunk(rbId, chunk);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+
+		verify(managerController).uploadClientRoutineBinaryChunk(rbId, chunk);
+	}
+
+
+	@Test
+	public void removeClientRoutine() throws Exception {
+		String rId = UUID.randomUUID().toString();
+
+		Future<Void> futureRemoveClientRoutine = client.removeClientRoutine(rId);
+		await().atMost(10, TimeUnit.SECONDS).until(futureRemoveClientRoutine::isDone);
+
+		verify(managerController).removeClientRoutine(rId);
 	}
 }

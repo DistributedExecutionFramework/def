@@ -48,7 +48,7 @@ public class RoutineMapper extends AbstractMapper<RoutineDTO, Routine> {
 			mapAttributes(
 				source::getRoutineBinaries,
 				dest::setRoutineBinaries,
-				routineBinaryDTOS -> MapManager.map(routineBinaryDTOS, RoutineBinary.class).collect(Collectors.toList())
+				routineBinaryDTOS -> MapManager.map(routineBinaryDTOS, RoutineBinary.class).collect(Collectors.toSet())
 			);
 			mapAttributes(
 					source::getRequiredFeatures,

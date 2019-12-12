@@ -21,7 +21,7 @@ public abstract class Routine_ {
 	public static volatile SingularAttribute<Routine, RoutineType> type;
 	public static volatile SingularAttribute<Routine, Short> revision;
 	public static volatile SingularAttribute<Routine, String> name;
-	public static volatile ListAttribute<Routine, RoutineBinary> routineBinaries;
+	public static volatile SetAttribute<Routine, RoutineBinary> routineBinaries;
 	public static volatile ListAttribute<Routine, String> arguments;
 	public static volatile SingularAttribute<Routine, String> id;
 	public static volatile SingularAttribute<Routine, FormalParameter> outParameter;

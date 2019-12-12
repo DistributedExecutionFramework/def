@@ -5,6 +5,7 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.library.api.client.ILibraryAdminServiceClient;
 import at.enfilo.def.transfer.dto.DataTypeDTO;
+import at.enfilo.def.transfer.dto.RoutineBinaryChunkDTO;
 import at.enfilo.def.transfer.dto.RoutineDTO;
 import at.enfilo.def.transfer.dto.TagDTO;
 import org.junit.Test;
@@ -12,7 +13,9 @@ import org.mockito.Mockito;
 import org.springframework.shell.core.CommandResult;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -167,23 +170,27 @@ public class LibraryCommandsTest extends ShellBaseTest {
 
 		String bId = UUID.randomUUID().toString();
 		String rId = UUID.randomUUID().toString();
-		char[] data = bId.toCharArray();
 		File binaryFile = File.createTempFile("binary", "routine");
 		binaryFile.deleteOnExit();
-		try (FileWriter writer = new FileWriter(binaryFile)) {
-			writer.write(data);
-			writer.flush();
+		try (FileOutputStream fos = new FileOutputStream(binaryFile)) {
+			fos.write(bId.getBytes());
 		}
 
-		Future<String> futureMock = Mockito.mock(Future.class);
-		when(clientMock.uploadRoutineBinary(
+		RoutineBinaryChunkDTO chunk = new RoutineBinaryChunkDTO((short)0, (short)1, 1000*1000, ByteBuffer.wrap(bId.getBytes()));
+
+		Future<String> futureCreateRoutineBinary = Mockito.mock(Future.class);
+		when(clientMock.createRoutineBinary(
 				eq(rId),
 				anyString(),
+				anyString(),
 				eq(binaryFile.length()),
-				anyBoolean(),
-				anyObject())
-		).thenReturn(futureMock);
-		when(futureMock.get()).thenReturn(bId);
+				anyBoolean())
+		).thenReturn(futureCreateRoutineBinary);
+		when(futureCreateRoutineBinary.get()).thenReturn(bId);
+
+		Future<Void> futureUploadChunk = Mockito.mock(Future.class);
+		when(clientMock.uploadRoutineBinaryChunk(eq(bId), eq(chunk))).thenReturn(futureUploadChunk);
+		when(futureUploadChunk.get()).thenReturn(null);
 
 		CommandResult result = shell.executeCommand(
 				String.format("%s --%s %s --%s %s", CMD_LIBRARY_ROUTINE_BINARY_UPLOAD,
@@ -405,7 +412,7 @@ public class LibraryCommandsTest extends ShellBaseTest {
 	}
 
 	@Test
-	public void setDataEndpoint() throws Exception {
+	public void setMasterLibrary() throws Exception {
 		ILibraryAdminServiceClient clientMock = setupMocks();
 		Random rnd = new Random();
 		String name = UUID.randomUUID().toString();
@@ -415,11 +422,11 @@ public class LibraryCommandsTest extends ShellBaseTest {
 		ServiceEndpointDTO endpoint = new ServiceEndpointDTO(host, port, protocol);
 		objects.getObjectMap().put(name, endpoint);
 		Future<Void> future = Mockito.mock(Future.class);
-		when(clientMock.setDataEndpoint(endpoint)).thenReturn(future);
+		when(clientMock.setMasterLibrary(endpoint)).thenReturn(future);
 		when(future.get()).thenReturn(null);
 
 		CommandResult result = shell.executeCommand(
-				String.format("%s --%s %s", CMD_LIBRARY_SET_DATA_ENDPOINT,
+				String.format("%s --%s %s", CMD_LIBRARY_MASTER_LIBRARY_SET,
 						OPT_SERVICE_ENDPOINT, name
 
 				)
@@ -430,6 +437,22 @@ public class LibraryCommandsTest extends ShellBaseTest {
 				result.getResult().toString()
 		);
 
+	}
+
+	@Test
+	public void getMasterLibrary() throws Exception {
+		ILibraryAdminServiceClient clientMock = setupMocks();
+
+		ServiceEndpointDTO serviceEndpointDTO = new ServiceEndpointDTO(UUID.randomUUID().toString(), 1234, Protocol.REST);
+		Future<ServiceEndpointDTO> futureMock = Mockito.mock(Future.class);
+		when(clientMock.getMasterLibrary()).thenReturn(futureMock);
+		when(futureMock.get()).thenReturn(serviceEndpointDTO);
+
+		CommandResult result = shell.executeCommand(
+				String.format("%s", CMD_LIBRARY_MASTER_LIBRARY_SHOW)
+		);
+		assertTrue(result.isSuccess());
+		assertTrue(result.getResult().toString().contains(serviceEndpointDTO.getHost()));
 	}
 
 

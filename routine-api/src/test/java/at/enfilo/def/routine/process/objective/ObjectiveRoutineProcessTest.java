@@ -1,7 +1,11 @@
 package at.enfilo.def.routine.process.objective;
 
+import at.enfilo.def.communication.dto.Protocol;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.routine.ObjectiveTestRoutine;
 import at.enfilo.def.routine.factory.NamedPipeFactory;
+import at.enfilo.def.transfer.dto.ExecutionState;
+import at.enfilo.def.transfer.dto.ProgramDTO;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,6 +13,8 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -21,9 +27,32 @@ public class ObjectiveRoutineProcessTest {
 	public static final String OUT_PIPE = "ObjectiveRoutineTest_out";
 	public static final String CTRL_PIPE = "ObjectiveRoutineTest_ctrl";
 
+	public static final ProgramDTO PROGRAM;
+	public static final ServiceEndpointDTO PARAMETER_SERVER_ENDPOINT = new ServiceEndpointDTO(
+			"localhost",
+			40092,
+			Protocol.THRIFT_TCP
+	);
+
 	public static final String FIRST_NAME = "FirstName1234";
 	public static final String LAST_NAME = "LastName9876";
 	public static final Short AGE = 33;
+
+	static {
+		PROGRAM = new ProgramDTO(
+				"program1",
+				ExecutionState.SCHEDULED,
+				215,
+				1003,
+				"user",
+				"name",
+				"description",
+				4,
+				new HashMap<>(),
+				new LinkedList<>()
+		);
+		PROGRAM.setResults(new HashMap<>());
+	}
 
 	private String inPipe;
 	private String outPipe;

@@ -6,6 +6,7 @@ import at.enfilo.def.datatype.DEFInteger;
 import at.enfilo.def.dto.cache.DTOCache;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import at.enfilo.def.node.impl.NodeServiceController;
+import at.enfilo.def.node.queue.ResourceQueue;
 import at.enfilo.def.routine.api.Command;
 import at.enfilo.def.routine.api.Order;
 import at.enfilo.def.routine.api.Result;
@@ -28,6 +29,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class RoutinesCommunicatorTest {
+
+	private static String DTO_CACHE_CONTEXT = "routines-communicator-test-dtos";
 
 	private TaskDTO task;
 	private RoutinesCommunicator communicator;
@@ -84,9 +87,66 @@ public class RoutinesCommunicatorTest {
 	}
 
 	@Test
+	public void receiveParametersFromQueue_queueEmptyAtBeginning() throws Exception {
+		String jId = UUID.randomUUID().toString();
+		ResourceQueue queue = new ResourceQueue(jId, DTO_CACHE_CONTEXT);
+		queue.release();
+
+		queue.registerObserver(communicator);
+
+		Random rnd = new Random();
+		DEFDouble value1 = new DEFDouble(rnd.nextDouble());
+		ResourceDTO r1 = prepareResource(UUID.randomUUID().toString(), value1.get_id(), value1);
+		DEFInteger value2 = new DEFInteger(rnd.nextInt());
+		ResourceDTO r2 = prepareResource(UUID.randomUUID().toString(), value2.get_id(), value2);
+		queue.queue(r1);
+		queue.queue(r2);
+
+		Order order = new Order(Command.GET_PARAMETER, "0");
+		ctrlWriter.store(order);
+		DEFDouble receivedValue1 = new DEFDouble();
+		outReader.read(receivedValue1);
+		assertEquals(value1, receivedValue1);
+
+		order = new Order(Command.GET_PARAMETER, "1");
+		ctrlWriter.store(order);
+		DEFInteger receivedValue2 = new DEFInteger();
+		outReader.read(receivedValue2);
+		assertEquals(value2, receivedValue2);
+	}
+
+	@Test
+	public void receiveParametersFromQueue_queueNotEmptyAtBeginning() throws Exception {
+		String jId = UUID.randomUUID().toString();
+		ResourceQueue queue = new ResourceQueue(jId, DTO_CACHE_CONTEXT);
+		queue.release();
+
+		Random rnd = new Random();
+		DEFDouble value1 = new DEFDouble(rnd.nextDouble());
+		ResourceDTO r1 = prepareResource(UUID.randomUUID().toString(), value1.get_id(), value1);
+		DEFInteger value2 = new DEFInteger(rnd.nextInt());
+		ResourceDTO r2 = prepareResource(UUID.randomUUID().toString(), value2.get_id(), value2);
+		queue.queue(r1);
+		queue.queue(r2);
+
+		queue.registerObserver(communicator);
+
+		Order order = new Order(Command.GET_PARAMETER, "0");
+		ctrlWriter.store(order);
+		DEFDouble receivedValue1 = new DEFDouble();
+		outReader.read(receivedValue1);
+		assertEquals(value1, receivedValue1);
+
+		order = new Order(Command.GET_PARAMETER, "1");
+		ctrlWriter.store(order);
+		DEFInteger receivedValue2 = new DEFInteger();
+		outReader.read(receivedValue2);
+		assertEquals(value2, receivedValue2);
+	}
+
+	@Test
 	public void receiveParameters() throws Exception {
 		Random rnd = new Random();
-		TSerializer serializer = new TSerializer();
 
 		DEFDouble value0 = new DEFDouble(rnd.nextDouble());
 		DEFInteger value1 = new DEFInteger(rnd.nextInt());
@@ -215,7 +275,7 @@ public class RoutinesCommunicatorTest {
 		ctrlWriter.store(order);
 	}
 
-	@Test(timeout = 120*1000L)
+	@Test(timeout = 60000)
 	public void sendWrongData() throws Exception {
 		int j = 20;
 		Random rnd = new Random();
@@ -227,7 +287,9 @@ public class RoutinesCommunicatorTest {
 			for (int k = 0; k < j; k++) {
 				byte[] buf = new byte[1];
 				rnd.nextBytes(buf);
-				buf[0]++;
+				if (buf[0] == 0) {
+					buf[0]++;
+				}
 				ctrlWriter.store(buf);
 			}
 			// Correct order
@@ -243,11 +305,16 @@ public class RoutinesCommunicatorTest {
 		alreadyDown = true;
 	}
 
-	private void addParameter(String key, String rId, String dataTypeId, TBase value) throws TException {
+	private ResourceDTO prepareResource(String rId, String dataTypeId, TBase value) throws TException {
 		ResourceDTO resource = new ResourceDTO(rId, dataTypeId);
 		if (value != null) {
 			resource.setData(serializer.serialize(value));
 		}
+		return resource;
+	}
+
+	private void addParameter(String key, String rId, String dataTypeId, TBase value) throws TException {
+		ResourceDTO resource = prepareResource(rId, dataTypeId, value);
 		communicator.addParameter(key, resource);
 	}
 

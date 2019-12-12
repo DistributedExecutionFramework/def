@@ -3,3 +3,6 @@
 **/build
 **/out
 **/demo-routines.jar
+**/bin
+**/obj
+**/.vs/

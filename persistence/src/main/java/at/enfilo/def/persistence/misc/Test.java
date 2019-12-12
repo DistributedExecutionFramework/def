@@ -1,14 +1,10 @@
 package at.enfilo.def.persistence.misc;
 
 import at.enfilo.def.domain.entity.Group;
-import at.enfilo.def.domain.entity.Program;
 import at.enfilo.def.domain.entity.User;
-import at.enfilo.def.persistence.api.IProgramDAO;
 import at.enfilo.def.persistence.api.IUserDAO;
 import at.enfilo.def.persistence.dao.PersistenceFacade;
-import at.enfilo.def.transfer.dto.ExecutionState;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -72,29 +68,6 @@ public class Test {
         for (Group group : group1List) {
             System.out.println(group.getName() + " - " + group.getDescription());
         }
-
-        System.out.println("----------program-------");
-
-        Program program = new Program();
-        program.setCreateTime(Instant.now());
-        program.setState(ExecutionState.SCHEDULED);
-        program.setMasterLibraryRoutine(true);
-        program.setOwner(user1);
-
-        IProgramDAO programDAO = persistenceFacade.getNewProgramDAO();
-        programDAO.save(program);
-
-        Group group3 = new Group();
-        group3.setName("group 3 prog");
-        group3.setDescription("prog group");
-
-        program.setGroups(new HashSet<>());
-        program.getGroups().add(group3);
-
-        programDAO.saveOrUpdate(program);
-
-        persistenceFacade.getNewGroupDAO().delete(group3);
-        programDAO.delete(program);
 
         System.out.println("for breakpoint");
     }

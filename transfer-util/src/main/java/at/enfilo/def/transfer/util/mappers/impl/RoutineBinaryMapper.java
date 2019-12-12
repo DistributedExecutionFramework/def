@@ -22,11 +22,12 @@ public class RoutineBinaryMapper extends AbstractMapper<RoutineBinaryDTO, Routin
 		}
         if (source != null) {
             mapAttributes(source::getId, dest::setId);
+            mapAttributes(source::getName, dest::setName);
             mapAttributes(source::getMd5, dest::setMd5);
 			mapAttributes(source::getSizeInBytes, dest::setSizeInBytes);
 			mapAttributes(source::isPrimary, dest::setPrimary);
 			mapAttributes(source::getUrl, dest::setUrl);
-			mapAttributes(source::getData, dest::setData);
+			mapAttributes(source::getExecutionUrl, dest::setExecutionUrl);
 
             return dest;
         }

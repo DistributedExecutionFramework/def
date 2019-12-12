@@ -216,10 +216,11 @@ public class ClusterCommands implements CommandMarker {
 
 	@CliCommand(value = CMD_CLUSTER_ROUTINE_SET_STORE, help = "Set StoreRoutine to Cluster and Workers")
 	public String setStoreRoutineId(
+			@CliOption(key = OPT_NODE_TYPE, mandatory = true, help = "Node type") final NodeType nodeType,
 			@CliOption(key = OPT_ROUTINE_ID, mandatory = true, help = "Routine Id of StoreRoutine") final String rId
 	) throws ClientCommunicationException, ExecutionException, InterruptedException {
 
-		session.getClusterServiceClient().setStoreRoutine(rId).get();
+		session.getClusterServiceClient().setStoreRoutine(rId, nodeType).get();
 		return MESSAGE_CLUSTER_ROUTINE_SET_STORE;
 	}
 }

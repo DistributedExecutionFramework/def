@@ -69,7 +69,9 @@ public class ExecLogicServiceClientTest {
 				UUID.randomUUID().toString(),
 				"name",
 				"description",
-				0
+				0,
+				new HashMap<>(),
+				new LinkedList<>()
 		);
 		when(requestServiceMock.getProgram(pId)).thenReturn(ticketId);
 		when(responseServiceMock.getProgram(ticketId)).thenReturn(program);
@@ -101,8 +103,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> deleteProgram = client.deleteProgram(pId);
 		await().atMost(30, TimeUnit.SECONDS).until(deleteProgram::isDone);
-		assertTrue(deleteProgram.isDone());
-		assertNull(deleteProgram.get());
 	}
 
 	@Test
@@ -113,8 +113,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> abortProgram = client.abortProgram(pId);
 		await().atMost(30, TimeUnit.SECONDS).until(abortProgram::isDone);
-		assertTrue(abortProgram.isDone());
-		assertNull(abortProgram.get());
 	}
 
 	@Test
@@ -125,8 +123,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> future = client.updateProgramName(pId, "name");
 		await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
-		assertTrue(future.isDone());
-		assertNull(future.get());
 	}
 
 	@Test
@@ -137,8 +133,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> future = client.updateProgramDescription(pId, "description");
 		await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
-		assertTrue(future.isDone());
-		assertNull(future.get());
 	}
 
 	@Test
@@ -149,9 +143,20 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> programFinished = client.markProgramAsFinished(pId);
 		await().atMost(30, TimeUnit.SECONDS).until(programFinished::isDone);
-		assertTrue(programFinished.isDone());
-		assertNull(programFinished.get());
 	}
+
+	@Test
+	public void startClientRoutine() throws Exception {
+		String pId = UUID.randomUUID().toString();
+		String crId = UUID.randomUUID().toString();
+		String ticketId = UUID.randomUUID().toString();
+		when(requestServiceMock.startClientRoutine(pId, crId)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		Future<Void> attachAndStartClientRoutine = client.startClientRoutine(pId, crId);
+		await().atMost(30, TimeUnit.SECONDS).until(attachAndStartClientRoutine::isDone);
+		assertTrue(attachAndStartClientRoutine.isDone());
+	}
+
 
 	@Test
 	public void getAllJobs() throws Exception {
@@ -191,7 +196,8 @@ public class ExecLogicServiceClientTest {
 				jId, pId, ExecutionState.SUCCESS,
 				rnd.nextLong(), rnd.nextLong(), rnd.nextLong(),
 				rnd.nextInt(), rnd.nextInt(), rnd.nextInt(), rnd.nextInt(),
-				UUID.randomUUID().toString()
+				UUID.randomUUID().toString(),
+				new LinkedList<>()
 		);
 		when(requestServiceMock.getJob(pId, jId)).thenReturn(ticketId);
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
@@ -209,8 +215,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> jobDelete = client.deleteJob(pId, jId);
 		await().atMost(30, TimeUnit.SECONDS).until(jobDelete::isDone);
-		assertTrue(jobDelete.isDone());
-		assertNull(jobDelete.get());
 	}
 
 	@Test
@@ -236,8 +240,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> attachMapRoutine = client.attachMapRoutine(pId, jId, routineId);
 		await().atMost(30, TimeUnit.SECONDS).until(attachMapRoutine::isDone);
-		assertTrue(attachMapRoutine.isDone());
-		assertNull(attachMapRoutine.get());
 	}
 
 
@@ -264,8 +266,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> attachReduceRoutine = client.attachReduceRoutine(pId, jId, routineId);
 		await().atMost(30, TimeUnit.SECONDS).until(attachReduceRoutine::isDone);
-		assertTrue(attachReduceRoutine.isDone());
-		assertNull(attachReduceRoutine.get());
 	}
 
 	@Test
@@ -354,8 +354,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> jobComplete = client.markJobAsComplete(pId, jId);
 		await().atMost(30, TimeUnit.SECONDS).until(jobComplete::isDone);
-		assertTrue(jobComplete.isDone());
-		assertNull(jobComplete.get());
 	}
 
 	@Test
@@ -367,8 +365,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> abortJob = client.abortJob(pId, jId);
 		await().atMost(30, TimeUnit.SECONDS).until(abortJob::isDone);
-		assertTrue(abortJob.isDone());
-		assertNull(abortJob.get());
 	}
 
 	@Test
@@ -381,8 +377,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> abortTask = client.abortTask(pId, jId, tId);
 		await().atMost(30, TimeUnit.SECONDS).until(abortTask::isDone);
-		assertTrue(abortTask.isDone());
-		assertNull(abortTask.get());
 	}
 
 	@Test
@@ -395,8 +389,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> abortTask = client.reRunTask(pId, jId, tId);
 		await().atMost(30, TimeUnit.SECONDS).until(abortTask::isDone);
-		assertTrue(abortTask.isDone());
-		assertNull(abortTask.get());
 	}
 
 
@@ -454,8 +446,6 @@ public class ExecLogicServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 		Future<Void> deleteResource = client.deleteSharedResource(pId, rId);
 		await().atMost(30, TimeUnit.SECONDS).until(deleteResource::isDone);
-		assertTrue(deleteResource.isDone());
-		assertNull(deleteResource.get());
 	}
 
 	@Test

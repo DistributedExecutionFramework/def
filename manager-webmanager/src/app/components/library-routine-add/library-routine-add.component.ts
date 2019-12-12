@@ -6,11 +6,12 @@ import {LibraryService} from '../../services/LibraryService/library.service';
 import {Observable} from 'rxjs/internal/Observable';
 import {RoutineBinary} from '../../entities/routine-binary';
 import {ParallelHasher} from 'ts-md5/dist/parallel_hasher';
-import {Language, Routine, RoutineType} from '../../entities/routine';
-import {filter, finalize} from 'rxjs/operators';
+import {Routine, RoutineType} from '../../entities/routine';
+import {finalize} from 'rxjs/operators';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NavigationElement} from '../../routing/navigation-element';
 import {Feature} from "../../entities/feature";
+import {RoutineBinaryChunk} from "../../entities/routine-binary-chunk";
 
 @Component({
   selector: 'app-library-routine-add',
@@ -22,6 +23,7 @@ export class LibraryRoutineAddComponent implements OnInit {
   navigationPath: NavigationElement[] = [];
   activeNavigationElement: NavigationElement;
   private readonly hasher: ParallelHasher = new ParallelHasher('./assets/md5_worker.js');
+  private readonly chunkSize: number = 1000000; // 1 MB
   name: string;
   private: boolean;
   description: string;
@@ -113,11 +115,13 @@ export class LibraryRoutineAddComponent implements OnInit {
   fileSelect(routineBinary: RoutineBinary, event: any): void {
     const file: File = event.target.files[0];
     if (file !== undefined && file != null) {
+      routineBinary.name = file.name;
       routineBinary.sizeInBytes = file.size;
+      routineBinary.file = file;
 
       const fileReader = new FileReader();
       fileReader.onloadend = e => {
-        routineBinary.data = fileReader.result;
+        //routineBinary.data = fileReader.result;
         const blob = new Blob([fileReader.result]);
         this.hasher.hash(blob).then(
           md5 => routineBinary.md5 = md5
@@ -133,7 +137,6 @@ export class LibraryRoutineAddComponent implements OnInit {
     routine.name = this.name;
     routine.description = this.description;
     routine.revision = 1;
-    //routine.language = this.language;
     routine.type = this.type;
     routine.privateRoutine = this.private;
     if (this.arguments.length > 0) {
@@ -178,7 +181,7 @@ export class LibraryRoutineAddComponent implements OnInit {
   }
 
   languageChange(): void {
-    let lang = this.languageFeature.name.toLowerCase();
+    const lang = this.languageFeature.name.toLowerCase();
     if (lang.includes('java') || lang.includes('c#')) {
       this.arguments = 'full.class.Name';
     } else if (lang.includes('matlab')) {
@@ -189,22 +192,65 @@ export class LibraryRoutineAddComponent implements OnInit {
     this.requiredFeatures = [];
   }
 
-  private uploadBinaries(rId: string) {
-    this.routineBinaries.forEach(async binary => {
-      await this.libraryService.uploadBinary(rId, binary).toPromise();
+  // this method is necessary because async/await doesn't work in forEach otherwise
+  async asyncForEach(array: RoutineBinary[], callback) {
+    for (let index = 0; index < array.length; index++) {
+      await callback(array[index], index, array);
+    }
+  }
+
+  // this method is necessary because async/await doesn't work in forEach otherwise
+  uploadBinaries = async(rId: string) => {
+    await this.asyncForEach(this.routineBinaries, async (element) => {
+      console.log('Upload binary with name ' + element.name);
+      await this.createRoutineBinary(rId, element);
+    });
+    console.log('Uploading done!');
+  }
+
+  private async createRoutineBinary(rId: string, binary: RoutineBinary) {
+    return this.libraryService.createRoutineBinary(rId, binary).toPromise().then(async result => {
+      let rbId = result.toString();
+      console.log('RoutineBinary with name ' + binary.name + ' - BinaryId: ' + rbId + ' created. Upload chunks.');
+      let totalChunks = Math.ceil(binary.file.size / this.chunkSize);
+      totalChunks = totalChunks == 0 ? 1 : totalChunks;
+      //let fr = new FileReader();
+      for (let i = 0; i < totalChunks; i++) {
+        let routineBinaryChunk = new RoutineBinaryChunk();
+        routineBinaryChunk.chunk = i;
+        routineBinaryChunk.totalChunks = totalChunks;
+        routineBinaryChunk.chunkSize = this.chunkSize;
+        let blob = binary.file.slice(i * this.chunkSize, i * this.chunkSize + this.chunkSize);
+        routineBinaryChunk.data = await this.readAsArrayBuffer(blob);
+        await this.uploadRoutineBinary(rbId, routineBinaryChunk);
+        /*
+        fr.onloadend = e => {
+          routineBinaryChunk.data = fr.result;
+          this.uploadRoutineBinary(rbId, routineBinaryChunk);
+        }
+        fr.readAsArrayBuffer(blob);
+        */
+      }
     });
   }
 
-  getLanguages(): Language[] {
-    return this.libraryService.getLanguages();
+  private async readAsArrayBuffer(blob: Blob)  {
+    let result = await new Promise<any>((resolve) => {
+      let fileReader = new FileReader();
+      fileReader.onloadend = (e) => {
+        resolve(fileReader.result);
+      };
+      fileReader.readAsArrayBuffer(blob);
+    });
+    return result;
+  }
+
+  private async uploadRoutineBinary(rbId: string, routineBinaryChunk: RoutineBinaryChunk) {
+    await this.libraryService.uploadRoutineBinaryChunk(rbId, routineBinaryChunk).toPromise();
   }
 
   getRoutineTypes(): RoutineType[] {
     return this.libraryService.getRoutineTypes();
-  }
-
-  getLanguageName(language: Language): string {
-    return this.libraryService.getLanguageName(language);
   }
 
   getRoutineTypeName(routineType: RoutineType): string {

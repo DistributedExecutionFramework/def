@@ -16,7 +16,9 @@ import org.mockito.Mockito;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.when;
@@ -133,7 +135,7 @@ public class ClusterServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> futureStatus = client.addNode(endpoint, type);
-		assertNull(futureStatus.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureStatus::isDone);
 	}
 
 	@Test
@@ -145,7 +147,7 @@ public class ClusterServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> futureStatus = client.removeNode(nId);
-		assertNull(futureStatus.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureStatus::isDone);
 	}
 
 
@@ -193,33 +195,58 @@ public class ClusterServiceClientTest {
 			NodeType.WORKER,
 			endpoint
 		);
-		assertNull(futureStatus.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureStatus::isDone);
 	}
 
 	@Test
-	public void getStoreRoutine() throws Exception {
+	public void getStoreRoutineWorker() throws Exception {
 		String ticketId = UUID.randomUUID().toString();
 		String routineId = UUID.randomUUID().toString();
 
-		when(requestServiceMock.getStoreRoutine()).thenReturn(ticketId);
+		when(requestServiceMock.getStoreRoutine(NodeType.WORKER)).thenReturn(ticketId);
 		when(responseServiceMock.getStoreRoutine(ticketId)).thenReturn(routineId);
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
-		Future<String> future = client.getStoreRoutine();
+		Future<String> future = client.getStoreRoutine(NodeType.WORKER);
+		assertEquals(routineId, future.get());
+	}
+
+	@Test
+	public void getStoreRoutineReducer() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String routineId = UUID.randomUUID().toString();
+
+		when(requestServiceMock.getStoreRoutine(NodeType.REDUCER)).thenReturn(ticketId);
+		when(responseServiceMock.getStoreRoutine(ticketId)).thenReturn(routineId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<String> future = client.getStoreRoutine(NodeType.REDUCER);
 		assertEquals(routineId, future.get());
 	}
 
 
 	@Test
-	public void setStoreRoutine() throws Exception {
+	public void setStoreRoutineWorker() throws Exception {
 		String ticketId = UUID.randomUUID().toString();
 		String routineId = UUID.randomUUID().toString();
 
-		when(requestServiceMock.setStoreRoutine(routineId)).thenReturn(ticketId);
+		when(requestServiceMock.setStoreRoutine(routineId, NodeType.WORKER)).thenReturn(ticketId);
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
-		Future<Void> future = client.setStoreRoutine(routineId);
-		assertNull(future.get());
+		Future<Void> future = client.setStoreRoutine(routineId, NodeType.WORKER);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+	}
+
+	@Test
+	public void setStoreRoutineReducer() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String routineId = UUID.randomUUID().toString();
+
+		when(requestServiceMock.setStoreRoutine(routineId, NodeType.REDUCER)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.setStoreRoutine(routineId, NodeType.REDUCER);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 
@@ -233,6 +260,7 @@ public class ClusterServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<String> future = client.getDefaultMapRoutine();
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 		assertEquals(routineId, future.get());
 	}
 
@@ -246,7 +274,7 @@ public class ClusterServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> future = client.setDefaultMapRoutine(routineId);
-		assertNull(future.get());
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 	}
 
 
@@ -268,6 +296,7 @@ public class ClusterServiceClientTest {
 		when(responseServiceMock.getNodeServiceEndpointConfiguration(ticketId)).thenReturn(serviceEndpointDTO);
 
 		Future<ServiceEndpointDTO> futureResult = client.getNodeServiceEndpointConfiguration(nodeType);
+		await().atMost(10, TimeUnit.SECONDS).until(futureResult::isDone);
 		assertEquals(serviceEndpointDTO, futureResult.get());
 	}
 
@@ -281,6 +310,7 @@ public class ClusterServiceClientTest {
 		when(responseServiceMock.getLibraryEndpointConfiguration(ticketId)).thenReturn(serviceEndpointDTO);
 
 		Future<ServiceEndpointDTO> futureResult = client.getLibraryEndpointConfiguration();
+		await().atMost(10, TimeUnit.SECONDS).until(futureResult::isDone);
 		assertEquals(serviceEndpointDTO, futureResult.get());
 	}
 
@@ -299,6 +329,7 @@ public class ClusterServiceClientTest {
 		when(responseServiceMock.findNodesForShutdown(ticketId)).thenReturn(list);
 
 		Future<List<String>> futureResult = client.findNodesForShutdown(nodeType, nrOfNodes);
+		await().atMost(10, TimeUnit.SECONDS).until(futureResult::isDone);
 		assertEquals(list, futureResult.get());
 	}
 }

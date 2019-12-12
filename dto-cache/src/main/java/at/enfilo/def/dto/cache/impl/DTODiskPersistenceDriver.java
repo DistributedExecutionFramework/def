@@ -17,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -112,6 +113,20 @@ public class DTODiskPersistenceDriver<T extends TBase> implements IDTOPersistenc
 		acquireLockForId(id);
 		getFile(id).delete();
 		releaseLockForId(id);
+	}
+
+	@Override
+	public void remove(Collection<String> ids) {
+		try {
+			overallLock.acquire(MAX_LOCKS);
+			for (String id : ids) {
+				getFile(id).delete();
+			}
+		} catch (InterruptedException e) {
+			LOGGER.error("Error while acquiring overallLock.", e);
+		} finally {
+			overallLock.release(MAX_LOCKS);
+		}
 	}
 
 	@Override

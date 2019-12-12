@@ -1,4 +1,6 @@
-task-scheduling-strategy: at.enfilo.def.scheduler.strategy.RoundRobinSchedulingStrategy
+task-scheduling-strategy: at.enfilo.def.scheduler.worker.strategy.RoundRobinTaskSchedulingStrategy
+reduce-scheduling-strategy: at.enfilo.def.scheduler.reducer.strategy.DefaultReduceSchedulingStrategy
+program-scheduling-strategy: at.enfilo.def.scheduler.clientroutineworker.strategy.RoundRobinProgramSchedulingStrategy
 
 notification-from-node:
   periodically: false

@@ -1,6 +1,8 @@
 package at.enfilo.def.library.impl;
 
 import at.enfilo.def.communication.api.common.server.IServer;
+import at.enfilo.def.communication.dto.Protocol;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ServerCreationException;
 import at.enfilo.def.communication.impl.ticket.TicketHandlerDaemon;
 import at.enfilo.def.communication.util.ServiceRegistry;
@@ -33,6 +35,7 @@ public abstract class LibraryAdminServiceTest {
     private RoutineDTO routine;
     private List<String> routineIds;
     private RoutineBinaryDTO routineBinary;
+    private RoutineBinaryChunkDTO chunk;
     private DataTypeDTO dataType;
     private List<String> dataTypeIds;
     private TagDTO tag;
@@ -52,9 +55,14 @@ public abstract class LibraryAdminServiceTest {
         routineIds.add(routine.getId());
         routineBinary = new RoutineBinaryDTO();
         routineBinary.setId(UUID.randomUUID().toString());
+        routineBinary.setName("binaryName");
         routineBinary.setMd5("md5");
 		routineBinary.setSizeInBytes(4);
-		routineBinary.setData(new byte[]{0x00, 0x01, 0x03, 0x04});
+		chunk = new RoutineBinaryChunkDTO();
+		chunk.setChunk((short) 1);
+		chunk.setTotalChunks((short) 1);
+		chunk.setChunkSize(1000);
+		chunk.setData(new byte[]{0x00, 0x01, 0x03, 0x04});
         routine.addToRoutineBinaries(routineBinary);
         dataType = new DataTypeDTO();
         dataType.setId(UUID.randomUUID().toString());
@@ -130,25 +138,33 @@ public abstract class LibraryAdminServiceTest {
     }
 
     @Test
-    public void uploadRoutineBinary() throws Exception {
-    	when(libraryController.uploadRoutineBinary(
-    			routine.getId(),
+    public void createRoutineBinary() throws Exception {
+        when(libraryController.createRoutineBinary(
+                routine.getId(),
+                routineBinary.getName(),
 				routineBinary.getMd5(),
 				routineBinary.getSizeInBytes(),
-				routineBinary.isPrimary(),
-				routineBinary.bufferForData()
-		)).thenReturn(routineBinary.getId());
+				routineBinary.isPrimary()
+        )).thenReturn(routineBinary.getId());
 
-        Future<String> futureId = client.uploadRoutineBinary(
-            routine.getId(),
+        Future<String> futureId = client.createRoutineBinary(
+                routine.getId(),
+                routineBinary.getName(),
             routineBinary.getMd5(),
             routineBinary.getSizeInBytes(),
-            routineBinary.isPrimary(),
-			routineBinary.bufferForData()
+            routineBinary.isPrimary()
         );
         await().atMost(30, TimeUnit.SECONDS).until(futureId::isDone);
 
         assertEquals(routineBinary.getId(), futureId.get());
+    }
+
+    @Test
+    public void uploadRoutineBinaryChunk() throws Exception {
+        Future<Void> future = client.uploadRoutineBinaryChunk(routineBinary.getId(), chunk);
+        await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
+
+        verify(libraryController).uploadRoutineBinaryChunk(routineBinary.getId(), chunk);
     }
 
     @Test
@@ -266,5 +282,26 @@ public abstract class LibraryAdminServiceTest {
         await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
 
         assertEquals(featureDTOS, future.get());
+    }
+
+    @Test
+    public void setMasterLibrary() throws Exception {
+        ServiceEndpointDTO endpoint = new ServiceEndpointDTO("host", 1234, Protocol.THRIFT_TCP);
+
+        Future<Void> future = client.setMasterLibrary(endpoint);
+        await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
+
+        verify(libraryController, times(1)).setMasterLibraryEndpoint(endpoint);
+    }
+
+    @Test
+    public void getMasterLibrary() throws Exception {
+        ServiceEndpointDTO masterLibrary = new ServiceEndpointDTO("host", 1234, Protocol.REST);
+        when(libraryController.getMasterLibraryEndpoint()).thenReturn(masterLibrary);
+
+        Future<ServiceEndpointDTO> future = client.getMasterLibrary();
+        await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
+
+        assertEquals(masterLibrary, future.get());
     }
 }

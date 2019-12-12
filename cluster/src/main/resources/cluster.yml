@@ -3,12 +3,12 @@ cloud-type: PRIVATE
 default-map-routine: 4e339e30-cd45-3101-8bb1-39f18895846a
 
 library-endpoint:
-  host: localhost
+  host: 127.0.0.1
   port: 40042
   protocol: THRIFT_TCP
 
 reducer-scheduler-endpoint:
-  host: localhost
+  host: 127.0.0.1
   port: 40022
   protocol: THRIFT_TCP
 
@@ -53,9 +53,31 @@ workers-configuration:
   timeout: 30
   timeout-unit: SECONDS
 
+client-routine-workers-scheduler-endpoint:
+  host: localhost
+  port: 40022
+  protocol: THRIFT_TCP
+
+client-routine-workers-configuration:
+  store-routine: 92979065-f681-32bf-be17-94271ec3900a
+  image: default-image-name
+  size: t1.micro
+  service-endpoint:
+    protocol: THRIFT_TCP
+    port: 40032
+  notification-from-node:
+    periodically: true
+    period-duration: 10
+    period-unit: SECONDS
+    endpoint:
+      protocol: THRIFT_TCP
+      port: 40012
+  timeout: 30
+  timeout-unit: SECONDS
+
 def-servers:
   rest:
-    enabled: true
+    enabled: false
     port: 40010
     bind-address: 0.0.0.0
     url-pattern: /api/*

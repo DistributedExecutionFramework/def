@@ -5,6 +5,7 @@ import at.enfilo.def.node.api.thrift.NodeResponseService;
 import at.enfilo.def.transfer.dto.FeatureDTO;
 import at.enfilo.def.transfer.dto.NodeEnvironmentDTO;
 import at.enfilo.def.transfer.dto.NodeInfoDTO;
+import at.enfilo.def.transfer.dto.QueueInfoDTO;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -21,6 +22,24 @@ public interface INodeResponseService extends NodeResponseService.Iface, IResour
     @Produces(MediaType.APPLICATION_JSON)
     @Override
     NodeInfoDTO getInfo(@QueryParam("ticketId") String ticketId);
+
+    @GET
+    @Path("/store-routine")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String getStoreRoutine(@QueryParam("ticketId") String ticketId);
+
+    @GET
+    @Path("/queue")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    List<String> getQueueIds(@QueryParam("ticketId") String ticketId);
+
+    @GET
+    @Path("/queue/qId")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    QueueInfoDTO getQueueInfo(@QueryParam("ticketId") String ticketId);
 
     @GET
     @Path("/environment")

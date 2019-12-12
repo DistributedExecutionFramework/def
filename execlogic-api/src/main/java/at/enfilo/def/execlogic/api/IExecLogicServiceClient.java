@@ -1,7 +1,6 @@
 package at.enfilo.def.execlogic.api;
 
 import at.enfilo.def.communication.api.common.client.IServiceClient;
-import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.transfer.dto.*;
 
@@ -43,7 +42,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * Delete existing Program (pId).
 	 *
 	 * @param pId - program id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> deleteProgram(String pId) throws ClientCommunicationException;
 
@@ -52,7 +50,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
 	 *
 	 * @param pId - program id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> abortProgram(String pId) throws ClientCommunicationException;
 
@@ -61,7 +58,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId	the id of the program the name should be updated
 	 * @param name	the new name of the program
-	 * @return Future {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> updateProgramName(String pId, String name) throws ClientCommunicationException;
 
@@ -70,15 +66,21 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId	the id of the program the description should be updated
 	 * @param description	the new description of the program
-	 * @return Future {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> updateProgramDescription(String pId, String description) throws ClientCommunicationException;
+
+	/**
+	 * Attach and start a client routine
+	 *
+	 * @param pId	program id to attach client routine
+	 * @param crId	client routine id
+	 */
+	Future<Void> startClientRoutine(String pId, String crId) throws ClientCommunicationException;
 
 	/**
 	 * Mark Program (pId) as finished.
 	 *
 	 * @param pId - program id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> markProgramAsFinished(String pId) throws ClientCommunicationException;
 
@@ -112,7 +114,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId - program id
 	 * @param jId - job id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> deleteJob(String pId, String jId) throws ClientCommunicationException;
 
@@ -131,7 +132,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * @param pId - program id
 	 * @param jId - job id
 	 * @param mapRoutineId
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> attachMapRoutine(String pId, String jId, String mapRoutineId) throws ClientCommunicationException;
 
@@ -150,7 +150,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * @param pId - program id
 	 * @param jId - job id
 	 * @param reduceRoutineId
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> attachReduceRoutine(String pId, String jId, String reduceRoutineId) throws ClientCommunicationException;
 
@@ -211,7 +210,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId - program id
 	 * @param jId - job id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> markJobAsComplete(String pId, String jId) throws ClientCommunicationException;
 
@@ -220,7 +218,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId - program id
 	 * @param jId - job id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> abortJob(String pId, String jId) throws ClientCommunicationException;
 
@@ -230,7 +227,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * @param pId - program id
 	 * @param jId - job id
 	 * @param tId - task id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> abortTask(String pId, String jId, String tId) throws ClientCommunicationException;
 
@@ -241,7 +237,6 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 * @param pId - program id
 	 * @param jId - job id
 	 * @param tId - task id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> reRunTask(String pId, String jId, String tId) throws ClientCommunicationException;
 
@@ -277,14 +272,22 @@ public interface IExecLogicServiceClient extends IServiceClient {
 	 *
 	 * @param pId - program id
 	 * @param rId - resource id
-	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
 	Future<Void> deleteSharedResource(String pId, String rId) throws ClientCommunicationException;
 
 	/**
-	 * Wait for job is either {@link ExecutionState::SUCESS} or {@link ExecutionState::FAILED}
+	 * Wait for job is either {@link ExecutionState::SUCCESS} or {@link ExecutionState::FAILED}
 	 * @param jId
 	 * @return
 	 */
 	JobDTO waitForJob(String pId, String jId) throws ClientCommunicationException, InterruptedException;
+
+	/**
+	 * Wait for program is either {@link ExecutionState::SUCCESS} or {@link ExecutionState::FAILED}
+	 * @param pId
+	 * @return
+	 * @throws ClientCommunicationException
+	 * @throws InterruptedException
+	 */
+	ProgramDTO waitForProgram(String pId) throws ClientCommunicationException, InterruptedException;
 }

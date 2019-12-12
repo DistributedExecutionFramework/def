@@ -44,14 +44,14 @@ public interface IExecLogicController {
 	 *
 	 * @param pId - to delete
 	 */
-	void deleteProgram(String pId) throws ExecLogicException, UnknownProgramException;
+	void deleteProgram(String pId) throws ExecLogicException, UnknownProgramException, UnknownJobException, UnknownTaskException;
 
 	/**
 	 * Abort program and all jobs and tasks.
 	 *
 	 * @param pId - to delete
 	 */
-	void abortProgram(String pId) throws ExecLogicException, UnknownProgramException;
+	void abortProgram(String pId) throws ExecLogicException, UnknownProgramException, UnknownJobException, UnknownTaskException;
 
 	/**
 	 * Updates the name of the program with the given id
@@ -72,6 +72,15 @@ public interface IExecLogicController {
 	 * @throws UnknownProgramException
 	 */
 	void updateProgramDescription(String pId, String description) throws ExecLogicException, UnknownProgramException;
+
+	/**
+	 * Attaches and starts a client routine
+	 *
+	 * @param pId - program id to attach client routine
+	 * @param crId - id of the client routine to be started
+	 * @throws ExecLogicException
+	 */
+	void startClientRoutine(String pId, String crId) throws ExecLogicException, UnknownProgramException;
 
 	/**
 	 * Mark Program as finished.
@@ -232,7 +241,7 @@ public interface IExecLogicController {
 	 * @param jId - job id to abort
 	 */
 	void abortJob(String pId, String jId)
-	throws ExecLogicException, UnknownProgramException, UnknownJobException;
+	throws ExecLogicException, UnknownProgramException, UnknownJobException, UnknownTaskException;
 
 	/**
 	 * Returns a list of shared resources associated to given program.
@@ -283,6 +292,7 @@ public interface IExecLogicController {
 	 * @param jId - job id
 	 * @param tId - task id
 	 */
-	void reRunTask(String pId, String jId, String tId) throws UnknownProgramException, ExecLogicException, UnknownJobException, UnknownTaskException;
+	void reRunTask(String pId, String jId, String tId)
+	throws UnknownProgramException, ExecLogicException, UnknownJobException, UnknownTaskException, Exception;
 
 }

@@ -1,5 +1,6 @@
 dependencies {
     compile project(':routine-api')
+    compile project(':client-api')
     compile project(':transfer') // TODO
 }
 

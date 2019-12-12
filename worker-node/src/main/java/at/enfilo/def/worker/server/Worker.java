@@ -7,6 +7,7 @@ import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import at.enfilo.def.node.api.thrift.NodeService;
 import at.enfilo.def.node.impl.NodeServiceImpl;
+import at.enfilo.def.node.util.DirectoryCleaner;
 import at.enfilo.def.worker.api.thrift.WorkerResponseService;
 import at.enfilo.def.worker.api.thrift.WorkerService;
 import at.enfilo.def.worker.impl.WorkerServiceImpl;
@@ -73,80 +74,15 @@ public class Worker extends ServerStartup<WorkerConfiguration> {
 		LOGGER.info("Startup worker");
 
 		// Cleanup working dir
-		Path workingDir = Paths.get(getInstance().readConfiguration().getWorkingDir());
-		if (workingDir.toFile().exists()) {
-			LOGGER.info("Existing working directory {} found.", workingDir.toAbsolutePath());
-			if (getInstance().readConfiguration().isCleanupWorkingDirOnStart()) {
-				LOGGER.debug("Try to cleanup.");
-				try {
-					cleanWorkingDirectory(workingDir);
-				} catch (IOException e) {
-					LOGGER.warn("Cannot clean working directory.", e);
-				}
-
-				boolean isDirsCreated = workingDir.toFile().mkdirs();
-				LOGGER.debug(
-					"Cleaned working directory \"{}\" - {}.",
-					workingDir.toAbsolutePath(),
-					isDirsCreated
-				);
-			} else {
-				LOGGER.info("Ignoring already existing working directory.");
-			}
-
-		} else {
-			boolean isDirsCreated = workingDir.toFile().mkdirs();
-			LOGGER.info(
-				"Create working directory: \"{}\" - {}.",
-				workingDir.toAbsolutePath(),
-				isDirsCreated
-			);
-		}
+		new DirectoryCleaner(LOGGER).cleanWorkingDirectory(getInstance().getConfiguration());
 
 		// Start services
-		getInstance().startServices();
-	}
+		try {
+			getInstance().startServices();
+		} catch (Exception e) {
+			LOGGER.error("Worker failed to start.", e);
+		}
 
-
-	/**
-	 * Cleanup WorkingDirectory.
-	 * Code from: http://stackoverflow.com/questions/779519/delete-directories-recursively-in-java
-	 *
-	 * @param workingDir
-	 * @throws IOException
-	 */
-	private static void cleanWorkingDirectory(Path workingDir) throws IOException {
-		Files.walkFileTree(workingDir, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
-
-			@Override
-			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-				// try to delete the file anyway, even if its attributes
-				// could not be read, since delete-only access is
-				// theoretically possible
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
-
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException
-			{
-				if (exc == null)
-				{
-					Files.delete(dir);
-					return FileVisitResult.CONTINUE;
-				}
-				else
-				{
-					// directory iteration failed; propagate exception
-					throw exc;
-				}
-			}
-		});
 	}
 
 	public static Worker getInstance() {

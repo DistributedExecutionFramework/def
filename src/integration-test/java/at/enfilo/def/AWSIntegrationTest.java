@@ -8,7 +8,6 @@ import at.enfilo.def.cloud.communication.server.CloudCommunication;
 import at.enfilo.def.cluster.api.ClusterServiceClientFactory;
 import at.enfilo.def.cluster.api.IClusterServiceClient;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
-import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.datatype.DEFDouble;
 import at.enfilo.def.demo.DefaultMapper;
 import at.enfilo.def.demo.DoubleSumReducer;
@@ -118,7 +117,8 @@ public class AWSIntegrationTest extends IntegrationTest {
         assertNotNull(libraryClient.getRoutine(defaultMapRoutineId).get());
         assertNotNull(libraryClient.getRoutine(storeRoutineId).get());
         clusterClient.setDefaultMapRoutine(defaultMapRoutineId);
-        clusterClient.setStoreRoutine(storeRoutineId);
+        clusterClient.setStoreRoutine(storeRoutineId, NodeType.WORKER);
+        clusterClient.setStoreRoutine(storeRoutineId, NodeType.REDUCER);
 
         // Create Program and Job with reduce
         String userId = UUID.randomUUID().toString();
@@ -127,7 +127,7 @@ public class AWSIntegrationTest extends IntegrationTest {
         String jId = defClient.createJob(pId).get();
         assertNotNull(jId);
         Future<Void> futureTicketStatus = defClient.attachReduceRoutine(pId, jId, UUID.nameUUIDFromBytes(DoubleSumReducer.class.getCanonicalName().getBytes()).toString());
-        assertNull(futureTicketStatus.get());
+        await().atMost(10, TimeUnit.SECONDS).until(futureTicketStatus::isDone);
 
         // Create 10 Tasks with PiCalc routine
         List<Future<String>> futureTaskIds = new LinkedList<>();
@@ -165,8 +165,6 @@ public class AWSIntegrationTest extends IntegrationTest {
         numberOfWorkers = 2;
         futureTicketStatus = managerClient.adjustNodePoolSize(clusterId, numberOfWorkers, NodeType.WORKER);
         await().atMost(120, TimeUnit.SECONDS).until(futureTicketStatus::isDone);
-        assertNotNull(futureTicketStatus.get());
-        assertNull(futureTicketStatus.get());
 
         clusterInfoFuture = managerClient.getClusterInfo(clusterId);
         await().atMost(10, TimeUnit.SECONDS).until(futureCreateAWSCluster::isDone);
@@ -197,16 +195,14 @@ public class AWSIntegrationTest extends IntegrationTest {
         //assertEquals(Math.PI, pi.getValue(), 1e4);
 
         Future<Void> futureDeleteJob = defClient.deleteJob(pId, jId);
-        assertNull(futureDeleteJob.get());
+        await().atMost(10, TimeUnit.SECONDS).until(futureDeleteJob::isDone);
         Future<Void> futureDeleteProgram = defClient.deleteProgram(pId);
-        assertNull(futureDeleteProgram.get());
+        await().atMost(10, TimeUnit.SECONDS).until(futureDeleteProgram::isDone);
 
         // Terminate workers
         numberOfWorkers = 1;
         futureTicketStatus = managerClient.adjustNodePoolSize(clusterId, numberOfWorkers, NodeType.WORKER);
         await().atMost(120, TimeUnit.SECONDS).until(futureTicketStatus::isDone);
-        assertNotNull(futureTicketStatus.get());
-        assertNull(futureTicketStatus.get());
 
         clusterInfoFuture = managerClient.getClusterInfo(clusterId);
         await().atMost(10, TimeUnit.SECONDS).until(futureCreateAWSCluster::isDone);
@@ -217,8 +213,6 @@ public class AWSIntegrationTest extends IntegrationTest {
         // Terminate cluster
         futureTicketStatus = managerClient.deleteCluster(clusterId);
         await().atMost(60, TimeUnit.SECONDS).until(futureTicketStatus::isDone);
-        assertNotNull(futureTicketStatus.get());
-        assertNull(futureTicketStatus.get());
         assertEquals(0, managerClient.getClusterIds().get().size());
     }
 

@@ -3,7 +3,7 @@ package at.enfilo.def.cluster.server;
 import at.enfilo.def.cluster.api.thrift.ClusterResponseService;
 import at.enfilo.def.cluster.api.thrift.ClusterService;
 import at.enfilo.def.cluster.impl.*;
-import at.enfilo.def.cluster.util.ClusterConfiguration;
+import at.enfilo.def.cluster.util.configuration.ClusterConfiguration;
 import at.enfilo.def.communication.api.common.service.IResource;
 import at.enfilo.def.communication.misc.ServerStartup;
 import at.enfilo.def.communication.thrift.ThriftProcessor;

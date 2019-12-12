@@ -4,6 +4,7 @@ import at.enfilo.def.communication.api.common.service.IResource;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.manager.api.thrift.ManagerResponseService;
 import at.enfilo.def.transfer.dto.ClusterInfoDTO;
+import at.enfilo.def.transfer.dto.FeatureDTO;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -35,4 +36,22 @@ public interface IManagerResponseService extends ManagerResponseService.Iface, I
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	List<String> getClusterIds(@QueryParam("ticketId") String ticketId);
+
+	@POST
+	@Path("/library/clientRoutines")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	String createClientRoutine(@QueryParam("ticketId") String ticketId);
+
+	@POST
+	@Path("/library/clientRoutines/binaries")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	String createClientRoutineBinary(@QueryParam("ticketId") String ticketId);
+
+	@GET
+	@Path("/library/feature")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	FeatureDTO getFeatureByNameAndVersion(@QueryParam("ticketId") String ticketId);
 }

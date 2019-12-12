@@ -7,11 +7,13 @@
 
 public enum Command
 {
-  GET_PARAMATER = 0,
-  EXEC_ROUTINE = 1,
-  SEND_RESULT = 2,
-  ROUTINE_DONE = 3,
-  LOG_DEBUG = 4,
-  LOG_INFO = 5,
-  LOG_ERROR = 6,
+    GET_PARAMETER = 0,
+    GET_PARAMETER_KEY = 1,
+    EXEC_ROUTINE = 2,
+    SEND_RESULT = 3,
+    ROUTINE_DONE = 4,
+    LOG_DEBUG = 5,
+    LOG_INFO = 6,
+    LOG_ERROR = 7,
+    CANCEL = 8
 }

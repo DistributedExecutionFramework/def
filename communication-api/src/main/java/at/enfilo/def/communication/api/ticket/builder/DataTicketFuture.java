@@ -25,7 +25,6 @@ class DataTicketFuture<T, V> extends AbstractTicketFuture<V> {
     private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(DataTicketFuture.class);
 
     private final Callable<V> callable;
-    private final ITicketServiceClient ticketServiceClient;
 
     private V value;
     private Future<V> responseFetcher;
@@ -38,7 +37,6 @@ class DataTicketFuture<T, V> extends AbstractTicketFuture<V> {
     ) throws IllegalArgumentException {
     	super(ticketServiceClient, ticketId, LOGGER);
 
-    	this.ticketServiceClient = ticketServiceClient;
         this.callable = () -> executorFunction.apply(client -> subjectProxyFunction.apply(client, ticketId));
     }
 

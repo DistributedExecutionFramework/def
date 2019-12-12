@@ -9,6 +9,7 @@ import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import org.apache.thrift.TBase;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -127,6 +128,16 @@ public class DTOCache<T extends TBase> {
 		LOGGER.debug("Remove object with id {} from cache.", id);
 		cache.remove(id);
 		driver.remove(id);
+	}
+
+	/**
+	 * Remove a batch of DTOs from cache (including persistence).
+	 * @param ids - DTOs to remove
+	 */
+	public void remove(Collection<String> ids) {
+		LOGGER.debug("Remove {} objects with from cache.", ids.size());
+		ids.forEach(cache::remove);
+		driver.remove(ids);
 	}
 
 	/**

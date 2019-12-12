@@ -151,20 +151,19 @@ implements IClusterServiceClient {
 	}
 
 	@Override
-	public Future<String> getStoreRoutine()
+	public Future<String> getStoreRoutine(NodeType nodeType)
 	throws ClientCommunicationException {
-		String ticketId = requestClient.execute(T::getStoreRoutine);
+		String ticketId = requestClient.execute(t -> t.getStoreRoutine(nodeType));
 		return new TicketFutureBuilder<R, String>()
 				.dataTicket(ticketId, ticketClient)
-
 				.request(R::getStoreRoutine)
 				.via(responseClient);
 	}
 
 	@Override
-	public Future<Void> setStoreRoutine(String routineId)
+	public Future<Void> setStoreRoutine(String routineId, NodeType nodeType)
 	throws ClientCommunicationException {
-		String ticketId = requestClient.execute(t -> t.setStoreRoutine(routineId));
+		String ticketId = requestClient.execute(t -> t.setStoreRoutine(routineId, nodeType));
 		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
 	}
 

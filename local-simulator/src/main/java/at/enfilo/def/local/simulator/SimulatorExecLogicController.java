@@ -116,6 +116,11 @@ public class SimulatorExecLogicController implements IExecLogicController {
 	}
 
 	@Override
+	public void startClientRoutine(String pId, String crId) throws ExecLogicException, UnknownProgramException {
+		// TODO implement
+	}
+
+	@Override
 	public void markProgramAsFinished(String pId) throws ExecLogicException, UnknownProgramException {
 		ProgramDTO program = programs.get(pId);
 		if (program != null) {

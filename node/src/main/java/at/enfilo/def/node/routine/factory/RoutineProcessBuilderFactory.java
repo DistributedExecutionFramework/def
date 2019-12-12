@@ -4,8 +4,8 @@ import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.library.api.ILibraryServiceClient;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.node.api.RoutineCreationException;
-import at.enfilo.def.node.api.RoutineExecutionException;
+import at.enfilo.def.node.api.exception.RoutineCreationException;
+import at.enfilo.def.node.api.exception.RoutineExecutionException;
 import at.enfilo.def.node.routine.exec.SequenceStep;
 import at.enfilo.def.node.routine.factory.impl.GenericConfigurationProcessBuilder;
 import at.enfilo.def.node.util.NodeConfiguration;
@@ -22,7 +22,8 @@ public class RoutineProcessBuilderFactory {
     private final ILibraryServiceClient libraryServiceClient;
     private final NodeConfiguration nodeConfiguration;
 
-    public RoutineProcessBuilderFactory(ILibraryServiceClient libraryServiceClient, NodeConfiguration nodeConfiguration, IRoutineProcessBuilderFactory processBuilderFactory) {
+    public RoutineProcessBuilderFactory(ILibraryServiceClient libraryServiceClient, NodeConfiguration nodeConfiguration,
+                                        IRoutineProcessBuilderFactory processBuilderFactory) {
         this.libraryServiceClient = libraryServiceClient;
         this.nodeConfiguration = nodeConfiguration;
         this.processBuilderFactory = processBuilderFactory;
@@ -32,7 +33,8 @@ public class RoutineProcessBuilderFactory {
         this(libraryServiceClient, nodeConfiguration, new GenericConfigurationProcessBuilder());
     }
 
-    public ProcessBuilder build(Path workingDir, SequenceStep step) throws RoutineExecutionException, RoutineCreationException {
+    public ProcessBuilder build(Path workingDir, SequenceStep step)
+            throws RoutineExecutionException, RoutineCreationException {
         try {
             // Fetch routine and create process builder
             RoutineDTO routine = libraryServiceClient.getRoutine(step.getRoutineId()).get();
@@ -52,19 +54,28 @@ public class RoutineProcessBuilderFactory {
         ProcessBuilder processBuilder;
         switch (routine.getType()) {
             case STORE:
-                processBuilder = processBuilderFactory.getRoutineProcessBuilder(routine, step, nodeConfiguration, false);
+                processBuilder = processBuilderFactory.getRoutineProcessBuilder(
+                        routine, step, nodeConfiguration, false);
                 break;
 
             case OBJECTIVE:
-                processBuilder = processBuilderFactory.getRoutineProcessBuilder(routine, step, nodeConfiguration, true);
+                processBuilder = processBuilderFactory.getRoutineProcessBuilder(
+                        routine, step, nodeConfiguration, true);
                 break;
 
             case MAP:
-                processBuilder = processBuilderFactory.getRoutineProcessBuilder(routine, step, nodeConfiguration, true);
+                processBuilder = processBuilderFactory.getRoutineProcessBuilder(
+                        routine, step, nodeConfiguration, true);
                 break;
 
             case REDUCE:
-                processBuilder = processBuilderFactory.getRoutineProcessBuilder(routine, step, nodeConfiguration, true);
+                processBuilder = processBuilderFactory.getRoutineProcessBuilder(
+                        routine, step, nodeConfiguration, true);
+                break;
+
+            case CLIENT:
+                processBuilder = processBuilderFactory.getRoutineProcessBuilder(
+                        routine, step, nodeConfiguration, false);
                 break;
 
             default:

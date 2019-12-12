@@ -3,7 +3,8 @@
     "navigation navigation"
     "cluster-details performance-data"
     "worker-area worker-area"
-    "reducer-area reducer-area";
+    "reducer-area reducer-area"
+    "client-routine-worker-area client-routine-worker-area";
   grid-template-columns: 1fr 1fr;
   grid-gap: var(--grid-gap);
 }
@@ -51,6 +52,10 @@
 
 .reducer-area {
   grid-area: reducer-area;
+}
+
+.client-routine-worker-area {
+  grid-area: client-routine-worker-area;
 }
 
 .missing-info {

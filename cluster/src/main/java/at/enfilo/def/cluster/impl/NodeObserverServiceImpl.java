@@ -16,40 +16,69 @@ public class NodeObserverServiceImpl implements INodeObserverService, NodeObserv
 	private final ClusterExecLogicController execLogicController;
 	private final WorkerController workerController;
 	private final ReducerController reducerController;
+	private final ClientRoutineWorkerController clientRoutineWorkerController;
 
 	public NodeObserverServiceImpl() {
 		this(
 				TicketRegistry.getInstance(),
 				ClusterExecLogicController.getInstance(),
 				WorkerController.getInstance(),
-				ReducerController.getInstance()
+				ReducerController.getInstance(),
+				ClientRoutineWorkerController.getInstance()
 		);
 	}
 
 	public NodeObserverServiceImpl(
-		ITicketRegistry ticketRegistry,
-		ClusterExecLogicController execLogicController,
-		WorkerController workerController,
-		ReducerController reducerController
+			ITicketRegistry ticketRegistry,
+			ClusterExecLogicController execLogicController,
+			WorkerController workerController,
+			ReducerController reducerController,
+			ClientRoutineWorkerController clientRoutineWorkerController
 	) {
 		this.ticketRegistry = ticketRegistry;
 		this.execLogicController = execLogicController;
 		this.workerController = workerController;
 		this.reducerController = reducerController;
+		this.clientRoutineWorkerController = clientRoutineWorkerController;
 	}
 
 	@Override
-	public String notifyTasksNewState(String nId, List<String> taskIds, ExecutionState newState) {
+	public String notifyElementsNewState(String nId, List<String> elementIds, ExecutionState newState) {
 		ITicket ticket = ticketRegistry.createTicket(() -> {
-				execLogicController.notifyTasksNewState(nId, taskIds, newState);
-				workerController.notifyTasksNewState(nId, taskIds, newState);
+			if (workerController.containsNode(nId)) {
+				execLogicController.notifyTasksNewState(nId, elementIds, newState);
+				workerController.notifyTasksNewState(nId, elementIds, newState);
+			} else if (reducerController.containsNode(nId)) {
+				reducerController.notifyJobsNewState(nId, elementIds, newState);
+			} else if (clientRoutineWorkerController.containsNode(nId)) {
+				execLogicController.notifyProgramsNewState(nId, elementIds, newState);
+				clientRoutineWorkerController.notifyProgramsNewState(nId, elementIds, newState);
+			}
 		});
 		return ticket.getId().toString();
 	}
 
 	@Override
-	public String notifyTasksReceived(String nId, List<String> taskIds) {
-		ITicket ticket = ticketRegistry.createTicket(() -> workerController.notifyTasksReceived(nId, taskIds));
+	public String notifyTasksReceived(String nId, List<String> elementIds) {
+		ITicket ticket = ticketRegistry.createTicket(() ->
+				workerController.notifyTasksReceived(nId, elementIds)
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String notifyProgramsReceived(String nId, List<String> programIds) {
+		ITicket ticket = ticketRegistry.createTicket(() ->
+				clientRoutineWorkerController.notifyProgramsReceived(nId, programIds)
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String notifyReduceKeysReceived(String nId, String jId, List<String> reduceKeys) {
+		ITicket ticket = ticketRegistry.createTicket(() ->
+				reducerController.notifyReduceKeysReceived(nId, jId, reduceKeys)
+		);
 		return ticket.getId().toString();
 	}
 
@@ -61,6 +90,8 @@ public class NodeObserverServiceImpl implements INodeObserverService, NodeObserv
 						workerController.notifyNodeInfo(nId, nodeInfo);
 					} else if (reducerController.containsNode(nId)) {
 						reducerController.notifyNodeInfo(nId, nodeInfo);
+					} else if (clientRoutineWorkerController.containsNode(nId)) {
+						clientRoutineWorkerController.notifyNodeInfo(nId, nodeInfo);
 					}
 				},
 				ITicket.SERVICE_PRIORITY

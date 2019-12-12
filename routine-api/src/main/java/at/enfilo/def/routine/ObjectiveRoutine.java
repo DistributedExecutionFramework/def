@@ -1,7 +1,17 @@
 package at.enfilo.def.routine;
 
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
+import at.enfilo.def.communication.exception.ClientCommunicationException;
+import at.enfilo.def.communication.exception.ClientCreationException;
+import at.enfilo.def.datatype.DEFString;
+import at.enfilo.def.parameterserver.api.IParameterServerServiceClient;
+import at.enfilo.def.parameterserver.api.client.ParameterServerServiceClientFactory;
+import at.enfilo.def.parameterserver.api.protocol.PrimitiveProtocolParser;
 import at.enfilo.def.routine.api.Command;
 import at.enfilo.def.routine.api.Order;
+import at.enfilo.def.transfer.dto.ParameterProtocol;
+import at.enfilo.def.transfer.dto.ProgramDTO;
+import at.enfilo.def.transfer.dto.ResourceDTO;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
@@ -21,6 +31,8 @@ import java.io.IOException;
  */
 public abstract class ObjectiveRoutine<R extends TBase> extends AbstractRoutine {
 	private final TSerializer serializer = new TSerializer();
+	private String pId;
+	private IParameterServerServiceClient parameterServerServiceClient;
 
 	protected ObjectiveRoutine() {
 	}
@@ -62,15 +74,25 @@ public abstract class ObjectiveRoutine<R extends TBase> extends AbstractRoutine 
 		}
 	}
 
+	private IParameterServerServiceClient getParameterServerClient() throws AccessParameterException {
+		try {
+			ServiceEndpointDTO endpoint = getParameter("parameterServerEndpoint", ServiceEndpointDTO.class);
+			return new ParameterServerServiceClientFactory().createClient(endpoint);
+		} catch (ClientCreationException e) {
+			throw new AccessParameterException(e);
+		}
+	}
 
 	@Override
 	public void runRoutine() {
 		// Start routine and store result
 		try {
+			pId = getParameter("program", DEFString.class).getValue();
+			parameterServerServiceClient = getParameterServerClient();
 			R result = routine();
 			setResult(result);
 
-		} catch (TException e) {
+		} catch (TException | AccessParameterException e) {
 			throw new RoutineException(e);
 		}
 	}
@@ -104,6 +126,50 @@ public abstract class ObjectiveRoutine<R extends TBase> extends AbstractRoutine 
 				System.err.println(String.format("%s - Error while running ObjectiveRoutine: %s", LogLevel.ERROR, e.getMessage()));
 				throw new RoutineException(e);
 			}
+		}
+	}
+
+	public float[] getFloatParameter(String name) throws AccessParameterException {
+		try {
+			ResourceDTO resourceDTO = parameterServerServiceClient.getParameter(pId, name, ParameterProtocol.PRIMITIVE).get();
+			return (float[]) new PrimitiveProtocolParser().decode(resourceDTO);
+		} catch (Exception e) {
+			throw new AccessParameterException(e);
+		}
+	}
+
+	public String setParameter(String name, float[] data) throws AccessParameterException {
+		try {
+			ResourceDTO resourceDTO = new PrimitiveProtocolParser().encode(data, "float");
+			return parameterServerServiceClient.setParameter(pId, name, resourceDTO, ParameterProtocol.PRIMITIVE).get();
+		} catch (Exception e) {
+			throw new AccessParameterException(e);
+		}
+	}
+
+
+	public String deleteParameter(String name) throws ClientCommunicationException {
+		try {
+			return parameterServerServiceClient.deleteParameter(pId, name).get();
+		} catch (Exception e) {
+			throw new ClientCommunicationException(e);
+		}
+	}
+
+	public String deleteAllParameters() throws ClientCommunicationException {
+		try {
+			return parameterServerServiceClient.deleteAllParameters(pId).get();
+		} catch (Exception e) {
+			throw new ClientCommunicationException(e);
+		}
+	}
+
+	public String addToParameter(String name, float[] data) throws AccessParameterException {
+		try {
+			ResourceDTO resourceDTO = new PrimitiveProtocolParser().encode(data, "float");
+			return parameterServerServiceClient.addToParameter(pId, name, resourceDTO, ParameterProtocol.PRIMITIVE).get();
+		} catch (Exception e) {
+			throw new AccessParameterException(e);
 		}
 	}
 }

@@ -1,8 +1,12 @@
 package at.enfilo.def.worker.impl;
 
+import at.enfilo.def.datatype.DEFString;
 import at.enfilo.def.dto.cache.DTOCache;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
+import at.enfilo.def.node.impl.ExecutorService;
+import at.enfilo.def.node.impl.IStateChangeListener;
+import at.enfilo.def.node.queue.QueuePriorityWrapper;
 import at.enfilo.def.node.routine.exec.SequenceStepsBuilder;
 import at.enfilo.def.node.routine.exec.SequenceStepsExecutor;
 import at.enfilo.def.node.routine.factory.RoutineProcessBuilderFactory;
@@ -12,7 +16,6 @@ import at.enfilo.def.transfer.dto.ExecutionState;
 import at.enfilo.def.transfer.dto.ResourceDTO;
 import at.enfilo.def.transfer.dto.RoutineType;
 import at.enfilo.def.transfer.dto.TaskDTO;
-import at.enfilo.def.worker.queue.QueuePriorityWrapper;
 import at.enfilo.def.worker.server.Worker;
 import at.enfilo.def.worker.util.WorkerConfiguration;
 import org.apache.thrift.TDeserializer;
@@ -27,172 +30,151 @@ import java.util.function.Consumer;
  * Picks one by one task from queuePriorityWrapper and execute / run it.
  * A task is a sequence of routines: ObjectiveRoutine > MapRoutine > PartitionRoutine > StoreRoutine (for Worker).
  */
-class TaskExecutorService extends Thread {
+class TaskExecutorService extends ExecutorService<TaskDTO> {
 
-	private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(TaskExecutorService.class);
-	private static final WorkerConfiguration CONFIGURATION = Worker.getInstance().getConfiguration();
+    private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(TaskExecutorService.class);
+    private static WorkerConfiguration CONFIGURATION;
 
-	private final QueuePriorityWrapper queuePriorityWrapper;
-	private final ITaskStateChangeListener taskStateChangeListener;
-	private final Object runningTaskLock;
-	private final DTOCache<TaskDTO> taskCache;
-	private final TDeserializer deserializer;
-	private final RoutineProcessBuilderFactory routineProcessBuilderFactory;
+    private final TDeserializer deserializer;
 
-	private boolean isActive;
-	private SequenceStepsExecutor sequenceStepsExecutor;
-	private String runningTask;
-	private String storeRoutineId;
+    static {
+        CONFIGURATION = Worker.getInstance().getConfiguration();
+    }
 
-	/**
-	 * Creates a TaskExecutorService for the given queuePriorityWrapper.
-	 *
-	 * @param queuePriorityWrapper - instance of queue priority wrapper.
-	 */
-	public TaskExecutorService(
-		QueuePriorityWrapper queuePriorityWrapper,
-		RoutineProcessBuilderFactory routineProcessBuilderFactory,
-		String storeRoutineId,
-		ITaskStateChangeListener taskStateChangeListener
-	) {
-		this.queuePriorityWrapper = queuePriorityWrapper;
-		this.taskStateChangeListener = taskStateChangeListener;
-		this.routineProcessBuilderFactory = routineProcessBuilderFactory;
-		this.storeRoutineId = storeRoutineId;
-		this.isActive = true;
-		this.runningTaskLock = new Object();
-		this.taskCache = DTOCache.getInstance(WorkerServiceController.DTO_TASK_CACHE_CONTEXT, TaskDTO.class);
-		this.deserializer = new TDeserializer();
-	}
+    private final RoutineProcessBuilderFactory routineProcessBuilderFactory;
 
-	@Override
-	public void run() {
-		LOGGER.info("Start TaskExecutorService.");
+    public TaskExecutorService(
+        QueuePriorityWrapper<TaskDTO> queuePriorityWrapper,
+        RoutineProcessBuilderFactory routineProcessBuilderFactory,
+        String storeRoutineId,
+        IStateChangeListener stateChangeListener
+    ) {
+        super(
+                queuePriorityWrapper,
+                storeRoutineId,
+                stateChangeListener,
+                WorkerServiceController.DTO_TASK_CACHE_CONTEXT,
+				TaskDTO.class
+        );
+        this.routineProcessBuilderFactory = routineProcessBuilderFactory;
+        this.deserializer = new TDeserializer();
+    }
 
-		while (isActive) {
-			try {
-				// Fetch next task from queuePriorityWrapper and create a running sequence
-				TaskDTO task = queuePriorityWrapper.enqueue();
+    /**
+     * Constructor for unit testing
+     */
+    protected TaskExecutorService(
+            QueuePriorityWrapper<TaskDTO> queuePriorityWrapper,
+            RoutineProcessBuilderFactory routineProcessBuilderFactory,
+            String storeRoutineId,
+            IStateChangeListener stateChangeListener,
+            WorkerConfiguration configuration,
+            DTOCache cache,
+            TDeserializer deserializer
+    ) {
+        super(
+                queuePriorityWrapper,
+                storeRoutineId,
+                stateChangeListener,
+                cache
+        );
+        this.routineProcessBuilderFactory = routineProcessBuilderFactory;
+        CONFIGURATION = configuration;
+        this.deserializer = deserializer;
+    }
 
-				// Run (execute) a task
-				runTask(task);
+    @Override
+    protected void logInfo(String message) {
+        LOGGER.info(message);
+    }
 
-			} catch (Exception e) {
-				LOGGER.error("Error while running TaskExecutorService.", e);
-				isActive = false;
-			}
-		}
+    @Override
+    protected void logInfo(TaskDTO task, String message) {
+        LOGGER.info(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), message);
+    }
 
-		LOGGER.info("TaskExecutorService terminated.");
-	}
+    @Override
+    protected void logError(String message, Exception e) {
+        LOGGER.error(message, e);
+    }
 
-	/**
-	 * Runs/executes a task. (split up to sequence steps)
-	 *
-	 * @param task - to execute
-	 */
-	void runTask(TaskDTO task) {
-		LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Prepare Task to run.");
-		synchronized (runningTaskLock) {
-			runningTask = task.getId();
-		}
+    @Override
+    protected void logError(TaskDTO task, String message, Exception e) {
+        LOGGER.error(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), message, e);
+    }
 
-		// Change task to state RUN
-		task.setState(ExecutionState.RUN);
-		task.setStartTime(System.currentTimeMillis());
-		taskCache.cache(task.getId(), task); // Update cache
-		LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(),task.getId()), "Notify Task state changed from SCHEDULED to RUN.");
-		taskStateChangeListener.notifyStateChanged(task.getId(), ExecutionState.SCHEDULED, ExecutionState.RUN);
+    @Override
+    protected String getElementId(TaskDTO task) {
+        return task.getId();
+    }
 
-		// Create Sequence Steps Executor for Task.
-		sequenceStepsExecutor = new SequenceStepsBuilder(task.getId(), CONFIGURATION)
-				.appendStep(task.getObjectiveRoutineId(), RoutineType.OBJECTIVE)
-				.appendStep(task.getMapRoutineId(), RoutineType.MAP)
-				.appendStep(storeRoutineId, RoutineType.STORE)
-				.build(task, routineProcessBuilderFactory);
+    @Override
+    protected ExecutionState getElementState(TaskDTO task) {
+        return task.getState();
+    }
 
-		// Run Task --> All Routines as  Processes
-		try {
-			LOGGER.info(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Run Routine processes for Task.");
-			List<Consumer<String>> processOutputConsumers = Collections.singletonList(task::addToMessages);
-			// Run and wait for task results
-			List<Result> results = sequenceStepsExecutor.run(processOutputConsumers, processOutputConsumers);
-			sequenceStepsExecutor = null; // done, free references
+    @Override
+    protected SequenceStepsExecutor buildSequenceStepsExecutor(TaskDTO task) {
+        return new SequenceStepsBuilder(task.getId(), CONFIGURATION)
+                .appendStep(task.getObjectiveRoutineId(), RoutineType.OBJECTIVE)
+                .appendStep(task.getMapRoutineId(), RoutineType.MAP)
+                .appendStep(getStoreRoutineId(), RoutineType.STORE)
+                .build(task, this.routineProcessBuilderFactory);
+    }
 
-			// Task successfully done
-			LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Task (all Routine processes) successfully finished.");
-			List<ResourceDTO> outParameters = new LinkedList<>();
-			for (Result result : results) {
-				ResourceDTO resource = new ResourceDTO();
-				resource.setId(UUID.randomUUID().toString());
-				resource.setDataTypeId(ResultUtil.extractDataTypeId(result, deserializer));
-				if (result.isSetUrl() && !result.getUrl().isEmpty()) {
-					resource.setUrl(result.getUrl());
-				} else {
-					resource.setData(result.getData());
-				}
-				resource.setKey(result.getKey());
-				outParameters.add(resource);
-			}
-			task.setOutParameters(outParameters);
-			task.setState(ExecutionState.SUCCESS);
+    @Override
+    protected void prepareElementForExecution(TaskDTO task) {
+        task.setState(ExecutionState.RUN);
+        task.setStartTime(System.currentTimeMillis());
+    }
 
-		} catch (Exception e) {
-			// Task execution failed
-			LOGGER.error(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Failed to execution Task: {}.", e.getMessage(), e);
-			task.setState(ExecutionState.FAILED);
-			task.addToMessages(e.getMessage());
-		}
-		task.setFinishTime(System.currentTimeMillis());
+    @Override
+    protected List<Result> executeElement(TaskDTO task, SequenceStepsExecutor executor) throws Exception {
+        executor.getCommunicator().addParameter("program", createResourceDTO(new DEFString(task.getProgramId())));
+        if (CONFIGURATION.getParameterServerEndpoint() != null) {
+            executor.getCommunicator().addParameter("parameterServerEndpoint", createResourceDTO(CONFIGURATION.getParameterServerEndpoint()));
+        }
 
-		taskCache.cache(task.getId(), task); // Update cache
+        List<Consumer<String>> processOutputConsumers = Collections.singletonList(task::addToMessages);
+        return executor.run(processOutputConsumers, processOutputConsumers);
+    }
 
-		synchronized (runningTaskLock) {
-			runningTask = null;
-		}
+    @Override
+    protected void handleSuccessfulExecutionOfElement(TaskDTO task, List<Result> results) throws Exception {
+        List<ResourceDTO> outParameters = extractResults(results);
+        task.setOutParameters(outParameters);
+        task.setState(ExecutionState.SUCCESS);
+    }
 
-		LOGGER.info(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Task finished with state \"{}\".", task.getState());
+    @Override
+    protected void handleFailedExecutionOfElement(TaskDTO task, Exception e) {
+        task.setState(ExecutionState.FAILED);
+        task.addToMessages(e.getMessage());
+    }
 
-		// Notify Task is finished
-		LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Notify state changed from RUN to {}.", task.getState());
-		taskStateChangeListener.notifyStateChanged(task.getId(), ExecutionState.RUN, task.getState());
-		LOGGER.debug(DEFLoggerFactory.createTaskContext(task.getProgramId(), task.getJobId(), task.getId()), "Run finished.");
-	}
+    protected List<ResourceDTO> extractResults(List<Result> results) {
+        List<ResourceDTO> outParameters = new LinkedList<>();
+        for (Result result: results) {
+            ResourceDTO resource = new ResourceDTO();
+            resource.setId(UUID.randomUUID().toString());
+            resource.setDataTypeId(ResultUtil.extractDataTypeId(result, deserializer));
+            if (result.isSetUrl() && !result.getUrl().isEmpty()) {
+                resource.setUrl(result.getUrl());
+            } else {
+                resource.setData(result.getData());
+            }
+            resource.setKey(result.getKey());
+            outParameters.add(resource);
+        }
+        return outParameters;
+    }
 
-	/**
-	 * Cancel current running task.
-	 */
-	public void cancelRunningTask() {
-		LOGGER.debug("Cancel running Task.");
-		if (sequenceStepsExecutor != null) {
-			sequenceStepsExecutor.cancel();
-		}
-		LOGGER.debug("Running task cancelled.");
-	}
-
-	/**
-	 * Returns the id of current running task.
-	 * @return
-	 */
-	public String getRunningTask() {
-		synchronized (runningTaskLock) {
-			LOGGER.debug("Get running Task.");
-			return runningTask;
-		}
-	}
-
-	public void shutdown() {
-		LOGGER.debug("Shutdown command received.");
-
-		if (sequenceStepsExecutor != null && sequenceStepsExecutor.isRunning()) {
-			sequenceStepsExecutor.cancel();
-		}
-
-		isActive = false;
-	}
-
-	public void setStoreRoutine(String storeRoutineId) {
-		LOGGER.debug("Set StoreRoutine with id {}.", storeRoutineId);
-		this.storeRoutineId = storeRoutineId;
-	}
+    /**
+     * Method for unit testing
+     *
+     * @param task
+     */
+	protected void runTask(TaskDTO task) {
+        super.run(task);
+    }
 }

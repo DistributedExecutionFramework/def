@@ -22,6 +22,7 @@ public class ClusterServiceThriftHTTPTest extends ClusterServiceTest {
 				new ClusterServiceImpl(
                         workerController,
 						reducerController,
+						clientRoutineWorkerController,
 						clusterResource,
 						execLogicController),
 				ClusterService.Processor<ClusterService.Iface>::new

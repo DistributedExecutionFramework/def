@@ -256,6 +256,30 @@ public class ManagerExecLogicController implements IExecLogicController {
 	}
 
 	@Override
+	public void startClientRoutine(String pId, String crId) throws ExecLogicException, UnknownProgramException {
+		Set<ITuple<ContextIndicator, ?>> indicators = createLoggingContext(pId);
+
+		if (!registry.isProgramRegistered(pId)) {
+			// TODO: Try to fetch from Database
+			String msg = "Program not registered.";
+			LOGGER.error(indicators, msg);
+			throw new UnknownProgramException(msg);
+		}
+
+		try {
+			String cId = registry.getClusterId(pId);
+			LOGGER.debug(indicators, "Delegate attach and start client routine to Cluster {}.", cId);
+			Future<Void> future = getClusterClient(cId).startClientRoutine(pId, crId);
+			future.get(); // Wait for ticket.
+			LOGGER.info(indicators, "Attaching and starting client routine successfully finished on cluster {}.", cId);
+		} catch (ExecutionException | ClientCommunicationException | UnknownProgramException |
+				InterruptedException | ClientCreationException | UnknownClusterException e) {
+			LOGGER.error(indicators, "Error attaching and starting client routine on cluster.", e);
+			throw new ExecLogicException(e);
+		}
+	}
+
+	@Override
 	public void markProgramAsFinished(String pId) throws ExecLogicException, UnknownProgramException {
 		Set<ITuple<ContextIndicator, ?>> indicators = createLoggingContext(pId);
 

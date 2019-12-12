@@ -9,6 +9,7 @@ import at.enfilo.def.node.api.rest.INodeService;
 import at.enfilo.def.transfer.dto.NodeEnvironmentDTO;
 import at.enfilo.def.transfer.dto.NodeInfoDTO;
 import at.enfilo.def.transfer.dto.PeriodUnit;
+import at.enfilo.def.transfer.dto.QueueInfoDTO;
 import at.enfilo.def.transfer.dto.ResourceDTO;
 
 import java.util.List;
@@ -98,7 +99,72 @@ public class NodeServiceImpl implements INodeService {
 		return ticket.getId().toString();
 	}
 
-	@Override
+    @Override
+    public String getStoreRoutine() {
+        ITicket ticket = ticketRegistry.createTicket(
+                String.class,
+                controller::getStoreRoutineId
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String setStoreRoutine(String routineId) {
+        ITicket ticket = ticketRegistry.createTicket(() -> controller.setStoreRoutineId(routineId));
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String getQueueIds() {
+        ITicket ticket = ticketRegistry.createTicket(
+                List.class,
+                controller::getQueueIds
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String getQueueInfo(String qId) {
+        ITicket ticket = ticketRegistry.createTicket(
+                QueueInfoDTO.class,
+                () -> controller.getQueueInfo(qId)
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String createQueue(String qId) {
+        ITicket ticket = ticketRegistry.createTicket(
+                () -> controller.createQueue(qId)
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String deleteQueue(String qId) {
+        ITicket ticket = ticketRegistry.createTicket(
+                () -> controller.deleteQueue(qId)
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String pauseQueue(String qId) {
+        ITicket ticket = ticketRegistry.createTicket(
+                () -> controller.pauseQueue(qId)
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
+    public String releaseQueue(String qId) {
+        ITicket ticket = ticketRegistry.createTicket(
+                () -> controller.releaseQueue(qId)
+        );
+        return ticket.getId().toString();
+    }
+
+    @Override
 	public String shutdown() {
 		ITicket ticket = ticketRegistry.createTicket(
 				ServiceRegistry.getInstance()::closeAll,

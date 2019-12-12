@@ -3,6 +3,7 @@ package at.enfilo.def.reducer.api.rest;
 import at.enfilo.def.communication.api.common.service.IResource;
 import at.enfilo.def.node.api.rest.INodeService;
 import at.enfilo.def.reducer.api.thrift.ReducerService;
+import at.enfilo.def.transfer.dto.JobDTO;
 import at.enfilo.def.transfer.dto.ResourceDTO;
 
 import javax.ws.rs.*;
@@ -12,34 +13,41 @@ import java.util.List;
 @Path("/")
 public interface IReducerService extends ReducerService.Iface, INodeService, IResource {
 
-	@PUT
-	@Path("/reduce/{jId}")
+	@GET
+	@Path("/reduce/{pId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String createReduceJob(@PathParam("jId") final String jId, @QueryParam("routineId") final String routineId);
+	String getQueuedJobs(@PathParam("pId") final String pId);
+
+	@PUT
+	@Path("/reduce")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	String createReduceJob(JobDTO job);
 
 	@DELETE
-	@Path("/reduce/{jId}")
+	@Path("/reduce/reducejob/{jId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String deleteReduceJob(@PathParam("jId") final String jId);
+	String abortReduceJob(@PathParam("jId") final String jId);
 
 	@POST
-	@Path("/reduce/{jId}/tasks")
+	@Path("/reduce/reducejob/{jId}/tasks")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
-	String add(@PathParam("jId") final String jId, final List<ResourceDTO> resources);
+	String addResourcesToReduce(@PathParam("jId") final String jId, final List<ResourceDTO> resources);
 
 	@POST
-	@Path("/reduce/{jId}")
+	@Path("/reduce/reducejob/{jId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String reduce(@PathParam("jId") final String jId);
+	String reduceJob(@PathParam("jId") final String jId);
 
 	@GET
-	@Path("/reduce/{jId}")
+	@Path("/reduce/reducejob/{jId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
-	String fetchResult(@PathParam("jId") final String jId);
+	String fetchResults(@PathParam("jId") final String jId);
 }

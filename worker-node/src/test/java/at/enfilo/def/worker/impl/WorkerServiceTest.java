@@ -4,8 +4,6 @@ import at.enfilo.def.communication.api.common.server.IServer;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ticket.TicketHandlerDaemon;
 import at.enfilo.def.config.server.core.DEFTicketServiceConfiguration;
-import at.enfilo.def.transfer.dto.JobDTO;
-import at.enfilo.def.transfer.dto.QueueInfoDTO;
 import at.enfilo.def.transfer.dto.TaskDTO;
 import at.enfilo.def.worker.api.IWorkerServiceClient;
 import at.enfilo.def.worker.api.WorkerServiceClientFactory;
@@ -22,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,50 +56,6 @@ public abstract class WorkerServiceTest {
 	protected abstract IServer getServer(WorkerServiceController controller) throws Exception;
 
 	@Test
-	public void createQueue() throws Exception {
-		String queueId = UUID.randomUUID().toString();
-		JobDTO job = new JobDTO();
-
-		Future<Void> future = client.createQueue(queueId);
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
-
-		verify(controller).createQueue(queueId);
-	}
-
-	@Test
-	public void deleteQueue() throws Exception {
-		String queueId = UUID.randomUUID().toString();
-
-		Future<Void> future = client.deleteQueue(queueId);
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
-
-		verify(controller).deleteQueue(queueId);
-	}
-
-	@Test
-	public void releaseQueue() throws Exception {
-		String queueId = UUID.randomUUID().toString();
-
-		Future<Void> future = client.releaseQueue(queueId);
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
-
-		verify(controller).releaseQueue(queueId);
-	}
-
-	@Test
-	public void pauseQueue() throws Exception {
-		String queueId = UUID.randomUUID().toString();
-		Future<Void> future = client.pauseQueue(queueId);
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
-
-		verify(controller).pauseQueue(queueId);
-	}
-
-	@Test
 	public void queueTasks() throws Exception {
 		String queueId = UUID.randomUUID().toString();
 		List<TaskDTO> tasks = new LinkedList<>();
@@ -111,9 +64,8 @@ public abstract class WorkerServiceTest {
 
 		Future<Void> future = client.queueTasks(queueId, tasks);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
 
-		verify(controller).queueTasks(queueId, tasks);
+		verify(controller).queueElements(queueId, tasks);
 	}
 
 	@Test
@@ -123,7 +75,7 @@ public abstract class WorkerServiceTest {
 		tasks.add(UUID.randomUUID().toString());
 		tasks.add(UUID.randomUUID().toString());
 
-		when(controller.getQueuedTasks(queueId)).thenReturn(tasks);
+		when(controller.getQueuedElements(queueId)).thenReturn(tasks);
 
 		Future<List<String>> future = client.getQueuedTasks(queueId);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
@@ -143,9 +95,8 @@ public abstract class WorkerServiceTest {
 
 		Future<Void> future = client.moveTasks(queueId, tasks, worker);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
 
-		verify(controller).moveTasks(queueId, tasks, worker);
+		verify(controller).moveElements(queueId, tasks, worker);
 	}
 
 	@Test
@@ -154,40 +105,8 @@ public abstract class WorkerServiceTest {
 
 		Future<Void> future = client.moveAllTasks(worker);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
 
-		verify(controller).moveAllTasks(worker);
-	}
-
-	@Test
-	public void getQueues() throws Exception {
-		List<String> queues = new LinkedList<>();
-		queues.add(UUID.randomUUID().toString());
-		queues.add(UUID.randomUUID().toString());
-
-		when(controller.getQueues()).thenReturn(queues);
-
-		Future<List<String>> future = client.getQueues();
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-
-		List<String> requestedQueues = future.get();
-
-		assertEquals(queues, requestedQueues);
-	}
-
-	@Test
-	public void getQueueInfo() throws Exception {
-		String queueId = UUID.randomUUID().toString();
-		QueueInfoDTO info = new QueueInfoDTO();
-
-		when(controller.getQueueInfo(queueId)).thenReturn(info);
-
-		Future<QueueInfoDTO> future = client.getQueueInfo(queueId);
-		//await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-
-		QueueInfoDTO requestedInfo = future.get();
-
-		assertEquals(info, requestedInfo);
+		verify(controller).moveAllElements(worker);
 	}
 
 	@Test
@@ -195,7 +114,7 @@ public abstract class WorkerServiceTest {
 		String taskId = UUID.randomUUID().toString();
 		TaskDTO task = new TaskDTO();
 
-		when(controller.fetchFinishedTask(taskId)).thenReturn(task);
+		when(controller.fetchFinishedElement(taskId)).thenReturn(task);
 
 		Future<TaskDTO> future = client.fetchFinishedTask(taskId);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
@@ -206,25 +125,10 @@ public abstract class WorkerServiceTest {
 	}
 
 	@Test
-	public void getStoreRoutine() throws Exception {
-		String rId = UUID.randomUUID().toString();
+	public void abortTask() throws Exception {
+		String tId = UUID.randomUUID().toString();
 
-		when(controller.getStoreRoutineId()).thenReturn(rId);
-
-		Future<String> future = client.getStoreRoutine();
+		Future<Void> future = client.abortTask(tId);
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-
-		assertEquals(rId, future.get());
-	}
-
-	@Test
-	public void setStoreRoutine() throws Exception {
-		String rId = UUID.randomUUID().toString();
-
-		Future<Void> future = client.setStoreRoutine(rId);
-		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
-		assertNull(future.get());
-
-		verify(controller).setStoreRoutineId(rId);
 	}
 }

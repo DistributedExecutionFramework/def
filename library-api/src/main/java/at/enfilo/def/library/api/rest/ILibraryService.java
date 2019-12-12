@@ -1,7 +1,6 @@
 package at.enfilo.def.library.api.rest;
 
 import at.enfilo.def.communication.api.common.service.IResource;
-import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.library.api.thrift.LibraryService;
 
 import javax.ws.rs.*;
@@ -29,15 +28,14 @@ public interface ILibraryService extends LibraryService.Iface, IResource {
 	String getRoutineRequiredFeatures(@PathParam("rId") String rId);
 
 	@GET
-	@Path("/routineBinaries/{rbId}")
+	@Path("/routines/binaries/{rbId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	String getRoutineBinary(@PathParam("rbId") String rbId);
 
-	@POST
-	@Path("/dataEndpoint")
+	@GET
+	@Path("/routines/binaries/{rbId}/chunks/{chunk}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
-	String setDataEndpoint(ServiceEndpointDTO dataEndpoint);
+	String getRoutineBinaryChunk(@PathParam("rbId") String rbId, @PathParam("chunk") short chunk, @QueryParam("chunkSize") int chunkSize);
 }

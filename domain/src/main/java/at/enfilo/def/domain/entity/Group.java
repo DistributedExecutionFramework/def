@@ -1,6 +1,5 @@
 package at.enfilo.def.domain.entity;
 
-import at.enfilo.def.domain.map.PGMap;
 import at.enfilo.def.domain.map.UGMap;
 
 import javax.persistence.*;
@@ -24,7 +23,6 @@ public class Group extends AbstractEntity<String> {
     private String name;
     private String description;
     private Collection<User> users;
-    private Collection<Program> programs;
 
     public Group(){
         id = UUID.randomUUID().toString();
@@ -58,16 +56,6 @@ public class Group extends AbstractEntity<String> {
         return users;
     }
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = PGMap.TABLE_NAME,
-        joinColumns = @JoinColumn(name = PGMap.GROUP_ID_FIELD_NAME, referencedColumnName = Group.ID_FIELD_NAME),
-        inverseJoinColumns = @JoinColumn(name = PGMap.PROGRAM_ID_FIELD_NAME, referencedColumnName = Program.ID_FIELD_NAME)
-    )
-    public Collection<Program> getPrograms() {
-        return programs;
-    }
-
     @Override
     public void setId(String id) {
         this.id = id;
@@ -83,10 +71,6 @@ public class Group extends AbstractEntity<String> {
 
     public void setUsers(Collection<User> users) {
         this.users = users;
-    }
-
-    public void setPrograms(Collection<Program> programs) {
-        this.programs = programs;
     }
 
     @Override

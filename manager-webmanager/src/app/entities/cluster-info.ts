@@ -1,5 +1,5 @@
 import {NodeInfo} from './node-info';
-import {Feature} from "./feature";
+import {Feature} from './feature';
 
 export class ClusterInfo {
   id: string;
@@ -10,18 +10,20 @@ export class ClusterInfo {
   // TODO: list<string> activePrograms
   numberOfWorkers: number;
   numberOfReducers: number;
+  numberOfClientRoutineWorkers: number;
   defaultMapRoutineId: string;
   storeRoutineId: string;
   workers: NodeInfo[];
   reducers: NodeInfo[];
+  clientRoutineWorkers: NodeInfo[];
   features: Feature[];
   featureCount: Map<string, number>;
   averageLoad: number;
   averageNumberOfCores: number;
   numberOfTasks: number;
-  numberOfQueuedTasks: number;
-  numberOfRunningTasks: number;
-  numberOfTasksToFinish: number;
+  numberOfQueuedElements: number;
+  numberOfRunningElements: number;
+  numberOfElementsToFinish: number;
   numberOfCores: number;
   host: string;
   maxLoadForCluster: number;
@@ -36,12 +38,14 @@ export class ClusterInfo {
     this.startTime = jsonData.startTime;
     this.numberOfWorkers = jsonData.numberOfWorkers;
     this.numberOfReducers = jsonData.numberOfReducers;
+    this.numberOfClientRoutineWorkers = jsonData.numberOfClientRoutineWorkers;
     this.defaultMapRoutineId = jsonData.defaultMapRoutineId;
     this.storeRoutineId = jsonData.storeRoutineId;
     this.host = jsonData.host;
 
     this.workers = [];
     this.reducers = [];
+    this.clientRoutineWorkers = [];
     this.features = [];
     this.featureCount = new Map<string, number>();
   }
@@ -60,28 +64,35 @@ export class ClusterInfo {
     }
   }
 
+  setClientRoutineWorkers(clientRoutineWorkers: NodeInfo[]): void {
+    this.clientRoutineWorkers = clientRoutineWorkers;
+    if (clientRoutineWorkers.length > 0) {
+      this.updateCluster();
+    }
+  }
+
   private updateCluster(): void {
     let nrOfCores = 0;
     let load = 0;
     let nrOfTasks = 0;
     let nrOfQueuedTasks = 0;
     let nrOfRunningTasks = 0;
-    const nodes = this.workers.concat(this.reducers);
+    const nodes = this.workers.concat(this.reducers).concat(this.clientRoutineWorkers);
 
     nodes.forEach(node => {
       nrOfCores += node.numberOfCores;
       load += node.load;
-      nrOfTasks += node.numberOfTasksToFinish;
-      nrOfQueuedTasks += node.numberOfQueuedTasks;
-      nrOfRunningTasks += node.numberOfRunningTasks;
+      nrOfTasks += node.numberOfElementsToFinish;
+      nrOfQueuedTasks += node.numberOfQueuedElements;
+      nrOfRunningTasks += node.numberOfRunningElements;
     });
 
     this.averageNumberOfCores = nrOfCores / nodes.length;
     this.averageLoad = load / nodes.length;
     this.numberOfTasks = nrOfTasks;
-    this.numberOfQueuedTasks = nrOfQueuedTasks;
-    this.numberOfRunningTasks = nrOfRunningTasks;
-    this.numberOfTasksToFinish = nrOfQueuedTasks + nrOfRunningTasks;
+    this.numberOfQueuedElements = nrOfQueuedTasks;
+    this.numberOfRunningElements = nrOfRunningTasks;
+    this.numberOfElementsToFinish = nrOfQueuedTasks + nrOfRunningTasks;
     this.numberOfCores = nrOfCores;
 
     // calc max load
@@ -98,13 +109,14 @@ export class ClusterInfo {
 
   adaptCalculatedValues(other: ClusterInfo): void {
     if (other != null) {
-      this.numberOfRunningTasks = other.numberOfRunningTasks;
-      this.numberOfQueuedTasks = other.numberOfQueuedTasks;
-      this.numberOfTasksToFinish = other.numberOfTasksToFinish;
+      this.numberOfRunningElements = other.numberOfRunningElements;
+      this.numberOfQueuedElements = other.numberOfQueuedElements;
+      this.numberOfElementsToFinish = other.numberOfElementsToFinish;
       this.numberOfTasks = other.numberOfTasks;
       this.numberOfCores = other.numberOfCores;
       this.numberOfWorkers = other.numberOfWorkers;
       this.numberOfReducers = other.numberOfReducers;
+      this.numberOfClientRoutineWorkers = other.numberOfClientRoutineWorkers;
       this.averageLoad = other.averageLoad;
       this.averageNumberOfCores = other.averageNumberOfCores;
       this.averageLoadPercent = other.averageLoadPercent;
@@ -117,7 +129,7 @@ export class ClusterInfo {
       return;
     }
     this.featureCount.clear();
-    let tmpFeatures = new Map<string, Feature>();
+    const tmpFeatures = new Map<string, Feature>();
 
     for (let f of features) {
       this.increaseCount(f.id);

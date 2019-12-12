@@ -4,7 +4,9 @@ apply plugin: 'org.hidetake.ssh'
 dependencies {
 	compile project(':cluster-api')
 	compile project(':manager-api')
+	compile project(':library-admin-api')
     compile project(':cloud-communication-api')
+	compile project(':library-admin-api')
 	compile project(':execlogic')
     compile project(':persistence')
 }

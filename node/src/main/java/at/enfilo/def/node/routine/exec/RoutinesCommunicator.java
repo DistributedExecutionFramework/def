@@ -8,7 +8,10 @@ import at.enfilo.def.dto.cache.UnknownCacheObjectException;
 import at.enfilo.def.logging.api.ContextIndicator;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
+import at.enfilo.def.node.api.exception.QueueNotReleasedException;
 import at.enfilo.def.node.impl.NodeServiceController;
+import at.enfilo.def.node.queue.IQueueObserver;
+import at.enfilo.def.node.queue.Queue;
 import at.enfilo.def.routine.api.*;
 import at.enfilo.def.routine.util.DataReader;
 import at.enfilo.def.routine.util.DataWriter;
@@ -34,7 +37,7 @@ import java.util.concurrent.Executors;
  *
  * For every routine an own RoutineCommunicationHandler will be started.
  */
-public class RoutinesCommunicator implements IPipeWriter, Runnable {
+public class RoutinesCommunicator implements IPipeWriter, Runnable, IQueueObserver<ResourceDTO> {
 
 	private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(RoutinesCommunicator.class);
 	private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool(r -> DaemonThreadFactory.newDaemonThread(r, "RoutineCommunicationHandler"));
@@ -239,7 +242,9 @@ public class RoutinesCommunicator implements IPipeWriter, Runnable {
 	private final List<RoutineCommunicationHandler> handlers;
 	private final Set<ITuple<ContextIndicator, ?>> logContext;
 	private final DTOCache<ResourceDTO> sharedResourceCache;
+	private final Object resourceLock;
 	private boolean ready;
+	private int resourceCounter;
 
 	/**
 	 * Constructor to create SimpleRoutineCommunicator.
@@ -265,6 +270,7 @@ public class RoutinesCommunicator implements IPipeWriter, Runnable {
 		this.logContext = logContext;
 		this.ready = false;
 		this.sharedResourceCache = DTOCache.getInstance(NodeServiceController.DTO_RESOURCE_CACHE_CONTEXT, ResourceDTO.class);
+		this.resourceLock = new Object();
 	}
 
 	@Override
@@ -286,7 +292,7 @@ public class RoutinesCommunicator implements IPipeWriter, Runnable {
 			// Start RoutineCommunicationHandlers for every routine/ctrlRead-pipe
 			int i = 0;
 			for (Pipe ctrlPipe : ctrlPipes) {
-				LOGGER.debug(logContext,"Open ctrlRead pipe {}", ctrlPipe);
+				LOGGER.debug(logContext,"Open ctrl pipe {}", ctrlPipe);
 				DataReader ctrlRead = new DataReader(ctrlPipe.getInputStream());
 				DataWriter ctrlWrite = new DataWriter(ctrlPipe.getOutputStream());
 				RoutineCommunicationHandler handler = new RoutineCommunicationHandler(ctrlRead, ctrlWrite, out, String.format("Routine %d", i));
@@ -360,6 +366,35 @@ public class RoutinesCommunicator implements IPipeWriter, Runnable {
 //		value = replaceSharedResourceProxy(key, value);
 		parameters.put(key, value);
 		notifyNewParameter();
+	}
+
+	private void addNewResources(Queue<ResourceDTO> queue) {
+		try {
+			while (queue.hasElements()) {
+				ResourceDTO resource = queue.enqueue();
+				synchronized (resourceLock) {
+					parameters.put(Integer.toString(resourceCounter++), resource);
+				}
+				notifyNewParameter();
+			}
+		} catch (QueueNotReleasedException | IOException | InterruptedException e) {
+			LOGGER.error(logContext, "Error while enqueueing resource from ResourceQueue.", e);
+		}
+	}
+
+	@Override
+	public void notifyQueueReleased(Queue<ResourceDTO> queue) {
+		addNewResources(queue);
+	}
+
+	@Override
+	public void notifyQueuePaused(Queue<ResourceDTO> queue) {
+		// Do nothing
+	}
+
+	@Override
+	public void notifyNewElement(Queue<ResourceDTO> queue) {
+		addNewResources(queue);
 	}
 
 	public ResourceDTO getParameter(String key) {

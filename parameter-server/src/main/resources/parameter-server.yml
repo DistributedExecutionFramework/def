@@ -1,0 +1,30 @@
+cluster-registration: true
+cluster-endpoint:
+  host: localhost
+  port: 40012
+  protocol: THRIFT_TCP
+
+store-driver: at.enfilo.def.parameterserver.impl.store.driver.simple.SimpleStoreDriver
+
+def-servers:
+  rest:
+    enabled: false
+    port: 40090
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40091
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40092
+    bind-address: 0.0.0.0
+    url-pattern: /*
+
+ticket-service:
+  business-logic:
+    threads: 4
+  service-logic:
+    threads: 2

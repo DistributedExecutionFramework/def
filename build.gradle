@@ -29,7 +29,7 @@ allprojects {
     apply plugin: 'jacoco'
 
     group 'at.enfilo'
-    version '1.4.6'
+    version '1.5.0'
 
     sourceCompatibility = 1.8
 
@@ -124,7 +124,13 @@ allprojects {
             f -> f.name = 'demo-routines.jar'
         }
     }
+    task copyDemoRoutinesToTmp(type: Copy) {
+        from 'libs/demo-routines.jar'
+        into '/tmp/def'
+        rename('demo-routines.jar', 'd4a3b398-2b79-38c6-b6ff-9f14e67b1ea1')
+    }
     copyDemoRoutines.dependsOn copyDemoRoutinesToProject
+    copyDemoRoutinesToTmp.dependsOn copyDemoRoutines
 }
 
 subprojects {
@@ -192,6 +198,7 @@ dependencies {
     integrationTestCompile project(':cluster')
     integrationTestCompile project(':worker-node')
     integrationTestCompile project(':reducer-node')
+    integrationTestCompile project(':client-routine-worker')
     integrationTestCompile project(':scheduler')
     integrationTestCompile project(':library')
     integrationTestCompile project(':client-api')
@@ -215,5 +222,6 @@ integrationTest {
 check.dependsOn integrationTest
 copyDemoRoutines.dependsOn project(':library').compileJava
 integrationTest.dependsOn copyDemoRoutines
+integrationTest.dependsOn copyDemoRoutinesToTmp
 integrationTest.dependsOn project(':cloud-communication').compileJava
 integrationTest.mustRunAfter test

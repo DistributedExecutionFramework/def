@@ -107,6 +107,17 @@ class Iface(object):
         """
         pass
 
+    def startClientRoutine(self, pId, crId):
+        """
+        Attach client routine and run it.
+        Returns a ticket id, state of ticket is available over TicketService interface.
+
+        Parameters:
+         - pId
+         - crId
+        """
+        pass
+
     def getAllJobs(self, pId):
         """
         Request the list of Jobs (jId) for a given Program (pId).
@@ -642,6 +653,42 @@ class Client(Iface):
         if result.success is not None:
             return result.success
         raise TApplicationException(TApplicationException.MISSING_RESULT, "markProgramAsFinished failed: unknown result")
+
+    def startClientRoutine(self, pId, crId):
+        """
+        Attach client routine and run it.
+        Returns a ticket id, state of ticket is available over TicketService interface.
+
+        Parameters:
+         - pId
+         - crId
+        """
+        self.send_startClientRoutine(pId, crId)
+        return self.recv_startClientRoutine()
+
+    def send_startClientRoutine(self, pId, crId):
+        self._oprot.writeMessageBegin('startClientRoutine', TMessageType.CALL, self._seqid)
+        args = startClientRoutine_args()
+        args.pId = pId
+        args.crId = crId
+        args.write(self._oprot)
+        self._oprot.writeMessageEnd()
+        self._oprot.trans.flush()
+
+    def recv_startClientRoutine(self):
+        iprot = self._iprot
+        (fname, mtype, rseqid) = iprot.readMessageBegin()
+        if mtype == TMessageType.EXCEPTION:
+            x = TApplicationException()
+            x.read(iprot)
+            iprot.readMessageEnd()
+            raise x
+        result = startClientRoutine_result()
+        result.read(iprot)
+        iprot.readMessageEnd()
+        if result.success is not None:
+            return result.success
+        raise TApplicationException(TApplicationException.MISSING_RESULT, "startClientRoutine failed: unknown result")
 
     def getAllJobs(self, pId):
         """
@@ -1436,6 +1483,7 @@ class Processor(Iface, TProcessor):
         self._processMap["updateProgramName"] = Processor.process_updateProgramName
         self._processMap["updateProgramDescription"] = Processor.process_updateProgramDescription
         self._processMap["markProgramAsFinished"] = Processor.process_markProgramAsFinished
+        self._processMap["startClientRoutine"] = Processor.process_startClientRoutine
         self._processMap["getAllJobs"] = Processor.process_getAllJobs
         self._processMap["createJob"] = Processor.process_createJob
         self._processMap["getJob"] = Processor.process_getJob
@@ -1653,6 +1701,29 @@ class Processor(Iface, TProcessor):
             msg_type = TMessageType.EXCEPTION
             result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
         oprot.writeMessageBegin("markProgramAsFinished", msg_type, seqid)
+        result.write(oprot)
+        oprot.writeMessageEnd()
+        oprot.trans.flush()
+
+    def process_startClientRoutine(self, seqid, iprot, oprot):
+        args = startClientRoutine_args()
+        args.read(iprot)
+        iprot.readMessageEnd()
+        result = startClientRoutine_result()
+        try:
+            result.success = self._handler.startClientRoutine(args.pId, args.crId)
+            msg_type = TMessageType.REPLY
+        except TTransport.TTransportException:
+            raise
+        except TApplicationException as ex:
+            logging.exception('TApplication exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = ex
+        except Exception:
+            logging.exception('Unexpected exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+        oprot.writeMessageBegin("startClientRoutine", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
@@ -3143,6 +3214,139 @@ class markProgramAsFinished_result(object):
         return not (self == other)
 all_structs.append(markProgramAsFinished_result)
 markProgramAsFinished_result.thrift_spec = (
+    (0, TType.STRING, 'success', 'UTF8', None, ),  # 0
+)
+
+
+class startClientRoutine_args(object):
+    """
+    Attributes:
+     - pId
+     - crId
+    """
+
+
+    def __init__(self, pId=None, crId=None,):
+        self.pId = pId
+        self.crId = crId
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.pId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.crId = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('startClientRoutine_args')
+        if self.pId is not None:
+            oprot.writeFieldBegin('pId', TType.STRING, 1)
+            oprot.writeString(self.pId.encode('utf-8') if sys.version_info[0] == 2 else self.pId)
+            oprot.writeFieldEnd()
+        if self.crId is not None:
+            oprot.writeFieldBegin('crId', TType.STRING, 2)
+            oprot.writeString(self.crId.encode('utf-8') if sys.version_info[0] == 2 else self.crId)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(startClientRoutine_args)
+startClientRoutine_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'pId', 'UTF8', None, ),  # 1
+    (2, TType.STRING, 'crId', 'UTF8', None, ),  # 2
+)
+
+
+class startClientRoutine_result(object):
+    """
+    Attributes:
+     - success
+    """
+
+
+    def __init__(self, success=None,):
+        self.success = success
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 0:
+                if ftype == TType.STRING:
+                    self.success = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('startClientRoutine_result')
+        if self.success is not None:
+            oprot.writeFieldBegin('success', TType.STRING, 0)
+            oprot.writeString(self.success.encode('utf-8') if sys.version_info[0] == 2 else self.success)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(startClientRoutine_result)
+startClientRoutine_result.thrift_spec = (
     (0, TType.STRING, 'success', 'UTF8', None, ),  # 0
 )
 

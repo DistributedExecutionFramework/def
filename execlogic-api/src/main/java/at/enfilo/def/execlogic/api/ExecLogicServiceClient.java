@@ -125,6 +125,14 @@ class ExecLogicServiceClient<T extends ExecLogicService.Iface, R extends ExecLog
 	}
 
 	@Override
+	public Future<Void> startClientRoutine(String pId, String crId) throws ClientCommunicationException {
+		String ticketId = requestClient.execute(t -> t.startClientRoutine(pId, crId));
+
+		// Assembling Future<T> object for received TicketId.
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
 	public Future<Void> markProgramAsFinished(String pId) throws ClientCommunicationException {
 		String ticketId = requestClient.execute(t -> t.markProgramAsFinished(pId));
 
@@ -355,6 +363,20 @@ class ExecLogicServiceClient<T extends ExecLogicService.Iface, R extends ExecLog
 				job = getJob(pId, jId).get();
 			}
 			return job;
+		} catch (ExecutionException e) {
+			throw new ClientCommunicationException(e);
+		}
+	}
+
+	@Override
+	public ProgramDTO waitForProgram(String pId) throws ClientCommunicationException, InterruptedException {
+		try {
+			ProgramDTO program = getProgram(pId).get();
+			while (!((program.getState() == ExecutionState.SUCCESS) || (program.getState() == ExecutionState.FAILED))) {
+				Thread.sleep(POLL_SLEEP);
+				program = getProgram(pId).get();
+			}
+			return program;
 		} catch (ExecutionException e) {
 			throw new ClientCommunicationException(e);
 		}

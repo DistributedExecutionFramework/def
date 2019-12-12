@@ -5,6 +5,7 @@ import at.enfilo.def.communication.misc.ServerStartup;
 import at.enfilo.def.communication.thrift.ThriftProcessor;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
+import at.enfilo.def.node.util.DirectoryCleaner;
 import at.enfilo.def.reducer.api.thrift.ReducerResponseService;
 import at.enfilo.def.reducer.api.thrift.ReducerService;
 import at.enfilo.def.reducer.impl.ReducerResponseServiceImpl;
@@ -39,10 +40,12 @@ public class Reducer extends ServerStartup<ReducerConfiguration> {
     public static void main(String[] args) {
         LOGGER.info("Startup Reducer.");
 
+        // Cleanup working dir
+        new DirectoryCleaner(LOGGER).cleanWorkingDirectory(getInstance().getConfiguration());
+
         try {
             // Start services
             getInstance().startServices();
-
         } catch (Exception e) {
             LOGGER.error("Reducer failed to start.", e);
         }

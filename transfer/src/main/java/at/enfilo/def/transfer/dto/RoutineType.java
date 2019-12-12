@@ -12,7 +12,7 @@ public enum RoutineType implements org.apache.thrift.TEnum {
   MAP(1),
   STORE(2),
   REDUCE(3),
-  MASTER(4);
+  CLIENT(4);
 
   private final int value;
 
@@ -42,7 +42,7 @@ public enum RoutineType implements org.apache.thrift.TEnum {
       case 3:
         return REDUCE;
       case 4:
-        return MASTER;
+        return CLIENT;
       default:
         return null;
     }

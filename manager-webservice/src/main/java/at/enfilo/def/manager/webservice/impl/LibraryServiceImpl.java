@@ -8,10 +8,7 @@ import at.enfilo.def.manager.webservice.rest.ILibraryService;
 import at.enfilo.def.manager.webservice.rest.ManagerWebserviceException;
 import at.enfilo.def.manager.webservice.server.ManagerWebservice;
 import at.enfilo.def.manager.webservice.util.ManagerWebserviceConfiguration;
-import at.enfilo.def.transfer.dto.DataTypeDTO;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
-import at.enfilo.def.transfer.dto.TagDTO;
+import at.enfilo.def.transfer.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,20 +144,39 @@ public class LibraryServiceImpl implements ILibraryService {
 	}
 
 	@Override
-	public String uploadRoutineBinary(String rId, String md5, Boolean primary, Long sizeInBytes, byte[] data) throws ManagerWebserviceException {
-		LOGGER.debug("Try to upload Routine Binary: RoutineId: {}, size: {}, md5: {}.", rId, sizeInBytes, md5);
+	public String createRoutineBinary(String rId, String name, String md5, Boolean primary, Long sizeInBytes) throws ManagerWebserviceException {
+		LOGGER.debug("Try to create RoutineBinary: RoutineId: {}, name: {}, size: {}, md5: {}.", rId, name, sizeInBytes, md5);
 		try {
-			String result = libraryServiceClient.uploadRoutineBinary(
+			String result = libraryServiceClient.createRoutineBinary(
 					rId,
+					name,
 					md5,
 					sizeInBytes,
-					primary,
-					ByteBuffer.wrap(data)
+					primary
 			).get();
-			LOGGER.info("Routine Binary (id: {}, size: {}, md5: {}) uploaded for Routine {}.", result, sizeInBytes, md5, rId);
+			LOGGER.info("RoutineBinary (id: {}, size: {}, md5: {}) created for Routine {}.", result, sizeInBytes, md5, rId);
 			return result;
 		} catch (InterruptedException | ExecutionException | ClientCommunicationException e) {
-			LOGGER.error("Error while upload Routine Binary: ", e);
+			LOGGER.error("Error while create RoutineBinary: ", e);
+			throw new ManagerWebserviceException(e);
+		}
+	}
+
+	@Override
+	public void uploadRoutineBinaryChunk(String rbId, short chunk, short totalChunks, int chunkSize, byte[] data) throws ManagerWebserviceException {
+		LOGGER.debug("Try to upload RoutineBinaryChunk. RoutineBinaryId: {}, Chunk #{}/{} size: {}.", rbId, chunk, totalChunks, chunkSize);
+		try {
+			RoutineBinaryChunkDTO chunkDTO = new RoutineBinaryChunkDTO(
+				chunk,
+				totalChunks,
+				chunkSize,
+				ByteBuffer.wrap(data)
+			);
+			Future<Void> future = libraryServiceClient.uploadRoutineBinaryChunk(rbId, chunkDTO);
+			future.get(); // Wait for ticket.
+			LOGGER.info("RoutineBinaryChunk (RoutineBinaryId: {}, Chunk #{}/{} size: {}) upload done.",  rbId, chunk, totalChunks, chunkSize);
+		} catch (InterruptedException | ExecutionException | ClientCommunicationException e) {
+			LOGGER.error("Error while upload RoutineBinaryChunk: ", e);
 			throw new ManagerWebserviceException(e);
 		}
 	}

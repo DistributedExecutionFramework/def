@@ -8,11 +8,10 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.communication.exception.TakeControlException;
-import at.enfilo.def.library.api.client.factory.LibraryServiceClientFactory;
+import at.enfilo.def.library.api.client.factory.LibraryAdminServiceClientFactory;
 import at.enfilo.def.manager.impl.ManagerController;
 import at.enfilo.def.manager.impl.UnknownClusterException;
 import at.enfilo.def.manager.util.ProgramClusterRegistry;
-import at.enfilo.def.node.api.NodeServiceClientFactory;
 import at.enfilo.def.transfer.dto.ClusterInfoDTO;
 import at.enfilo.def.transfer.dto.NodeType;
 
@@ -36,7 +35,7 @@ public class ManagerControllerMock extends ManagerController {
             ClusterServiceClientFactory clusterServiceClientFactory,
             ICloudCommunicationServiceClient cloudCommunicationServiceClient
     ) {
-        super(registry, clusterServiceClientFactory, cloudCommunicationServiceClient);
+        super(registry, clusterServiceClientFactory, null, cloudCommunicationServiceClient);
 
         clusterInfoDTO = new ClusterInfoDTO();
         clusterInfoDTO.setHost("127.0.0.1");
@@ -75,10 +74,10 @@ public class ManagerControllerMock extends ManagerController {
     }
 
     @Override
-    public void bootNodeInstancesInCluster(String cloudClusterId, IClusterServiceClient clusterServiceClient, ServiceEndpointDTO clusterLibraryEndpoint, LibraryServiceClientFactory libraryServiceClientFactory, InstanceTypeDTO instanceType, int nrOfNodes) {
+    public void bootNodeInstancesInCluster(String cloudClusterId, IClusterServiceClient clusterServiceClient, ServiceEndpointDTO clusterLibraryEndpoint, LibraryAdminServiceClientFactory libraryAdminServiceClientFactory, InstanceTypeDTO instanceType, int nrOfNodes) {
         this.counterBootNodeInstancesInClusterCalls++;
         if (callBootNodeInstancesInCluster) {
-            super.bootNodeInstancesInCluster(cloudClusterId, clusterServiceClient, clusterLibraryEndpoint, libraryServiceClientFactory, instanceType, nrOfNodes);
+            super.bootNodeInstancesInCluster(cloudClusterId, clusterServiceClient, clusterLibraryEndpoint, libraryAdminServiceClientFactory, instanceType, nrOfNodes);
         }
     }
 
@@ -99,9 +98,9 @@ public class ManagerControllerMock extends ManagerController {
     }
 
     @Override
-    public String createCluster(String cloudClusterId, int numberOfWorkers, int numberOfReducers, LibraryServiceClientFactory libraryServiceClientFactory) throws InterruptedException, ExecutionException, ClientCreationException, TakeControlException, ClientCommunicationException {
+    public String createCluster(String cloudClusterId, int numberOfWorkers, int numberOfReducers, LibraryAdminServiceClientFactory libraryAdminServiceClientFactory) throws InterruptedException, ExecutionException, ClientCreationException, TakeControlException, ClientCommunicationException {
         if (callCreateCluster) {
-            return super.createCluster(cloudClusterId, numberOfWorkers, numberOfReducers, libraryServiceClientFactory);
+            return super.createCluster(cloudClusterId, numberOfWorkers, numberOfReducers, libraryAdminServiceClientFactory);
         }
         return UUID.randomUUID().toString();
     }

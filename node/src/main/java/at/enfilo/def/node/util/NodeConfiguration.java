@@ -5,6 +5,7 @@ import at.enfilo.def.common.util.environment.domain.Feature;
 import at.enfilo.def.communication.dto.Protocol;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.config.server.core.DEFRootConfiguration;
+import at.enfilo.def.transfer.dto.PeriodUnit;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,9 +27,18 @@ public abstract class NodeConfiguration extends DEFRootConfiguration {
 	private static final String PROPERTY_CLUSTER_REGISTRATION = "cluster-registration";
 	private static final String PROPERTY_CLUSTER_ENDPOINT = "cluster-endpoint";
 	private static final String PROPERTY_MATLAB_RUNTIME = "matlab-runtime";
-	private static final String PROPERTY_ENVIRONMENT = "environment";
+	private static final String PROPERTY_QUEUE_LIFE_TIME = "queue-life-time";
+	private static final String PROPERTY_QUEUE_LIFE_TIME_UNIT = "queue-life-time-unit";
+	private static final String PROPERTY_STORE_ROUTINE_ID = "store-routine";
+    private static final String PROPERTY_ENVIRONMENT = "environment";
+    private static final String PROPERTY_PARAMETER_SERVER_ENDPOINT = "parameter-server-endpoint";
 
-	private static final String PRIMARY_FEATURE_GROUP = "language";
+    private static final String PRIMARY_FEATURE_GROUP = "language";
+
+	private static final int DEFAULT_QUEUE_LIFE_TIME = 48;
+	private static final PeriodUnit DEFAULT_QUEUE_LIFE_TIME_UNIT = PeriodUnit.HOURS;
+	private static final String DEFAULT_STORE_ROUTINE_ID = "2a2fa500-fb5b-340b-8b80-2c4fae4921b3";
+
 
 	private String workingDir = "/tmp/def/";
 	private boolean cleanupWorkingDirOnStart = false;
@@ -42,7 +52,11 @@ public abstract class NodeConfiguration extends DEFRootConfiguration {
 	);
 	private boolean clusterRegistration = false;
 	private ServiceEndpointDTO clusterEndpoint = null;
+	private ServiceEndpointDTO parameterServerEndpoint = null;
 	private String matlabRuntime = "/usr/local/MATLAB/MATLAB_Runtime/v94";
+	private int queueLifeTime = DEFAULT_QUEUE_LIFE_TIME;
+	private PeriodUnit queueLifeTimeUnit = DEFAULT_QUEUE_LIFE_TIME_UNIT;
+	private String storeRoutineId = DEFAULT_STORE_ROUTINE_ID;
 	private List<NodeFeatureConfiguration> environment = new ArrayList<>();
 
 	/**
@@ -174,6 +188,16 @@ public abstract class NodeConfiguration extends DEFRootConfiguration {
 		this.clusterEndpoint = clusterEndpoint;
 	}
 
+	@JsonProperty(PROPERTY_PARAMETER_SERVER_ENDPOINT)
+	public ServiceEndpointDTO getParameterServerEndpoint() {
+		return parameterServerEndpoint;
+	}
+
+	@JsonProperty(PROPERTY_PARAMETER_SERVER_ENDPOINT)
+	public void setParameterServerEndpoint(ServiceEndpointDTO parameterServerEndpoint) {
+		this.parameterServerEndpoint = parameterServerEndpoint;
+	}
+
 	@JsonProperty(PROPERTY_MATLAB_RUNTIME)
 	public String getMatlabRuntime() {
 		return matlabRuntime;
@@ -220,4 +244,22 @@ public abstract class NodeConfiguration extends DEFRootConfiguration {
 		}
 		return environment;
 	}
+
+	@JsonProperty(PROPERTY_QUEUE_LIFE_TIME)
+	public int getQueueLifeTime() { return queueLifeTime; }
+
+	@JsonProperty(PROPERTY_QUEUE_LIFE_TIME)
+	public void setQueueLifeTime(int queueLifeTime) { this.queueLifeTime = queueLifeTime; }
+
+	@JsonProperty(PROPERTY_QUEUE_LIFE_TIME_UNIT)
+	public PeriodUnit getQueueLifeTimeUnit() { return queueLifeTimeUnit; }
+
+	@JsonProperty(PROPERTY_QUEUE_LIFE_TIME_UNIT)
+	public void setQueueLifeTimeUnit(PeriodUnit queueLifeTimeUnit) { this.queueLifeTimeUnit = queueLifeTimeUnit; }
+
+	@JsonProperty(PROPERTY_STORE_ROUTINE_ID)
+	public String getStoreRoutineId() { return storeRoutineId; }
+
+	@JsonProperty(PROPERTY_STORE_ROUTINE_ID)
+	public void setStoreRoutineId(String storeRoutineId) { this.storeRoutineId = storeRoutineId; }
 }

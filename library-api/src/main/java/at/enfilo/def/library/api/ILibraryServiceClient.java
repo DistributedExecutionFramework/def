@@ -3,10 +3,7 @@ package at.enfilo.def.library.api;
 import at.enfilo.def.communication.api.common.client.IServiceClient;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.LibraryInfoDTO;
-import at.enfilo.def.transfer.dto.RoutineBinaryDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
+import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -40,16 +37,23 @@ public interface ILibraryServiceClient extends IServiceClient {
 	Future<RoutineBinaryDTO> getRoutineBinary(String rbId) throws ClientCommunicationException;
 
 	/**
+	 * Returns request RoutineBinary chunk.
+	 * @param rbId routine binary id
+	 * @param chunk chunk #
+	 * @param chunkSize chunk size
+	 * @return chunk
+	 */
+	Future<RoutineBinaryChunkDTO> getRoutineBinaryChunk(String rbId, short chunk, int chunkSize) throws ClientCommunicationException;
+
+	/**
+	 * Returns the requested Routine required features.
+
+	/**
 	 * Returns the requested Routine required features.
 	 *
 	 * @param rId routine id.
 	 * @return requested Routine features.
 	 */
-	Future<List<FeatureDTO>> getRoutineRequiredFeatures(String rId)
-			throws ClientCommunicationException;
+	Future<List<FeatureDTO>> getRoutineRequiredFeatures(String rId)  throws ClientCommunicationException;
 
-	/**
-	 * Sets the data endpoint for pulling routines
-	 */
-	Future<Void> setDataEndpoint(ServiceEndpointDTO dataEndpoint) throws ClientCommunicationException;
 }

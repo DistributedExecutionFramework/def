@@ -6,12 +6,8 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ticket.TicketRegistry;
 import at.enfilo.def.library.api.rest.ILibraryAdminService;
 import at.enfilo.def.library.api.rest.ILibraryService;
-import at.enfilo.def.transfer.dto.DataTypeDTO;
-import at.enfilo.def.transfer.dto.LibraryInfoDTO;
-import at.enfilo.def.transfer.dto.RoutineBinaryDTO;
-import at.enfilo.def.transfer.dto.RoutineDTO;
+import at.enfilo.def.transfer.dto.*;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public class LibraryServiceImpl implements ILibraryService, ILibraryAdminService {
@@ -68,8 +64,27 @@ public class LibraryServiceImpl implements ILibraryService, ILibraryAdminService
 	}
 
 	@Override
-	public String setDataEndpoint(ServiceEndpointDTO dataEndpoint) {
-		ITicket ticket = TICKET_REGISTRY.createTicket(() -> controller.setLibraryEndpoint(dataEndpoint));
+	public String getRoutineBinaryChunk(String rbId, short chunk, int chunkSize) {
+		ITicket ticket = TICKET_REGISTRY.createTicket(
+				RoutineBinaryChunkDTO.class,
+				() -> controller.getRoutineBinaryChunk(rbId, chunk, chunkSize)
+		);
+
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String setMasterLibrary(ServiceEndpointDTO dataEndpoint) {
+		ITicket ticket = TICKET_REGISTRY.createTicket(() -> controller.setMasterLibraryEndpoint(dataEndpoint));
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String getMasterLibrary() {
+		ITicket ticket = TICKET_REGISTRY.createTicket(
+				ServiceEndpointDTO.class,
+				controller::getMasterLibraryEndpoint
+		);
 		return ticket.getId().toString();
 	}
 
@@ -108,25 +123,29 @@ public class LibraryServiceImpl implements ILibraryService, ILibraryAdminService
 	}
 
 	@Override
-	public String uploadRoutineBinary(
-        String rId,
-        String md5,
-        long sizeInBytes,
-        boolean isPrimary,
-        ByteBuffer data
-    ) {
+	public String createRoutineBinary(String rId, String name, String md5, long sizeInBytes, boolean isPrimary) {
 		ITicket ticket = TICKET_REGISTRY.createTicket(
             String.class,
-            () -> controller.uploadRoutineBinary(
-                rId,
-                md5,
-                sizeInBytes,
-                isPrimary,
-                data
-            )
+            () -> controller.createRoutineBinary(rId, name, md5, sizeInBytes, isPrimary)
         );
-
         return ticket.getId().toString();
+	}
+
+	@Override
+	public String uploadRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) {
+		ITicket ticket = TICKET_REGISTRY.createTicket(
+				() -> controller.uploadRoutineBinaryChunk(rbId, chunk)
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String verifyRoutineBinary(String rbId) {
+		ITicket ticket = TICKET_REGISTRY.createTicket(
+				Boolean.class,
+				() -> controller.verifyRoutineBinary(rbId)
+		);
+		return ticket.getId().toString();
 	}
 
 	@Override
@@ -190,7 +209,6 @@ public class LibraryServiceImpl implements ILibraryService, ILibraryAdminService
 	@Override
 	public String createTag(String label, String description) {
         ITicket ticket = TICKET_REGISTRY.createTicket(
-            String.class,
             () -> controller.createTag(label, description)
         );
 
@@ -230,6 +248,15 @@ public class LibraryServiceImpl implements ILibraryService, ILibraryAdminService
 				() -> controller.getFeatures(pattern)
 		);
 
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String getFeatureByNameAndVersion(String name, String version) {
+		ITicket ticket = TICKET_REGISTRY.createTicket(
+				FeatureDTO.class,
+				() -> controller.getFeatureByNameAndVersion(name, version)
+		);
 		return ticket.getId().toString();
 	}
 }

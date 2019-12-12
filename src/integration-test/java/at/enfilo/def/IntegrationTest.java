@@ -11,11 +11,11 @@ import static org.awaitility.Awaitility.await;
 
 public abstract class IntegrationTest {
 
-    protected List<ServerStartup> services;
-    protected Map<Class<? extends ServerStartup>, IServer> thriftServices;
-    protected Map<Class<? extends ServerStartup>, IServer> restServices;
+    protected static List<ServerStartup> services;
+    protected static Map<Class<? extends ServerStartup>, IServer> thriftServices;
+    protected static Map<Class<? extends ServerStartup>, IServer> restServices;
 
-    protected void startServices() throws Exception {
+    protected static void startServices() throws Exception {
         for (ServerStartup st : services) {
             st.startServices();
             if (st.getConfiguration().getServerHolderConfiguration().getRESTConfiguration().isEnabled()) {
@@ -31,7 +31,7 @@ public abstract class IntegrationTest {
         }
     }
 
-    protected void stopServices() throws Exception {
+    protected static void stopServices() throws Exception {
         for (IServer server : thriftServices.values()) {
             server.close();
         }

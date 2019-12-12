@@ -11,7 +11,7 @@ import {interval} from 'rxjs/internal/observable/interval';
 import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
 import {AppConfig} from '../../config/app-config';
-import {NodeType} from "../../enums/node-type.enum";
+import {NodeType} from '../../enums/node-type.enum';
 
 @Component({
   selector: 'app-cluster-details',
@@ -29,9 +29,11 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
   cluster: ClusterInfo;
   workers: NodeInfo[];
   reducers: NodeInfo[];
+  clientRoutineWorkers: NodeInfo[];
   clusterLoading = true;
   workersLoading = true;
   reducersLoading = true;
+  clientRoutineWorkersLoading = true;
   featuresLoading = true;
   workerType = NodeType.WORKER;
   reducerType = NodeType.REDUCER;
@@ -55,6 +57,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
     this.nodeFeaturesLoading = new Map<string, boolean>();
     this.workers = [];
     this.reducers = [];
+    this.clientRoutineWorkers = [];
 
     // Update navigation path
     this.setNavigationPath();
@@ -71,6 +74,10 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
       if (this.cluster.reducers && this.cluster.reducers.length > 0) {
         this.prepareReducers(this.cluster, this.cluster.reducers);
         this.reducersLoading = false;
+      }
+      if (this.cluster.clientRoutineWorkers && this.cluster.clientRoutineWorkers.length > 0) {
+        this.prepareClientRoutineWorkers(this.cluster, this.cluster.clientRoutineWorkers);
+        this.clientRoutineWorkersLoading = false;
       }
       this.clusterLoading = false;
       this.featuresLoading = false;
@@ -140,6 +147,17 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
         error => console.error('Error while fetching reducers: ' + error)
       );
 
+    // Fetch all client routine workers and update data
+    this.nodeService.getAllClientRoutineWorkersOfCluster(cluster.id)
+      .pipe(finalize(() => {
+        lock.release();
+        this.clientRoutineWorkersLoading = false;
+      }))
+      .subscribe(
+        clientRoutineWorkers => this.prepareClientRoutineWorkers(cluster, clientRoutineWorkers),
+        error => console.error('Error while fetching client routine workers: ' + error)
+      );
+
     // Wait for 3 releases
     for (let i = 0; i < 3; i++) {
       await lock.wait();
@@ -166,6 +184,16 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
     this.reducers = reducers;
   }
 
+  private prepareClientRoutineWorkers(cluster: ClusterInfo, clientRoutineWorkers: NodeInfo[]): void {
+    // Udpate client routine workers of cluster
+    if (!clientRoutineWorkers) {
+      clientRoutineWorkers = [];
+    }
+    cluster.setClientRoutineWorkers(clientRoutineWorkers);
+    this.prepareNodes(cluster, clientRoutineWorkers, NodeType.CLIENT_ROUTINE_WORKER);
+    this.clientRoutineWorkers = clientRoutineWorkers;
+  }
+
   private prepareNodes(cluster: ClusterInfo, nodes: NodeInfo[], nodeType: NodeType): void {
     // calc max number of tasks for nodes
     const maxNumberOfTasks = this.nodeService.calcMaxNumberOfTasksForNodesOfCluster(cluster.id, nodes, nodeType);
@@ -176,7 +204,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
     this.maxLoadsPerNodeType.set(nodeType, maxLoad);
 
     // add existing features
-    const existingNodes = this.workers.concat(this.reducers);
+    const existingNodes = this.workers.concat(this.reducers).concat(this.clientRoutineWorkers);
     for (let node of existingNodes) {
       for (let newNode of nodes) {
         if (node.id === newNode.id) {
@@ -191,7 +219,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
         this.showNodeFeatures.set(node.id, false);
         this.nodeFeaturesLoading.set(node.id, true);
       }
-    })
+    });
   }
 
   private async fetchCluster(): Promise<void> {
@@ -212,7 +240,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
     if (this.nodeService.hasMaxNumberOfTasksForNodesOfCluster(this.cluster.id, nodeType)) {
       maxNumberOfTasks = this.nodeService.getMaxNumberOfTasksForNodesOfCluster(this.cluster.id, nodeType);
     }
-    return this.calcPercent(node.numberOfTasksToFinish, maxNumberOfTasks);
+    return this.calcPercent(node.numberOfElementsToFinish, maxNumberOfTasks);
   }
 
   getLoadPercentForNode(node: NodeInfo, nodeType: NodeType): number {

@@ -7,11 +7,6 @@ import at.enfilo.def.persistence.api.*;
 import at.enfilo.def.persistence.api.core.IGenericDAO;
 import at.enfilo.def.persistence.mock.api.IDataMaster;
 import at.enfilo.def.persistence.mock.datamaster.entity.*;
-import at.enfilo.def.transfer.dto.IdDTO;
-import at.enfilo.def.transfer.dto.JobDTO;
-import at.enfilo.def.transfer.dto.ProgramDTO;
-import at.enfilo.def.transfer.dto.TaskDTO;
-import at.enfilo.def.transfer.util.MapManager;
 import org.mockito.Mockito;
 
 import javax.persistence.metamodel.SingularAttribute;
@@ -30,9 +25,6 @@ import static org.mockito.Mockito.when;
 public class MockPersistenceFacade implements IPersistenceFacade {
 
     private final GroupDataMaster groupDataMaster;
-    private final JobDataMaster jobDataMaster;
-    private final ProgramDataMaster programDataMaster;
-    private final TaskDataMaster taskDataMaster;
     private final UserDataMaster userDataMaster;
     private final RoutineDataMaster routineDataMaster;
     private final RoutineBinaryDataMaster routineBinaryDataMaster;
@@ -42,10 +34,7 @@ public class MockPersistenceFacade implements IPersistenceFacade {
 
     public MockPersistenceFacade() {
         groupDataMaster = new GroupDataMaster();
-        jobDataMaster = new JobDataMaster();
         userDataMaster = new UserDataMaster();
-        programDataMaster = new ProgramDataMaster(userDataMaster);
-        taskDataMaster = new TaskDataMaster();
         routineDataMaster = new RoutineDataMaster();
         routineBinaryDataMaster = new RoutineBinaryDataMaster();
         datatypeDataMaster = new DataTypeDataMaster();
@@ -55,18 +44,6 @@ public class MockPersistenceFacade implements IPersistenceFacade {
 
     public GroupDataMaster getGroupDataMaster() {
         return groupDataMaster;
-    }
-
-    public JobDataMaster getJobDataMaster() {
-        return jobDataMaster;
-    }
-
-    public ProgramDataMaster getProgramDataMaster() {
-        return programDataMaster;
-    }
-
-    public TaskDataMaster getTaskDataMaster() {
-        return taskDataMaster;
     }
 
     public UserDataMaster getUserDataMaster() {
@@ -115,24 +92,6 @@ public class MockPersistenceFacade implements IPersistenceFacade {
             return any();
         });
 
-        when(mockDAO.getAllOwnedPrograms(anyString())).thenReturn(
-            new LinkedList<>(programDataMaster.getAllDummyEntities())
-        );
-
-        when(mockDAO.getAllGroupPrograms(anyString())).thenReturn(
-            new LinkedList<>(programDataMaster.getAllDummyEntities())
-        );
-
-        when(mockDAO.getAllPrograms(anyString())).thenReturn(
-            new LinkedList<>(programDataMaster.getAllDummyEntities())
-        );
-
-        when(mockDAO.getAllProgramIds(anyString())).thenReturn(
-            programDataMaster.getAllDummyEntities().stream().map(
-                program -> new IdDTO(program.getId())
-            ).collect(Collectors.toList())
-        );
-
         when(mockDAO.getAllGroups(anyString())).thenReturn(
             new LinkedList<>(groupDataMaster.getAllDummyEntities())
         );
@@ -146,69 +105,8 @@ public class MockPersistenceFacade implements IPersistenceFacade {
 
         IGroupDAO mockDAO = Mockito.mock(IGroupDAO.class);
 
-        // Applying custom dao behaviour decorators.
-        when(mockDAO.getAllProgramIds(anyString())).thenReturn(
-            programDataMaster.getAllDummyEntities().stream().map(
-                program -> new IdDTO(program.getId())
-            ).collect(Collectors.toList())
-        );
-
         // Applying generic dao behaviour decorators.
         return decorateGenericBehaviour(mockDAO, groupDataMaster);
-    }
-
-    @Override
-    public IProgramDAO getNewProgramDAO() {
-
-        IProgramDAO mockDAO = Mockito.mock(IProgramDAO.class);
-
-        // Applying custom dao behaviour decorators.
-        when(mockDAO.getProgramInfo(anyString())).thenReturn(
-            MapManager.map(programDataMaster.getDummyEntityForSearch(), ProgramDTO.class)
-        );
-
-        when(mockDAO.getAllJobIds(anyString())).thenReturn(
-            jobDataMaster.getAllDummyEntities().stream().map(
-                job -> new IdDTO(job.getId())
-            ).collect(Collectors.toList())
-        );
-
-        // Applying generic dao behaviour decorators.
-        return decorateGenericBehaviour(mockDAO, programDataMaster);
-    }
-
-    @Override
-    public IJobDAO getNewJobDAO() {
-
-        IJobDAO mockDAO = Mockito.mock(IJobDAO.class);
-
-        // Applying custom dao behaviour decorators.
-        when(mockDAO.getJobInfo(anyString())).thenReturn(
-            MapManager.map(jobDataMaster.getDummyEntityForSearch(), JobDTO.class)
-        );
-
-        when(mockDAO.getAllTaskIds(anyString())).thenReturn(
-            taskDataMaster.getAllDummyEntities().stream().map(
-                task -> new IdDTO(task.getId())
-            ).collect(Collectors.toList())
-        );
-
-        // Applying generic dao behaviour decorators.
-        return decorateGenericBehaviour(mockDAO, jobDataMaster);
-    }
-
-    @Override
-    public ITaskDAO getNewTaskDAO() {
-
-        ITaskDAO mockDAO = Mockito.mock(ITaskDAO.class);
-
-        // Applying custom dao behaviour decorators.
-        when(mockDAO.getTaskInfo(anyString())).thenReturn(
-            MapManager.map(taskDataMaster.getDummyEntityForSearch(), TaskDTO.class)
-        );
-
-        // Applying generic dao behaviour decorators.
-        return decorateGenericBehaviour(mockDAO, taskDataMaster);
     }
 
     @Override

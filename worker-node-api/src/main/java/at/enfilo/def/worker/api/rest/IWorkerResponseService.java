@@ -17,38 +17,6 @@ import java.util.List;
 public interface IWorkerResponseService extends WorkerResponseService.Iface, INodeResponseService {
 
 	/**
-	 * Returns info about worker.
-	 * @param ticketId
-	 */
-	@Override
-	@GET
-	@Path("/")
-	@Produces(MediaType.APPLICATION_JSON)
-	NodeInfoDTO getInfo(@QueryParam("ticketId") String ticketId);
-
-	/**
-	 * Returns a list of active queues (id).
-	 * @param ticketId
-	 */
-	@Override
-	@GET
-	@Path("/queues")
-	@Produces(MediaType.APPLICATION_JSON)
-	List<String> getQueues(@QueryParam("ticketId") String ticketId);
-
-
-	/**
-	 * Returns information of the requested Queue.
-	 * @param ticketId
-	 */
-	@Override
-	@GET
-	@Path("/queues/qId")
-	@Produces(MediaType.APPLICATION_JSON)
-	QueueInfoDTO getQueueInfo(@QueryParam("ticketId") String ticketId);
-
-
-	/**
 	 * Returns all queued TaskIDs.
 	 * @param ticketId
 	 */
@@ -69,16 +37,4 @@ public interface IWorkerResponseService extends WorkerResponseService.Iface, INo
 	@Path("/queues/qId/tasks/tId")
 	@Produces(MediaType.APPLICATION_JSON)
 	TaskDTO fetchFinishedTask(@QueryParam("ticketId") String ticket);
-
-
-	/**
-	 * Returns current acvtive StoreRoutine Id.
-	 *
-	 * @param ticketId
-	 */
-	@Override
-	@GET
-	@Path("/store-routine")
-	@Produces(MediaType.APPLICATION_JSON)
-	String getStoreRoutine(@QueryParam("ticketId") String ticketId);
 }

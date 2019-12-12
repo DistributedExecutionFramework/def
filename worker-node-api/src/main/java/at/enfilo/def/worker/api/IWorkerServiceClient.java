@@ -14,34 +14,6 @@ import java.util.concurrent.Future;
  * Worker Service Client Interface.
  */
 public interface IWorkerServiceClient extends INodeServiceClient {
-	/**
-	 * Request a list of active queues (id).
-	 */
-	Future<List<String>> getQueues() throws ClientCommunicationException;
-
-	/**
-	 * Request information of the given queue id.
-	 * @param qId - queue id
-	 */
-	Future<QueueInfoDTO> getQueueInfo(String qId) throws ClientCommunicationException;
-
-	/**
-	 * Create a new Queue.
-	 * @param qId - queue id
-	 */
-	Future<Void> createQueue(String qId) throws ClientCommunicationException;
-
-	/**
-	 * Delete the requested queue (=> stop and abort execution).
-	 * @param qId - queue id
-	 */
-	Future<Void> deleteQueue(String qId) throws ClientCommunicationException;
-
-	/**
-	 * Release (start) a queue. All tasks in this queue will be executed.
-	 * @param qId - queue id
-	 */
-	Future<Void> releaseQueue(String qId) throws ClientCommunicationException;
 
 	/**
 	 * Request all queued TaskIDs.
@@ -58,12 +30,6 @@ public interface IWorkerServiceClient extends INodeServiceClient {
 			String qId,
 			List<TaskDTO> taskList
 	) throws ClientCommunicationException;
-
-	/**
-	 * Pause operation of tasks from a queue.
-	 * @param qId - queue id
-	 */
-	Future<Void> pauseQueue(String qId) throws ClientCommunicationException;
 
 	/**
 	 * Move a task to another node.
@@ -94,16 +60,4 @@ public interface IWorkerServiceClient extends INodeServiceClient {
 	 * @param tId - task to abort.
 	 */
 	Future<Void> abortTask(String tId) throws ClientCommunicationException;
-
-	/**
-	 * Set new StoreRoutine for this worker. Effects all queue tasks.
-	 * @param routineId - new StoreRoutine id
-	 */
-	Future<Void> setStoreRoutine(String routineId) throws ClientCommunicationException;
-
-	/**
-	 * Returns id of current StoreRoutine.
-	 * @return StoreRoutine id
-	 */
-	Future<String> getStoreRoutine() throws ClientCommunicationException;
 }

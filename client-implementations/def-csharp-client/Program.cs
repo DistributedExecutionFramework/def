@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using client_api;
 using client_api.client;
+using client_api.util;
 
 namespace def_csharp_client
 {
@@ -17,7 +17,7 @@ namespace def_csharp_client
         private static String clusterId = "t-cluster";
         private static String userId = "rosa";
 
-        private static int useCase = 3;
+        private static int useCase = 1;
 
         public static void Main(String[] args)
         {
@@ -131,9 +131,7 @@ namespace def_csharp_client
                 System.Console.WriteLine(String.Format("   Created shared resource: {0}", rId));
 
                 ResourceDTO resouce = client.GetSharedResource(pId, rId).Result;
-
-                DEFDouble fetchedValue = client.ExtractValueFromResource<DEFDouble>(resouce);
-                System.Console.WriteLine(String.Format("   Fetched shared resource with value: {0}", fetchedValue.Value));
+                System.Console.WriteLine(String.Format("   Fetched shared resource with key: {0}", resouce.Key));
 
                 List<String> sharedResources = client.GetAllSharedResources(pId).Result;
                 System.Console.WriteLine("   Fetched all shared resources");

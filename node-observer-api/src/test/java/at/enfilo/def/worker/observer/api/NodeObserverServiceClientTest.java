@@ -51,10 +51,10 @@ public class NodeObserverServiceClientTest {
 		Random rnd = new Random();
 		ExecutionState state = ExecutionState.values()[rnd.nextInt(ExecutionState.values().length)];
 
-		when(requestService.notifyTasksNewState(wId, tasksDone, state)).thenReturn(ticketId);
+		when(requestService.notifyElementsNewState(wId, tasksDone, state)).thenReturn(ticketId);
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(null);
 
-		Future<Void> future = client.notifyTasksNewState(wId, tasksDone, state);
+		Future<Void> future = client.notifyElementsNewState(wId, tasksDone, state);
 		await().atMost(30, TimeUnit.SECONDS).until(future::isDone);
 	}
 

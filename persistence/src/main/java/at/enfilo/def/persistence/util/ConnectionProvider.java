@@ -52,7 +52,7 @@ public class ConnectionProvider {
             sessionFactory = hibernateConfig.buildSessionFactory();
 
         } catch (Exception e) {
-            LOGGER.error("Something went wrong by initializing hibernate. Check config files for errors and DB availability.");
+            LOGGER.error("Something went wrong by initializing hibernate. Check config files for errors and DB availability.", e);
             throw new ExceptionInInitializerError(e);
         }
     }

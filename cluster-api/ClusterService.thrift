@@ -74,13 +74,13 @@ service ClusterService {
     * Request the current active StoreRoutine for this Cluster.
     * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
     **/
-    DTOs.TicketId getStoreRoutine();
+    DTOs.TicketId getStoreRoutine(1: DTOs.NodeType nodeType);
 
     /**
     * Set new StoreRoutine for this cluster (every worker)
     * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
     **/
-    DTOs.TicketId setStoreRoutine(1: DTOs.Id routineId);
+    DTOs.TicketId setStoreRoutine(1: DTOs.Id routineId, 2: DTOs.NodeType nodeType);
 
     /**
     * Request the current default MapRoutine for this Cluster.

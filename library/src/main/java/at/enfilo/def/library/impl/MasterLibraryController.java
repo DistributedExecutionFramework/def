@@ -18,8 +18,6 @@ import at.enfilo.def.transfer.util.MapManager;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -30,7 +28,6 @@ class MasterLibraryController extends LibraryController {
 	private final PersistenceFacade persistenceFacade;
 	private final BaseDataTypeRegistry baseDataTypeRegistry;
 	private final BaseRoutineRegistry baseRoutineRegistry;
-	private final IBinaryStoreDriver storeDriver;
 
 	MasterLibraryController(
 			LibraryConfiguration configuration,
@@ -43,7 +40,6 @@ class MasterLibraryController extends LibraryController {
 		this.persistenceFacade = persistenceFacade;
 		this.baseDataTypeRegistry = baseDataTypeRegistry;
 		this.baseRoutineRegistry = baseRoutineRegistry;
-		this.storeDriver = storeDriver;
 	}
 
 	@Override
@@ -97,15 +93,27 @@ class MasterLibraryController extends LibraryController {
 			routineDAO.forceLoadLazyField(routine, Routine::getRoutineBinaries);
 			routineDAO.forceLoadLazyField(routine, Routine::getInParameters);
 			routineDAO.forceLoadLazyField(routine, Routine::getArguments);
-			routine.getRoutineBinaries().forEach(rb -> rb.setData(null));
 
 			routine.setRequiredFeatures(new HashSet<>(mergeFeatures(routine.getRequiredFeatures())));
+			for (RoutineBinary rb : routine.getRoutineBinaries()) {
+				if (rb.getExecutionUrl() == null || rb.getExecutionUrl().isEmpty()) {
+					rb.setExecutionUrl(
+							binaryStoreDriver.getExecutionURL(rId, rb.getId(), rb.getName()).toString()
+					);
+				}
+			}
 			return MapManager.map(routine, RoutineDTO.class);
 		}
 		catch (Exception e) {
 			LOGGER.error("Error while fetch Routine from Database.", e);
 			throw  new RoutineFetchException(e);
 		}
+	}
+
+	@Override
+	protected RoutineBinaryDTO fetchRoutineBinary(String rbId) {
+		RoutineBinary routineBinary = persistenceFacade.getNewRoutineBinaryDAO().findById(rbId);
+		return MapManager.map(routineBinary, RoutineBinaryDTO.class);
 	}
 
 	@Override
@@ -133,12 +141,12 @@ class MasterLibraryController extends LibraryController {
 						RoutineBinary tmp = persistenceFacade.getNewRoutineBinaryDAO().findById(binary.getId());
 						if (tmp == null) {
 							LOGGER.debug("Remove RoutineBinary {} from storage.", binary.getId());
-							storeDriver.delete(binary.getId());
+							binaryStoreDriver.delete(rId, binary.getId(), binary.getName());
 						}
 					} catch (PersistenceException e) {
 						// Assume RoutineBinary no longer exists, delete it.
 						LOGGER.debug("Remove RoutineBinary {} from storage.", binary.getId());
-						storeDriver.delete(binary.getId());
+						binaryStoreDriver.delete(rId, binary.getId(), binary.getName());
 					}
 				} catch (IOException e1) {
 					LOGGER.warn("Can not delete RoutineBinary {}: {}.", binary.getId(), e1.getMessage(), e1);
@@ -174,6 +182,15 @@ class MasterLibraryController extends LibraryController {
 		}
 		Set<Feature> features = new HashSet<>();
 		for (FeatureDTO featureDTO : routineDTO.getRequiredFeatures()) {
+			if (featureDTO.getId() == null || featureDTO.getId().isEmpty()) {
+				try {
+					List<Feature> fetchedFeatures = persistenceFacade.getNewFeatureDAO().findByNameAndVersion(featureDTO.getName(), featureDTO.getVersion());
+					featureDTO.setId(fetchedFeatures.get(0).getId());
+				} catch (PersistenceException e) {
+					LOGGER.error("Error while fetching feature with name {} and version {} from database.", featureDTO.getName(), featureDTO.getVersion());
+					throw new ExecutionException(e);
+				}
+			}
 			//Feature feature = featureDAO.findById(featureDTO.getId());
 			Feature feature = new Feature(featureDTO);
 			features.add(feature);
@@ -217,7 +234,8 @@ class MasterLibraryController extends LibraryController {
 	}
 
 	@Override
-	public String uploadRoutineBinary(String rId, String md5, long sizeInBytes, boolean isPrimary, ByteBuffer data) throws ExecutionException {
+	public String createRoutineBinary(String rId, String routineBinaryName, String md5, long sizeInBytes, boolean isPrimary) throws ExecutionException {
+		LOGGER.debug("Uploading routine binary with name: {} - isPrimary: {}", routineBinaryName, isPrimary);
 		try {
 			IRoutineDAO routineDAO = persistenceFacade.getNewRoutineDAO();
 			Routine routine = routineDAO.findById(rId);
@@ -227,37 +245,52 @@ class MasterLibraryController extends LibraryController {
 
 			RoutineBinary routineBinary = new RoutineBinary();
 			routineBinary.setId(UUID.randomUUID().toString());
+			routineBinary.setName(routineBinaryName);
 			routineBinary.setMd5(md5);
 			routineBinary.setSizeInBytes(sizeInBytes);
 			routineBinary.setPrimary(isPrimary);
-			routineBinary.setData(data.array());
-
-			// Persist RoutineBinary
-			RoutineBinaryDTO binaryToPersist = MapManager.map(routineBinary, RoutineBinaryDTO.class);
-			URL url = storeDriver.store(binaryToPersist);
+			URL url = binaryStoreDriver.create(rId, new RoutineBinaryDTO(
+					routineBinary.getId(),
+					routineBinary.getMd5(),
+					routineBinary.getSizeInBytes(),
+					routineBinary.isPrimary(),
+					null,
+					routineBinary.getName(),
+					null));
+			routineBinary.setUrl(url.toString());
+			routineBinary.setExecutionUrl(
+					binaryStoreDriver.getExecutionURL(rId, routineBinary.getId(), routineBinaryName).toString()
+			);
 
 			// Update DB
-			routineBinary.setUrl(url.toString());
-			List<RoutineBinary> routineBinaries = routine.getRoutineBinaries();
+			Set<RoutineBinary> routineBinaries = routine.getRoutineBinaries();
 			routineBinaries.add(routineBinary);
 			routineDAO.saveOrUpdate(routine);
 
-			// Update cache
-			RoutineBinaryDTO cacheBinary = new RoutineBinaryDTO();
-			cacheBinary.setId(routineBinary.getId());
-			cacheBinary.setPrimary(routineBinary.isPrimary());
-			cacheBinary.setUrl(routineBinary.getUrl());
-			cacheBinary.setMd5(routineBinary.getMd5());
-			cacheBinary.setSizeInBytes(routineBinary.getSizeInBytes());
+			// Update Cache
 			if (!routineRegistry.containsKey(rId)) {
 				routineRegistry.put(rId, MapManager.map(routine, RoutineDTO.class));
 			}
-			routineRegistry.get(rId).addToRoutineBinaries(cacheBinary);
+			routineRegistry.get(rId).addToRoutineBinaries(MapManager.map(routineBinary, RoutineBinaryDTO.class));
 
 			return routineBinary.getId();
 
-		} catch (UnknownRoutineException | IOException e) {
-			LOGGER.error(String.format("Error while add RoutineBinary to Routine %s.", rId), e);
+		} catch (IOException | UnknownRoutineException | PersistenceException e) {
+			LOGGER.error("Error while create RoutineBinary for Routine {}.", rId, e);
+			throw new ExecutionException(e);
+		}
+	}
+
+	@Override
+	public void uploadRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ExecutionException {
+		try {
+			if (binaryStoreDriver.exists(rbId)) {
+				binaryStoreDriver.storeChunk(rbId, chunk);
+			} else {
+				LOGGER.error("Cannot upload RoutineBinaryChunk - RoutineBinary not exists: {}.", rbId);
+				throw new RoutineBinaryNotExists(String.format("RoutineBinary with id %s not exists.", rbId));
+			}
+		} catch (RoutineBinaryNotExists | IOException e) {
 			throw new ExecutionException(e);
 		}
 	}
@@ -354,13 +387,13 @@ class MasterLibraryController extends LibraryController {
 	}
 
 	@Override
-	public String createTag(String label, String description) throws ExecutionException {
+	public void createTag(String label, String description) throws ExecutionException {
 		try {
 			Tag tag = new Tag();
 			tag.setId(label);
 			tag.setDescription(description);
 
-			return persistenceFacade.getNewTagDAO().save(tag);
+			persistenceFacade.getNewTagDAO().save(tag);
 
 		} catch (PersistenceException e) {
 			LOGGER.error("Error while create Tag with label '{}'.", label, e);
@@ -379,33 +412,6 @@ class MasterLibraryController extends LibraryController {
 	}
 
 	@Override
-	public RoutineBinaryDTO getRoutineBinary(String bId) throws ExecutionException {
-		try {
-			LOGGER.debug("RoutineBinary get request: {}", bId);
-			if (storeDriver.exists(bId)) {
-				try {
-					return storeDriver.read(bId);
-				} catch (IOException | NoSuchAlgorithmException e) {
-					LOGGER.error("Error while fetch RoutineBinary {}.", bId, e);
-					throw e;
-				}
-			} else {
-				RoutineBinary routineBinary = persistenceFacade.getNewRoutineBinaryDAO().findById(bId);
-				if (routineBinary != null) {
-					return storeDriver.read(bId, new URL(routineBinary.getUrl()));
-				}
-			}
-
-			LOGGER.error("RoutineBinary {} not exists.", bId);
-			throw new RoutineBinaryNotExists("RoutineBinary " + bId + " not exists.");
-
-		} catch (RoutineBinaryNotExists | NoSuchAlgorithmException | IOException e) {
-			throw new ExecutionException(e);
-		}
-	}
-
-
-	@Override
 	public String createFeature(String name, String group, String version) throws ExecutionException {
 		LOGGER.debug("Trying to create new feature.");
 		try {
@@ -422,7 +428,7 @@ class MasterLibraryController extends LibraryController {
 
 	@Override
 	public String addExtension(String featureId, String name, String version) throws ExecutionException {
-		LOGGER.debug("Trying to add extension to feature ID: ", featureId);
+		LOGGER.debug("Trying to add extension to feature ID: {}", featureId);
 		try {
 			IFeatureDAO featureDAO = persistenceFacade.getNewFeatureDAO();
 			Feature feature = featureDAO.findById(featureId);
@@ -459,6 +465,18 @@ class MasterLibraryController extends LibraryController {
 			return MapManager.map(featureList, FeatureDTO.class).collect(Collectors.toList());
 		} catch (PersistenceException e) {
 			LOGGER.error("Error while finding Features with pattern '{}'.", pattern, e);
+			throw new ExecutionException(e);
+		}
+	}
+
+	@Override
+	public FeatureDTO getFeatureByNameAndVersion(String name, String version) throws ExecutionException {
+		try {
+			IFeatureDAO featureDAO = persistenceFacade.getNewFeatureDAO();
+			Feature fetchedFeature = featureDAO.findByNameAndVersion(name, version).get(0);
+			return MapManager.map(fetchedFeature, FeatureDTO.class);
+		} catch (PersistenceException e) {
+			LOGGER.error("Error while fetching feature with name {} and version {}.", name, version);
 			throw new ExecutionException(e);
 		}
 	}

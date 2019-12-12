@@ -4,7 +4,6 @@ import at.enfilo.def.communication.api.common.client.IClient;
 import at.enfilo.def.communication.api.ticket.builder.TicketFutureBuilder;
 import at.enfilo.def.communication.api.ticket.service.ITicketServiceClient;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
-import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
 import at.enfilo.def.communication.exception.ClientCreationException;
 import at.enfilo.def.node.observer.api.client.INodeObserverServiceClient;
@@ -34,9 +33,9 @@ class NodeObserverServiceClient<T extends NodeObserverService.Iface> implements 
 	}
 
 	@Override
-	public Future<Void> notifyTasksNewState(String nId, List<String> taskIds, ExecutionState newState)
+	public Future<Void> notifyElementsNewState(String nId, List<String> elementIds, ExecutionState newState)
 	throws ClientCommunicationException {
-		String ticketId = requestClient.execute(t -> t.notifyTasksNewState(nId, taskIds, newState));
+		String ticketId = requestClient.execute(t -> t.notifyElementsNewState(nId, elementIds, newState));
 		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
 	}
 
@@ -44,6 +43,20 @@ class NodeObserverServiceClient<T extends NodeObserverService.Iface> implements 
 	public Future<Void> notifyTasksReceived(String nId, List<String> taskIds)
 	throws ClientCommunicationException {
 		String ticketId = requestClient.execute(t -> t.notifyTasksReceived(nId, taskIds));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<Void> notifyProgramsReceived(String nId, List<String> programIds)
+	throws ClientCommunicationException {
+		String ticketId = requestClient.execute(t -> t.notifyProgramsReceived(nId, programIds));
+		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
+	}
+
+	@Override
+	public Future<Void> notifyReduceKeysReceived(String nId, String jId, List<String> reduceKeys)
+	throws ClientCommunicationException {
+		String ticketId = requestClient.execute(t -> t.notifyReduceKeysReceived(nId, jId, reduceKeys));
 		return new TicketFutureBuilder<>().voidTicket(ticketId, ticketClient);
 	}
 

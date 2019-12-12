@@ -1,5 +1,5 @@
 namespace java at.enfilo.def.cloud.communication.dto
-namespace py def_api.thrift.cloud.communication
+namespace py def_api.thrift.cloud.communication.dto
 
 enum InstanceTypeDTO {
     CLUSTER = 0,

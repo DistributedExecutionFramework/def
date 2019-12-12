@@ -8,7 +8,8 @@ import {catchError, map} from 'rxjs/operators';
 import {DataType} from '../../entities/datatype';
 import {RoutineBinary} from '../../entities/routine-binary';
 import {saveAs} from 'file-saver/FileSaver';
-import {Feature} from "../../entities/feature";
+import {Feature} from '../../entities/feature';
+import {RoutineBinaryChunk} from "../../entities/routine-binary-chunk";
 
 @Injectable()
 export class LibraryService extends BaseService {
@@ -111,10 +112,17 @@ export class LibraryService extends BaseService {
     );
   }
 
-  uploadBinary(rId: string, binary: RoutineBinary): Observable<string> {
-    const url = this.appConfig.serviceConfig.getUrlForUploadRoutineBinary(rId, binary.md5, binary.sizeInBytes, binary.primary);
-    return this.httpClient.post(url, binary.data, {responseType: 'text'}).pipe(
-      catchError(this.handleError<string>('uploadBinary(rId, binary)'))
+  createRoutineBinary(rId: string, binary: RoutineBinary): Observable<string | Object> {
+    const url = this.appConfig.serviceConfig.getUrlForCreateRoutineBinary(rId, binary.name, binary.md5, binary.sizeInBytes, binary.primary);
+    return this.httpClient.post(url, null, {responseType: 'text' as 'json'}).pipe(
+      catchError(this.handleError<string>('createRoutineBinary(rId, binary)'))
+    );
+  }
+
+  uploadRoutineBinaryChunk(rbId: string, binaryChunk: RoutineBinaryChunk): Observable<string | Object> {
+    const url = this.appConfig.serviceConfig.getUrlForUploadRoutineBinaryChunk(rbId, binaryChunk.chunk, binaryChunk.totalChunks, binaryChunk.chunkSize);
+    return this.httpClient.post(url, binaryChunk.data, {responseType: 'text'}).pipe(
+      catchError(this.handleError<string>('uploadRoutineBinaryChunk(rbId, binaryChunk)'))
     );
   }
 

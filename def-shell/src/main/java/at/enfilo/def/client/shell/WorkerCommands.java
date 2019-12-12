@@ -141,7 +141,7 @@ public class WorkerCommands implements CommandMarker {
 	@CliCommand(value = CMD_WORKER_QUEUE_LIST, help = "List Queues on Worker")
 	public String getQueues() throws ClientCommunicationException, ExecutionException, InterruptedException {
 
-		Future<List<String>> qIds = session.getWorkerServiceClient().getQueues();
+		Future<List<String>> qIds = session.getWorkerServiceClient().getQueueIds();
 		return ShellOutputFormatter.format(qIds.get());
 	}
 

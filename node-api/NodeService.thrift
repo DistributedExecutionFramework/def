@@ -62,6 +62,54 @@ service NodeService {
     * Remove SharedResources from this node.
     */
     DTOs.TicketId removeSharedResources(1: list<DTOs.Id> rIds);
+
+    /**
+    * Request a list of active queues (id).
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId getQueueIds();
+
+    /**
+    * Request information of the queue with the given id.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId getQueueInfo(1: DTOs.Id qId);
+
+    /**
+    * Create a new queue with the given id.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId createQueue(1: DTOs.Id qId);
+
+    /**
+    * Pause operation of elements in the queue with the given id.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId pauseQueue(1: DTOs.Id qId);
+
+    /**
+    * Delete the queue with the given id. Aborts the execution of queue elements.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId deleteQueue(1: DTOs.Id qId);
+
+    /**
+    * Release (start) a queue. All elements in this queue will be executed.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId releaseQueue(1: DTOs.Id qId);
+
+    /**
+    * Request the current active store routine for this node.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId getStoreRoutine();
+
+    /**
+    * Set new store routine for this node.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId setStoreRoutine(1: DTOs.Id routineId);
 }
 
 /**
@@ -74,6 +122,21 @@ service NodeResponseService {
      * Request info about node.
      */
     DTOs.NodeInfoDTO getInfo(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns a list of active queues (id).
+    **/
+    list<DTOs.Id> getQueueIds(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns information of the requested queue.
+    **/
+    DTOs.QueueInfoDTO getQueueInfo(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns current active store routine id.
+    **/
+    DTOs.Id getStoreRoutine(1: DTOs.TicketId ticketId);
 
     /**
      * Request info about node environment.

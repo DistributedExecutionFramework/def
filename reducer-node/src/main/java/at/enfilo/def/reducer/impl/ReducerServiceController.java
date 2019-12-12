@@ -1,33 +1,59 @@
 package at.enfilo.def.reducer.impl;
 
-import at.enfilo.def.communication.api.common.factory.UnifiedClientFactory;
+import at.enfilo.def.common.api.ITuple;
+import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCreationException;
+import at.enfilo.def.dto.cache.DTOCache;
+import at.enfilo.def.dto.cache.UnknownCacheObjectException;
+import at.enfilo.def.library.api.client.factory.LibraryServiceClientFactory;
+import at.enfilo.def.logging.api.ContextIndicator;
 import at.enfilo.def.logging.api.IDEFLogger;
+import at.enfilo.def.logging.impl.ContextSetBuilder;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.node.api.INodeServiceClient;
-import at.enfilo.def.node.api.NodeServiceClientFactory;
+import at.enfilo.def.node.api.exception.QueueNotExistsException;
+import at.enfilo.def.node.impl.ExecutorService;
 import at.enfilo.def.node.impl.NodeServiceController;
 import at.enfilo.def.node.observer.api.client.INodeObserverServiceClient;
 import at.enfilo.def.node.observer.api.client.factory.NodeObserverServiceClientFactory;
-import at.enfilo.def.node.util.ResultUtil;
+import at.enfilo.def.node.queue.Queue;
+import at.enfilo.def.node.queue.QueuePriorityWrapper;
+import at.enfilo.def.node.queue.ResourceQueue;
+import at.enfilo.def.node.routine.factory.RoutineProcessBuilderFactory;
+import at.enfilo.def.reducer.queue.ReduceJobQueue;
 import at.enfilo.def.reducer.server.Reducer;
 import at.enfilo.def.reducer.util.ReducerConfiguration;
-import at.enfilo.def.routine.api.Result;
 import at.enfilo.def.transfer.UnknownJobException;
-import at.enfilo.def.transfer.dto.NodeType;
-import at.enfilo.def.transfer.dto.ResourceDTO;
+import at.enfilo.def.transfer.UnknownProgramException;
+import at.enfilo.def.transfer.dto.*;
 
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
-public class ReducerServiceController extends NodeServiceController {
+public class ReducerServiceController extends NodeServiceController<ReduceJobDTO> {
 
     private static final IDEFLogger LOGGER = DEFLoggerFactory.getLogger(ReducerServiceController.class);
+    private static final String ELEMENT_NAME = "ReduceJob";
 
-	/**
-     * Private class to provide thread safe singleton.
+    public static final String DTO_JOB_CACHE_CONTEXT = "reducer-jobs";
+    public static final String DTO_RESOURCE_CACHE_CONTEXT = "reducejob-resources";
+
+    protected static final String KEY_REDUCE = "REDUCE";
+
+    private final QueuePriorityWrapper<ReduceJobDTO> reduceJobQueuePriorityWrapper;
+    private final Map<String, ResourceQueue> resourceQueues;
+    private final Map<String, CountDownLatch> activeReduceJobs;
+
+    protected final List<ReduceJobExecutorService> reduceJobExecutorServices;
+
+    private String storeRoutineId;
+
+
+    /**
+     * Private class to provide thread safe singleton
      */
     private static class ThreadSafeLazySingletonWrapper {
         private static final ReducerServiceController INSTANCE = new ReducerServiceController();
@@ -35,160 +61,274 @@ public class ReducerServiceController extends NodeServiceController {
         private ThreadSafeLazySingletonWrapper() {}
     }
 
-    private final ExecutorService executorService;
-	private final Map<String, ReduceJob> reduceJobs;
-	private final Map<String, List<ResourceDTO>> results;
-	private final Map<String, Future<?>> reduceJobFutures;
-	private final ReducerConfiguration configuration;
-    private String storeRoutineId;
-
-    private ReducerServiceController() {
-        this(
-            new LinkedList<>(),
-            new NodeServiceClientFactory(),
-            Reducer.getInstance().getConfiguration(),
-			new HashMap<>(),
-			new HashMap<>(),
-			Executors.newFixedThreadPool(Reducer.getInstance().getConfiguration().getExecutionThreads())
-        );
-    }
-
-    private ReducerServiceController(
-        List<INodeObserverServiceClient> observers,
-        UnifiedClientFactory<? extends INodeServiceClient> nodeServiceClientFactory,
-        ReducerConfiguration reducerConfiguration,
-		Map<String, ReduceJob> reduceJobs,
-		Map<String, List<ResourceDTO>> results,
-		ExecutorService executorService
-    ) {
-        // Should be implemented as thread safe lazy singleton.
-        super(
-			NodeType.REDUCER,
-            observers,
-			reducerConfiguration,
-			new NodeObserverServiceClientFactory(),
-            LOGGER
-        );
-
-        this.reduceJobs = reduceJobs;
-        this.results = results;
-        this.configuration = reducerConfiguration;
-        this.storeRoutineId = reducerConfiguration.getStoreRoutineId();
-        this.executorService = executorService;
-        this.reduceJobFutures = new HashMap<>();
-    }
-
     /**
-     * Singleton pattern.
-     * @return a instance of {@link ReducerServiceController}
+     * Singleton pattern
+     * @return an instance of {@link ReducerServiceController}
      */
-    public static ReducerServiceController getInstance() {
+    static ReducerServiceController getInstance() {
         return ThreadSafeLazySingletonWrapper.INSTANCE;
     }
 
-    public String getStoreRoutineId() {
-        return storeRoutineId;
+    /**
+     * Singleton, hide constructor
+     */
+    private ReducerServiceController() {
+        this(
+            new QueuePriorityWrapper<>(Reducer.getInstance().getConfiguration()),
+            new HashMap<>(),
+            Collections.synchronizedSet(new HashSet<>()),
+            new LinkedList<>(),
+            Reducer.getInstance().getConfiguration(),
+            new NodeObserverServiceClientFactory()
+        );
     }
 
-    public void setStoreRoutineId(String storeRoutineId) {
-        this.storeRoutineId = storeRoutineId;
+    /**
+     * Private constructor for unit tests
+     */
+    private ReducerServiceController(
+            QueuePriorityWrapper<ReduceJobDTO> reduceJobQueuePriorityWrapper,
+            Map<String, ResourceQueue> resourceQueues,
+            Set<String> finishedJobs,
+            List<INodeObserverServiceClient> observers,
+            ReducerConfiguration configuration,
+            NodeObserverServiceClientFactory nodeObserverServiceClientFactory
+    ) {
+        super(
+                NodeType.REDUCER,
+                observers,
+                finishedJobs,
+                configuration,
+                nodeObserverServiceClientFactory,
+                DTO_JOB_CACHE_CONTEXT,
+                ReduceJobDTO.class,
+                LOGGER
+        );
+        this.reduceJobQueuePriorityWrapper = reduceJobQueuePriorityWrapper;
+        this.resourceQueues = resourceQueues;
+        this.storeRoutineId = configuration.getStoreRoutineId();
+        this.reduceJobExecutorServices = new LinkedList<>();
+        this.activeReduceJobs = new HashMap<>();
+
+        try {
+            RoutineProcessBuilderFactory routineProcessBuilderFactory = new RoutineProcessBuilderFactory(
+                    new LibraryServiceClientFactory().createClient(configuration.getLibraryEndpoint()),
+                    configuration
+            );
+
+            // Create ReduceExecutorServices for all threads.
+            LOGGER.info("Start {} ReducerExecutorServices.", configuration.getExecutionThreads());
+            for (int i = 0; i < configuration.getExecutionThreads(); i++) {
+                ReduceJobExecutorService executorService = new ReduceJobExecutorService(
+                        this.reduceJobQueuePriorityWrapper,
+                        this.resourceQueues,
+                        routineProcessBuilderFactory,
+                        this.storeRoutineId,
+                        this
+                );
+
+                executorService.setName("ReduceExecutionThread " + i);
+                executorService.setDaemon(true);
+                executorService.start();
+                reduceJobExecutorServices.add(executorService);
+            }
+        } catch (ClientCreationException e) {
+            LOGGER.error("Error while creating LibraryServiceClient on startup.", e);
+            throw new RuntimeException(e);
+        }
     }
 
-	public void createReduceJob(String jId, String routineId) throws ClientCreationException {
-    	LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Try to create and start a ReduceJob with Routine {}.", routineId);
-		try {
-			ReduceJob reduceJob = new ReduceJob(jId, routineId, storeRoutineId);
-			Future<?> future = executorService.submit(reduceJob);
-			reduceJobs.put(jId, reduceJob);
-			reduceJobFutures.put(jId, future);
-			LOGGER.info(DEFLoggerFactory.createJobContext(jId), "Successful started ReduceJob with Routine {}.", routineId);
+    @Override
+    protected QueuePriorityWrapper getQueuePriorityWrapper() {
+        return reduceJobQueuePriorityWrapper;
+    }
 
-		} catch (ClientCreationException e) {
-			LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Error while create reduce job.", e);
-			throw e;
-		}
-	}
+    @Override
+    protected List<? extends ExecutorService> getExecutorServices() {
+        return reduceJobExecutorServices;
+    }
 
-	public void deleteReduceJob(String jId) throws UnknownJobException {
-		if (reduceJobs.containsKey(jId)) {
-			LOGGER.debug(DEFLoggerFactory.createJobContext(jId), "Try to abort and delete ReduceJob.");
-			Future<?> future = reduceJobFutures.get(jId);
-			future.cancel(true);
-			reduceJobFutures.remove(jId);
-			reduceJobs.remove(jId);
-			results.remove(jId);
-			LOGGER.info(DEFLoggerFactory.createJobContext(jId), "ReduceJob aborted and deleted.");
-		} else {
-			String msg = String.format("Cannot delete an unknown ReduceJob: %s.", jId);
-			LOGGER.error(DEFLoggerFactory.createJobContext(jId), msg);
-			throw new UnknownJobException(msg);
-		}
-	}
+    @Override
+    protected Queue createQueueInstance(String qId) {
+        return new ReduceJobQueue(qId);
+    }
 
-	public void addResources(String jId, List<ResourceDTO> resources) throws UnknownJobException {
-    	if (reduceJobs.containsKey(jId)) {
-    		reduceJobs.get(jId).addResources(resources);
-    		LOGGER.info(DEFLoggerFactory.createJobContext(jId), "Added resource to reduce.");
-		} else {
-    		String msg = String.format("Reduce job %s not known.", jId);
-			LOGGER.error(DEFLoggerFactory.createJobContext(jId), msg);
-    		throw new UnknownJobException(msg);
-		}
-	}
+    @Override
+    public List<String> getQueueIds() {
+        return reduceJobQueuePriorityWrapper.getAllQueues()
+                .stream()
+                .map(Queue::getQueueId)
+                .collect(Collectors.toList());
+    }
 
-	public void reduce(String jId) throws UnknownJobException, ReduceJobException {
-		if (reduceJobs.containsKey(jId)) {
-			try {
-				// reduce and wait
-				ReduceJob reduceJob = reduceJobs.get(jId);
-				reduceJob.reduceAndWait();
 
-				// extract results
-				if (reduceJob.isSuccessful()) {
-					results.put(jId, new LinkedList<>());
-					for (Result r : reduceJob.getResults()) {
-						// TODO: create a helper class for this (with drivers for different persistence types)
-						ResourceDTO resource = new ResourceDTO();
-						resource.setId(UUID.randomUUID().toString());
-						resource.setData(r.getData());
-						resource.setKey(r.getKey());
-						resource.setDataTypeId(ResultUtil.extractDataTypeId(r));
-						results.get(jId).add(resource);
-					}
-				} else {
-					throw new ReduceJobException(String.format("Reduce job failed: %s.", reduceJob.getError()));
-				}
+    @Override
+    protected void throwException(String eId, String message) throws Exception {
+        throw new UnknownJobException(message);
+    }
 
-			} catch (InterruptedException e) {
-				LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Reduce interrupted.", e);
-				Thread.currentThread().interrupt();
-			} catch (ReduceJobException e) {
-				LOGGER.error(DEFLoggerFactory.createJobContext(jId), "Reduce failed.", e);
-				throw e;
-			} finally {
-				reduceJobs.remove(jId);
-				reduceJobFutures.remove(jId);
-			}
-		} else {
-			String msg = String.format("Reduce job %s not known.", jId);
-			LOGGER.error(DEFLoggerFactory.createJobContext(jId), msg);
-			throw new UnknownJobException(msg);
-		}
+    @Override
+    protected Set<ITuple<ContextIndicator, ?>> getLogContext(ReduceJobDTO element) {
+        return new ContextSetBuilder()
+                .add(ContextIndicator.PROGRAM_CONTEXT, element.getJob().getProgramId())
+                .add(ContextIndicator.JOB_CONTEXT, element.getJobId())
+                .build();
+    }
 
-	}
+    @Override
+    protected Set<ITuple<ContextIndicator, ?>> getLogContext(String elementId) {
+        return new ContextSetBuilder()
+                .add(ContextIndicator.JOB_CONTEXT, elementId)
+                .build();
+    }
 
-	public List<ResourceDTO> fetchResult(String jId) throws UnknownJobException {
-    	if (results.containsKey(jId)) {
-    		return results.remove(jId);
-		} else {
-			String msg = String.format("Reduce job %s not known.", jId);
-			LOGGER.error(DEFLoggerFactory.createJobContext(jId), msg);
-			throw new UnknownJobException(msg);
-		}
-	}
+    @Override
+    protected void removeElementFromQueues(String eId) {
+        reduceJobQueuePriorityWrapper.getAllQueues().forEach(reduceJobQueue ->  reduceJobQueue.remove(eId));
+    }
 
-	@Override
-	protected Map<String, String> getNodeInfoParameters() {
-		return new HashMap<>();
-	}
+    @Override
+    protected void setState(ReduceJobDTO element, ExecutionState state) {
+        element.setState(state);
+    }
+
+    @Override
+    protected List<String> getElementIds(List<ReduceJobDTO> elements) {
+        return elements.stream().map(ReduceJobDTO::getJobId).collect(Collectors.toList());
+    }
+
+    @Override
+    protected List<? extends Queue> getQueues() {
+        return reduceJobQueuePriorityWrapper.getAllQueues();
+    }
+
+    @Override
+    protected Future<Void> queueElements(String qId, List<ReduceJobDTO> elementsToQueue, ServiceEndpointDTO targetNodeEndpoint) throws IllegalAccessException {
+        throw new IllegalAccessException();
+    }
+
+    @Override
+    protected void notifyObservers(String nId, List<String> eIds) {
+        // do nothing
+    }
+
+    @Override
+    protected void finishedExecutionOfElement(String eId) {
+        activeReduceJobs.get(eId).countDown();
+    }
+
+    @Override
+    protected String getElementName() {
+        return ELEMENT_NAME;
+    }
+
+    public void reduceJob(String jId) throws UnknownJobException {
+    	if (!resourceQueues.containsKey(jId)) {
+            LOGGER.error(DEFLoggerFactory.createJobContext(jId), "ReduceJob does not exist.");
+            throw new UnknownJobException(MessageFormat.format("ReduceJob with id {0} is not known.", jId));
+        }
+
+        try {
+            ResourceDTO end = new ResourceDTO();
+            end.setId(UUID.randomUUID().toString());
+            end.setKey(KEY_REDUCE);
+			end.setData(new byte[]{});
+            resourceQueues.get(jId).queue(end);
+        } catch (InterruptedException e) {
+            LOGGER.error("Error while reducing job with id {}", jId);
+        }
+
+    }
+
+    public void addResourcesToReduce(String jId, List<ResourceDTO> resources) throws UnknownJobException {
+        if (!resourceQueues.containsKey(jId)) {
+            LOGGER.error(DEFLoggerFactory.createJobContext(jId), "ReduceJob does not exist.", jId);
+            throw new UnknownJobException(MessageFormat.format("ReduceJob with id {0} is not known.", jId));
+        }
+
+        try {
+            Set<String> reduceKeys = new HashSet<>();
+            ResourceQueue queue = resourceQueues.get(jId);
+            for (ResourceDTO resource : resources) {
+                queue.queue(resource);
+                reduceKeys.add(resource.getKey());
+            }
+            notifyAllObservers(observerClient -> observerClient.notifyReduceKeysReceived(
+                    getNodeConfiguration().getId(),
+                    jId,
+                    new ArrayList<>(reduceKeys)
+            ));
+        } catch (InterruptedException e) {
+            LOGGER.error("Error while adding resources to reduce to job with id {}", jId);
+        }
+    }
+
+    public void abortReduceJob(String jId) throws UnknownJobException {
+        if (!resourceQueues.containsKey(jId)) {
+            LOGGER.error(DEFLoggerFactory.createJobContext(jId), "ReduceJob does not exist.", jId);
+            throw new UnknownJobException(MessageFormat.format("ReduceJob with id {0} is not known.", jId));
+        }
+
+        try {
+            ReduceJobDTO reduceJob = elementCache.fetch(jId);
+            reduceJob.addToMessages("Aborted by user.");
+            ExecutionState oldState = reduceJob.getState();
+
+            abortElement(jId, reduceJob, oldState);
+            resourceQueues.get(jId).clear();
+            resourceQueues.remove(jId);
+
+            activeReduceJobs.get(jId).countDown();
+
+        } catch (UnknownCacheObjectException e) {
+            LOGGER.error("Queue with id {} does not exist.", jId, e);
+            throw new UnknownJobException(MessageFormat.format("Job with id {0} is not known.", jId));
+        } catch (IOException e) {
+            LOGGER.error("Error while aborting reduce job.", e);
+        }
+
+    }
+
+    public void createReduceJob(JobDTO job) throws UnknownProgramException {
+        try {
+            activeReduceJobs.put(job.getId(), new CountDownLatch(1));
+
+            if (!reduceJobQueuePriorityWrapper.containsQueue(job.getProgramId())) {
+                createQueue(job.getProgramId());
+            }
+
+            ResourceQueue resourceQueue = new ResourceQueue(job.getId(), DTO_RESOURCE_CACHE_CONTEXT);
+            resourceQueue.release();
+            resourceQueues.put(job.getId(), resourceQueue);
+
+            ReduceJobDTO reduceJob = new ReduceJobDTO();
+            reduceJob.setJobId(job.getId());
+            reduceJob.setJob(job);
+            reduceJob.setState(ExecutionState.SCHEDULED);
+            queueElements(job.getProgramId(), Collections.singletonList(reduceJob));
+
+        } catch (QueueNotExistsException e) {
+            LOGGER.error("Queue with id {} does not exist.", job.getProgramId(), e);
+            throw new UnknownProgramException(MessageFormat.format("Program with id {0} is not known.", job.getProgramId()));
+        }
+    }
+
+
+    public List<ResourceDTO> fetchResults(String jId) throws Exception {
+        if (!resourceQueues.containsKey(jId)) {
+            LOGGER.error(DEFLoggerFactory.createJobContext(jId), "ReduceJob does not exist.", jId);
+            throw new UnknownJobException(MessageFormat.format("ReduceJob with id {0} is not known.", jId));
+        }
+
+        activeReduceJobs.get(jId).await();
+        ReduceJobDTO reduceJob = fetchFinishedElement(jId);
+        return reduceJob.getJob().getReducedResults();
+    }
+
+    /**
+     * Helper function for unit testing
+     */
+    protected DTOCache<ReduceJobDTO> getReduceJobCache() { return elementCache; }
+
+    protected Map<String, CountDownLatch> getActiveReduceJobs() { return activeReduceJobs; }
 }

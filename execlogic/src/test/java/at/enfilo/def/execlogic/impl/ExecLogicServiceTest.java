@@ -91,7 +91,6 @@ public abstract class ExecLogicServiceTest {
 		String pId = UUID.randomUUID().toString();
 		ProgramDTO program = new ProgramDTO();
 		program.setId(pId);
-		program.setMasterLibraryRoutine(false);
 
 		when(execLogicController.getProgram(pId)).thenReturn(program);
 

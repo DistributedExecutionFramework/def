@@ -130,7 +130,7 @@ public interface IClusterServiceClient extends IServiceClient {
 	 * Returns current active StoreRoutine Id for every task.
 	 * @return StoreRoutine Id
 	 */
-	Future<String> getStoreRoutine()
+	Future<String> getStoreRoutine(NodeType nodeType)
 	throws ClientCommunicationException;
 
 	/**
@@ -138,7 +138,7 @@ public interface IClusterServiceClient extends IServiceClient {
 	 * @param routineId - StoreRoutine Id
 	 * @return Future - {@link TicketStatusDTO}, void function with more status info
 	 */
-	Future<Void> setStoreRoutine(String routineId)
+	Future<Void> setStoreRoutine(String routineId, NodeType nodeType)
 	throws ClientCommunicationException;
 
 	/**

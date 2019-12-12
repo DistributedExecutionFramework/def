@@ -10,15 +10,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ReducerServiceRESTTest extends ReducerServiceTest {
-	@Override
-	protected IServer getServer(ReducerServiceController controller) throws Exception {
-		List<IResource> resources = new LinkedList<>();
-		resources.add(new ReducerServiceImpl(controller, TicketRegistry.getInstance()));
-		resources.add(new ReducerResponseServiceImpl());
 
-		return RESTServer.getInstance(
-				Reducer.getInstance().getConfiguration().getServerHolderConfiguration().getRESTConfiguration(),
-				resources
-		);
-	}
+    @Override
+    protected IServer getServer(ReducerServiceController controller) throws Exception {
+        List<IResource> resources = new LinkedList<>();
+        resources.add(new ReducerServiceImpl(controller, TicketRegistry.getInstance()));
+        resources.add(new ReducerResponseServiceImpl());
+
+        return RESTServer.getInstance(
+                Reducer.getInstance().getConfiguration().getServerHolderConfiguration().getRESTConfiguration(),
+                resources
+        );
+    }
 }

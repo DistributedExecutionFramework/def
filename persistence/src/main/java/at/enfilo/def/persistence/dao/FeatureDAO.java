@@ -78,4 +78,36 @@ class FeatureDAO extends GenericDAO<Feature, String> implements IFeatureDAO {
             throw new PersistenceException(e);
         }
     }
+
+    @Override
+    public List<Feature> findByNameAndVersion(String name, String version) throws PersistenceException {
+
+        try {
+            return findByCriteria(criteriaBuilder -> {
+
+                CriteriaQuery<Feature> criteriaQuery = criteriaBuilder.createQuery(Feature.class);
+
+                Root<Feature> featureRoot = criteriaQuery.from(Feature.class);
+
+                Predicate whereName = criteriaBuilder.like(
+                      featureRoot.get(Feature_.name),
+                      name
+                );
+
+                Predicate whereVersion = criteriaBuilder.like(
+                    featureRoot.get(Feature_.version),
+                    version
+                );
+
+                Predicate nameOrVersion = criteriaBuilder.and(
+                        whereName,
+                        whereVersion
+                );
+
+                return criteriaQuery.where(nameOrVersion);
+            });
+        } catch (HibernateException | NoResultException e) {
+            throw new PersistenceException(e);
+        }
+    }
 }

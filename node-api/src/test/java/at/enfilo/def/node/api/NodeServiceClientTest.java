@@ -180,6 +180,85 @@ public class NodeServiceClientTest {
 		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
 		assertNull(future.get());
 	}
+
+	@Test
+	public void getQueueIds() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		List<String> queueIds = new LinkedList<>();
+		queueIds.add(UUID.randomUUID().toString());
+		queueIds.add(UUID.randomUUID().toString());
+
+		when(requestService.getQueueIds()).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(responseService.getQueueIds(ticketId)).thenReturn(queueIds);
+
+		Future<List<String>> future = client.getQueueIds();
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+		assertEquals(queueIds, future.get());
+	}
+
+	@Test
+	public void getQueueInfo() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String queueId = UUID.randomUUID().toString();
+		QueueInfoDTO info = new QueueInfoDTO();
+
+		when(requestService.getQueueInfo(queueId)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(responseService.getQueueInfo(ticketId)).thenReturn(info);
+
+		Future<QueueInfoDTO> future = client.getQueueInfo(queueId);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+		assertEquals(info, future.get());
+	}
+
+	@Test
+	public void createQueue() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String qId = UUID.randomUUID().toString();
+
+		when(requestService.createQueue(qId)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.createQueue(qId);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+	}
+
+	@Test
+	public void deleteQueue() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String qId = UUID.randomUUID().toString();
+
+		when(requestService.deleteQueue(qId)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.deleteQueue(qId);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+	}
+
+	@Test
+	public void pauseQueue() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String qId = UUID.randomUUID().toString();
+
+		when(requestService.pauseQueue(qId)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.pauseQueue(qId);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+	}
+
+	@Test
+	public void releaseQueue() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String qId = UUID.randomUUID().toString();
+
+		when(requestService.releaseQueue(qId)).thenReturn(ticketId);
+		when(ticketService.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> future = client.releaseQueue(qId);
+		await().atMost(10, TimeUnit.SECONDS).until(future::isDone);
+	}
 }
 
 

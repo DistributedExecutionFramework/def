@@ -46,7 +46,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	public String createProgram(String cId, String uId) {
 		ITicket ticket = ticketRegistry.createTicket(
 				String.class,
-				() -> execLogicController.createProgram(cId, uId)
+				() -> execLogicController.createProgram(cId, uId),
+				ITicket.HIGHER_THAN_NORMAL_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -64,7 +65,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	@Override
 	public String deleteProgram(String pId) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> execLogicController.deleteProgram(pId)
+				() -> execLogicController.deleteProgram(pId),
+				ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -72,7 +74,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	@Override
 	public String abortProgram(String pId) {
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> execLogicController.abortProgram(pId)
+				() -> execLogicController.abortProgram(pId),
+				ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -89,6 +92,14 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	public String updateProgramDescription(String pId, String description) {
 		ITicket ticket = ticketRegistry.createTicket(
 				() -> execLogicController.updateProgramDescription(pId, description)
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String startClientRoutine(String pId, String crId) {
+		ITicket ticket = ticketRegistry.createTicket(
+				() -> execLogicController.startClientRoutine(pId, crId)
 		);
 		return ticket.getId().toString();
 	}
@@ -115,7 +126,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	public String createJob(String pId) {
 		ITicket ticket = ticketRegistry.createTicket(
 				String.class,
-				() -> execLogicController.createJob(pId)
+				() -> execLogicController.createJob(pId),
+				ITicket.HIGHER_THAN_NORMAL_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -134,7 +146,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	public String deleteJob(String pId, String jId) {
 		lastTasks.remove(jId);
 		ITicket ticket = ticketRegistry.createTicket(
-				() -> execLogicController.deleteJob(pId, jId)
+				() -> execLogicController.deleteJob(pId, jId),
+				ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();
 	}
@@ -277,7 +290,8 @@ public class ExecLogicServiceImpl implements IExecLogicService, ExecLogicService
 	public String createSharedResource(String pId, String dataTypeId, ByteBuffer data) {
 		ITicket ticket = ticketRegistry.createTicket(
 				String.class,
-				() -> execLogicController.createSharedResource(pId, dataTypeId, data)
+				() -> execLogicController.createSharedResource(pId, dataTypeId, data),
+				ITicket.HIGHER_THAN_NORMAL_PRIORITY
 		);
 		return ticket.getId().toString();
 	}

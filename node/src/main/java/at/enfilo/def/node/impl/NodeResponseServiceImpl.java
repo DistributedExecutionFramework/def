@@ -6,6 +6,7 @@ import at.enfilo.def.node.api.rest.INodeResponseService;
 import at.enfilo.def.transfer.dto.FeatureDTO;
 import at.enfilo.def.transfer.dto.NodeEnvironmentDTO;
 import at.enfilo.def.transfer.dto.NodeInfoDTO;
+import at.enfilo.def.transfer.dto.QueueInfoDTO;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -29,6 +30,21 @@ implements INodeResponseService {
     @Override
     public NodeInfoDTO getInfo(String ticketId) {
         return getResult(ticketId, NodeInfoDTO.class);
+    }
+
+    @Override
+    public String getStoreRoutine(String ticketId) {
+        return getResult(ticketId, String.class);
+    }
+
+    @Override
+    public List<String> getQueueIds(String ticketId) {
+        return getResult(ticketId, List.class);
+    }
+
+    @Override
+    public QueueInfoDTO getQueueInfo(String ticketId) {
+        return getResult(ticketId, QueueInfoDTO.class);
     }
 
     @Override

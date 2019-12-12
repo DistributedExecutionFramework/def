@@ -9,12 +9,16 @@ import org.mockito.Mockito;
 
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class CommandTemplateParserTest {
 
     private Environment environment;
+    private Environment environment2;
     private Map<String, IPlaceholder> placeholderMap;
+    private Map<String, IPlaceholder> placeholderMap2;
 
     @Before
     public void setup() {
@@ -53,7 +57,7 @@ public class CommandTemplateParserTest {
         Map<String, String> javaVariables = new HashMap<>();
         javaVariables.put("javaVar", "jv");
         javaVariables.put("path", "pathToJv");
-        String javaCmd = "java ({rbs}:-cp {}) test [test] [{cuda(>9)}:{$cudaJavaExtension}] {args} {pipes}";
+        String javaCmd = "java ({rbs}:-cp {} )test [test] [{cuda(>9)}:{$cudaJavaExtension}] {args} {pipes}";
         Feature java = new Feature("java", "1.8", "language", null, javaCmd, javaEnvironment, javaVariables);
 
         Map<String, String> cudaEnvironment = new HashMap<>();
@@ -64,14 +68,13 @@ public class CommandTemplateParserTest {
         Feature cuda = new Feature("cuda", "9.4", null, null, null, cudaEnvironment, cudaVariables);
 
         Map<String, String> frameworkEnvironment = new HashMap<>();
-        frameworkEnvironment.put("var", "/{$path}/");
+        frameworkEnvironment.put("var", "/{$fwPath}/");
         Map<String, String> frameworkVariables = new HashMap<>();
-        frameworkVariables.put("fw", "({rbs}:{$fwPath})");
+        frameworkVariables.put("fw", "({rbs}:{$fwPath}:)");
         frameworkVariables.put("fwPath", "pathToFramework");
         Feature framework = new Feature("framework", "9.4", null, null, null, frameworkEnvironment, frameworkVariables);
 
         environment = new Environment(Arrays.asList(python, python2, java, cuda, framework));
-
         placeholderMap = new HashMap<>();
 
         IPlaceholder rbPlaceholder = Mockito.mock(IPlaceholder.class);
@@ -100,6 +103,47 @@ public class CommandTemplateParserTest {
         placeholderMap.put("in", pPlaceholder);
         placeholderMap.put("out", pPlaceholder);
         placeholderMap.put("ctrl", pPlaceholder);
+
+        Map<String, String> dl4jVariables = new HashMap<>();
+        dl4jVariables.put("dl4jPath", "/home/def/lib/dl4j/");
+        Extension dl4j = new Extension("dl4j", "1.0.0.3", null, null, dl4jVariables);
+
+        Map<String, String> nd4jVariables = new HashMap<>();
+        nd4jVariables.put("nd4jPath", "/home/def/lib/nd4j/");
+        Extension nd4j = new Extension("nd4j", "1.0.0.3", null, null, nd4jVariables);
+
+        Map<String, String> javaVariables2 = new HashMap<>();
+        javaVariables2.put("libraryPath", "/home/def/lib/");
+        String javaCmd2 = "java -cp ({rbs}:{}:)[{java(1.8):dl4j}:{$dl4jPath}*:][{java(1.8):nd4j}:{$nd4jPath}*:] {arg0} {args} {pipes}";
+        Feature java2 = new Feature("java", "1.8", "language", Arrays.asList(dl4j, nd4j), javaCmd2, null, javaVariables2);
+
+        environment2 = new Environment(Collections.singletonList(java2));
+        placeholderMap2 = new HashMap<>();
+
+        IPlaceholder rbPlaceholder2 = Mockito.mock(IPlaceholder.class);
+        when(rbPlaceholder2.get("rbs")).thenReturn("jar");
+        when(rbPlaceholder2.get("rbp")).thenReturn("jar");
+        when(rbPlaceholder2.get("rb0")).thenReturn("jar");
+
+        IPlaceholder aPlaceholder2 = Mockito.mock(IPlaceholder.class);
+        when(aPlaceholder2.get("args")).thenReturn("at.fhv.Class");
+        when(aPlaceholder2.get("arg0")).thenReturn("at.fhv.Class");
+
+        IPlaceholder pPlaceholder2 = Mockito.mock(IPlaceholder.class);
+        when(pPlaceholder2.get("pipes")).thenReturn("in ctrl");
+        when(pPlaceholder2.get("in")).thenReturn("in");
+        when(pPlaceholder2.get("out")).thenReturn(null);
+        when(pPlaceholder2.get("ctrl")).thenReturn("ctrl");
+
+        placeholderMap2.put("rbs", rbPlaceholder2);
+        placeholderMap2.put("rbp", rbPlaceholder2);
+        placeholderMap2.put("rb*", rbPlaceholder2);
+        placeholderMap2.put("args", aPlaceholder2);
+        placeholderMap2.put("arg*", aPlaceholder2);
+        placeholderMap2.put("pipes", pPlaceholder2);
+        placeholderMap2.put("in", pPlaceholder2);
+        placeholderMap2.put("out", pPlaceholder2);
+        placeholderMap2.put("ctrl", pPlaceholder2);
     }
 
     @Test
@@ -118,116 +162,61 @@ public class CommandTemplateParserTest {
                 Feature.buildFromString("cuda(>9)"),
                 Feature.buildFromString("framework")
         );
+        List<Feature> requiredFeatures5 = Collections.singletonList(
+                Feature.buildFromString("java(>1.8):dl4j(1.0.0.3),nd4j(1.0.0.3)")
+        );
 
         MatchingMode mode = MatchingMode.LOWEST;
-
         CommandTemplateParser parser1 = new CommandTemplateParser(environment, requiredFeatures1, placeholderMap, mode);
         CommandTemplateParser parser2 = new CommandTemplateParser(environment, requiredFeatures2, placeholderMap, mode);
         CommandTemplateParser parser3 = new CommandTemplateParser(environment, requiredFeatures3, placeholderMap, mode);
         CommandTemplateParser parser4 = new CommandTemplateParser(environment, requiredFeatures4, placeholderMap, mode);
+        CommandTemplateParser parser5 = new CommandTemplateParser(environment2, requiredFeatures5, placeholderMap2, mode);
 
         Map<String, List<String>> environment1 = parser1.parseEnvironmentVariables();
         Map<String, List<String>> environment2 = parser2.parseEnvironmentVariables();
         Map<String, List<String>> environment3 = parser3.parseEnvironmentVariables();
         Map<String, List<String>> environment4 = parser4.parseEnvironmentVariables();
-
+        Map<String, List<String>> environment5 = parser5.parseEnvironmentVariables();
         String cmd1 = parser1.parseCommand();
         String cmd2 = parser2.parseCommand();
         String cmd3 = parser3.parseCommand();
         String cmd4 = parser4.parseCommand();
-        System.out.println("done");
+        String cmd5 = parser5.parseCommand();
+
+        assertEquals(1, environment1.size());
+        assertEquals(1, environment2.size());
+        assertEquals(1, environment3.size());
+        assertEquals(3, environment4.size());
+        assertEquals(0, environment5.size());
+
+        assertTrue(environment1.containsKey("JAVA_HOME"));
+        assertTrue(environment2.containsKey("PATH"));
+        assertTrue(environment3.containsKey("PATH"));
+        assertTrue(environment4.containsKey("JAVA_HOME"));
+        assertTrue(environment4.containsKey("PATH"));
+        assertTrue(environment4.containsKey("var"));
+
+        assertEquals(1, environment1.get("JAVA_HOME").size());
+        assertEquals(2, environment2.get("PATH").size());
+        assertEquals(2, environment3.get("PATH").size());
+        assertEquals(1, environment4.get("PATH").size());
+        assertEquals(1, environment4.get("var").size());
+        assertEquals(1, environment4.get("JAVA_HOME").size());
+
+        assertTrue(environment1.get("JAVA_HOME").contains("/pathToJv/"));
+        assertTrue(environment2.get("PATH").contains("/pathToNpy/"));
+        assertTrue(environment2.get("PATH").contains("/pathToPy/"));
+        assertTrue(environment3.get("PATH").contains("/pathToNpy/"));
+        assertTrue(environment3.get("PATH").contains("/pathToPy/"));
+        assertTrue(environment4.get("JAVA_HOME").contains("/pathToJv/"));
+        assertTrue(environment4.get("var").contains("/pathToFramework/"));
+        assertTrue(environment4.get("PATH").contains("/pathToCuda/"));
+
+        assertEquals("java -cp rb1 -cp rb2 test [test] arg1 arg2 in ctrl", cmd1);
+        assertEquals("python pathToPy npy py rb1 rb2 arg1 arg2 in ctrl", cmd2);
+        assertEquals("python3 pathToPy npy py rb1 rb2 arg1 arg2 in ctrl", cmd3);
+        assertEquals("java -cp rb1 -cp rb2 test [test] -enableCuda pathToFramework:pathToFramework: arg1 arg2 in ctrl", cmd4);
+        assertEquals("java -cp jar:/home/def/lib/dl4j/*:/home/def/lib/nd4j/*: at.fhv.Class at.fhv.Class in ctrl", cmd5);
     }
-
-    /*private ITemplateDataProvider getDataProvider(IFeature feature) {
-        if (feature instanceof Feature) {
-            return new CommandTemplateParser.DataProvider() {
-                @Override
-                public String resolveVariable(String variable) {
-                    if (feature.getVariables() != null && feature.getVariables().containsKey(variable)) {
-                        return feature.getVariables().get(variable);
-                    }
-                    return null;
-                }
-            };
-        } else if (feature instanceof Extension) {
-            return new CommandTemplateParser.DataProvider() {
-                @Override
-                public String resolveVariable(String variable) {
-                    if (feature.getVariables() != null && feature.getVariables().containsKey(variable)) {
-                        return feature.getVariables().get(variable);
-                    } else if (extensionFeatureMap.get(feature).getVariables() != null &&
-                            extensionFeatureMap.get(feature).getVariables().containsKey(variable)) {
-                        return extensionFeatureMap.get(feature).getVariables().get(variable);
-                    }
-                    return null;
-                }
-            };
-        }
-        return null;
-    }
-
-    private abstract class DataProvider implements ITemplateDataProvider {
-
-        private String lastFeatureString;
-        private String lastFeatureName;
-
-        @Override
-        public String resolvePlaceholder(String placeholder) {
-            if (placeholder == null || placeholder.isEmpty()) {
-                return null;
-            }
-            String key = placeholder.matches(".*\\d+") ? placeholder.replaceAll("\\d", "") + "*" : placeholder;
-            return placeholderMap.containsKey(key) ? placeholderMap.get(key).get(placeholder) : null;
-        }
-
-        @Override
-        public String resolveOptional(String reference, String template) {
-            if (!requiresFeature(reference)) {
-                return null;
-            }
-            Feature feature = features.get(lastFeatureName);
-            List<Extension> extensionList = new ArrayList<>();
-            for (String extensionName : Feature.getExtensionNames(lastFeatureString)) {
-                extensionList.add(extensions.get(extensionName));
-            }
-            ITemplateDataProvider superProvider = this;
-            return new Template(new CommandTemplateParser.DataProvider() {
-                @Override
-                public String resolveVariable(String variable) {
-                    String result = superProvider.resolveVariable(variable);
-                    if (result == null) {
-                        if (feature.getVariables() != null && feature.getVariables().containsKey(variable)) {
-                            return feature.getVariables().get(variable);
-                        } else if (!extensionList.isEmpty()){
-                            for (Extension extension : extensionList) {
-                                if (extension.getVariables() != null && extension.getVariables().containsKey(variable)) {
-                                    return extension.getVariables().get(variable);
-                                }
-                            }
-                        }
-                    }
-                    return result;
-                }
-            }, template).parse();
-        }
-
-        private boolean requiresFeature(String featureString) {
-            if (featureString == null || featureString.isEmpty()) {
-                return false;
-            }
-
-            if (lastFeatureString.equals(featureString)) {
-                return lastFeatureName != null;
-            }
-            lastFeatureString = featureString;
-            if (requiredFeatures.matches(Collections.singletonList(featureString))) {
-                lastFeatureName = Feature.getName(featureString);
-                return true;
-            } else {
-                lastFeatureName = null;
-                return false;
-            }
-        }
-
-    }*/
 }

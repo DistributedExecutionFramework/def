@@ -4,6 +4,7 @@ import at.enfilo.def.transfer.UnknownTaskException;
 import org.apache.thrift.TBase;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public interface IDTOPersistenceDriver<T extends TBase> {
 
@@ -35,6 +36,12 @@ public interface IDTOPersistenceDriver<T extends TBase> {
 	 * @param id - DTO id to delete.
 	 */
 	void remove(String id);
+
+	/**
+	 * Delete a batch of DTO from persistence.
+	 * @param ids - List of DTOs to delete
+	 */
+	void remove(Collection<String> ids);
 
 	/**
 	 * Delete all from persistence.

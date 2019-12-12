@@ -9,11 +9,11 @@ import at.enfilo.def.logging.impl.DEFLoggerFactory;
 import at.enfilo.def.manager.api.rest.IManagerResponseService;
 import at.enfilo.def.manager.api.thrift.ManagerResponseService;
 import at.enfilo.def.transfer.dto.ClusterInfoDTO;
+import at.enfilo.def.transfer.dto.FeatureDTO;
 
 import java.util.List;
 
-public class ManagerResponseServiceImpl extends ResponseService
-implements IManagerResponseService, ManagerResponseService.Iface {
+public class ManagerResponseServiceImpl extends ResponseService implements IManagerResponseService, ManagerResponseService.Iface {
 
 	private final static IDEFLogger LOGGER = DEFLoggerFactory.getLogger(ManagerResponseServiceImpl.class);
 
@@ -44,5 +44,20 @@ implements IManagerResponseService, ManagerResponseService.Iface {
 	@Override
 	public ServiceEndpointDTO getClusterEndpoint(String ticketId) {
 		return getResult(ticketId, ServiceEndpointDTO.class);
+	}
+
+	@Override
+	public String createClientRoutine(String ticketId) {
+		return getResult(ticketId, String.class);
+	}
+
+	@Override
+	public String createClientRoutineBinary(String ticketId) {
+		return getResult(ticketId, String.class);
+	}
+
+	@Override
+	public FeatureDTO getFeatureByNameAndVersion(String ticketId) {
+		return getResult(ticketId, FeatureDTO.class);
 	}
 }

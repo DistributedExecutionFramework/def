@@ -6,9 +6,9 @@ import at.enfilo.def.common.util.DaemonThreadFactory;
 import at.enfilo.def.logging.api.ContextIndicator;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.node.api.RoutineCreationException;
-import at.enfilo.def.node.api.RoutineExecutionException;
-import at.enfilo.def.node.api.TaskExecutionException;
+import at.enfilo.def.node.api.exception.RoutineCreationException;
+import at.enfilo.def.node.api.exception.RoutineExecutionException;
+import at.enfilo.def.node.api.exception.QueueElementExecutionException;
 import at.enfilo.def.node.routine.factory.RoutineProcessBuilderFactory;
 import at.enfilo.def.node.util.NodeConfiguration;
 import at.enfilo.def.routine.api.Result;
@@ -90,9 +90,9 @@ public class SequenceStepsExecutor {
 	 * Create workingDirectory for the given task.
 	 *
 	 * @return Path to working directory.
-	 * @throws TaskExecutionException if an error occurs while trying to create a working dir.
+	 * @throws QueueElementExecutionException if an error occurs while trying to create a working dir.
 	 */
-	private Path setupWorkingDirectory() throws TaskExecutionException {
+	private Path setupWorkingDirectory() throws QueueElementExecutionException {
 		Path workingDir = Paths.get(configuration.getWorkingDir(), id);
 		if (!workingDir.toFile().mkdirs()) {
 			LOGGER.error(
@@ -101,7 +101,7 @@ public class SequenceStepsExecutor {
 				workingDir.toAbsolutePath()
 			);
 
-			throw new TaskExecutionException("Error while creating task working directory");
+			throw new QueueElementExecutionException("Error while creating task working directory");
 		}
 
 		LOGGER.debug(
@@ -334,4 +334,10 @@ public class SequenceStepsExecutor {
 	public RoutinesCommunicator getCommunicator() {
 		return communicator;
 	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public int getNumberOfSequenceSteps() { return steps.size(); }
 }

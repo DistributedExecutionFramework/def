@@ -1,18 +1,17 @@
 package at.enfilo.def.cluster.impl;
 
 import at.enfilo.def.cluster.api.NodeCreationException;
+import at.enfilo.def.cluster.api.NodeExecutionException;
 import at.enfilo.def.cluster.api.UnknownNodeException;
 import at.enfilo.def.cluster.server.Cluster;
-import at.enfilo.def.cluster.util.ClusterConfiguration;
-import at.enfilo.def.cluster.util.WorkersConfiguration;
+import at.enfilo.def.cluster.util.configuration.ClusterConfiguration;
+import at.enfilo.def.cluster.util.configuration.WorkersConfiguration;
 import at.enfilo.def.communication.dto.Protocol;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
+import at.enfilo.def.communication.exception.TicketFailedException;
 import at.enfilo.def.node.observer.api.util.NodeNotificationConfiguration;
-import at.enfilo.def.scheduler.api.ISchedulerServiceClient;
-import at.enfilo.def.transfer.dto.ExecutionState;
-import at.enfilo.def.transfer.dto.FeatureDTO;
-import at.enfilo.def.transfer.dto.NodeInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.scheduler.worker.api.IWorkerSchedulerServiceClient;
+import at.enfilo.def.transfer.dto.*;
 import at.enfilo.def.worker.api.IWorkerServiceClient;
 import at.enfilo.def.worker.api.WorkerServiceClientFactory;
 import org.junit.Assert;
@@ -33,10 +32,10 @@ import static org.mockito.Mockito.*;
 
 public class WorkerControllerTest {
 
-	private WorkerController nodeController;
+	private WorkerController workerController;
 	private ClusterConfiguration configuration = Cluster.getInstance().getConfiguration();
 	private WorkerServiceClientFactory workerServiceClientFactoryMock;
-	private ISchedulerServiceClient schedulerServiceClientMock;
+	private IWorkerSchedulerServiceClient schedulerServiceClientMock;
 	private IWorkerServiceClient workerServiceClientMock;
 	private List<String> workers;
 	private Map<String, String> workerInstanceMap;
@@ -50,7 +49,7 @@ public class WorkerControllerTest {
 		// Creating general mocks
 		workerServiceClientFactoryMock = Mockito.mock(WorkerServiceClientFactory.class);
 		workerServiceClientMock = Mockito.mock(IWorkerServiceClient.class);
-		schedulerServiceClientMock = Mockito.mock(ISchedulerServiceClient.class);
+		schedulerServiceClientMock = Mockito.mock(IWorkerSchedulerServiceClient.class);
 
 		ClusterResource.getInstance().setWorkerSchedulerServiceClient(schedulerServiceClientMock);
 
@@ -74,7 +73,7 @@ public class WorkerControllerTest {
 				Map.class
 				);
 		constructor.setAccessible(true);
-		nodeController = constructor.newInstance(
+		workerController = constructor.newInstance(
 				workerServiceClientFactoryMock,
 				workers,
 				workerInstanceMap,
@@ -85,7 +84,6 @@ public class WorkerControllerTest {
 				workerTaskAssignment
 		);
 	}
-
 
 	@Test
 	public void getWorkerInfo() throws Exception {
@@ -103,15 +101,14 @@ public class WorkerControllerTest {
 		workers.add(workerId);
 		workerInfoMap.put(workerId, info);
 
-		NodeInfoDTO receivedInfo = nodeController.getNodeInfo(workerId);
+		NodeInfoDTO receivedInfo = workerController.getNodeInfo(workerId);
 
 		assertEquals(info, receivedInfo);
 	}
 
-
 	@Test(expected = UnknownNodeException.class)
 	public void getUnknownWorkerInfo() throws Exception {
-		nodeController.getNodeInfo(UUID.randomUUID().toString());
+		workerController.getNodeInfo(UUID.randomUUID().toString());
 	}
 
 	@Test
@@ -121,7 +118,7 @@ public class WorkerControllerTest {
 		workers.add(workerId);
 		workerConnectionMap.put(workerId, workerServiceClientMock);
 
-		IWorkerServiceClient client = nodeController.getServiceClient(workerId);
+		IWorkerServiceClient client = workerController.getServiceClient(workerId);
 		assertEquals(workerServiceClientMock, client);
 	}
 
@@ -133,7 +130,7 @@ public class WorkerControllerTest {
 		workers.add(workerId);
 		workerConnectionMap.put(workerId, workerServiceClientMock);
 
-		IWorkerServiceClient client = nodeController.getServiceClient(unknownWorkerId);
+		IWorkerServiceClient client = workerController.getServiceClient(unknownWorkerId);
 	}
 
 	@Test
@@ -180,7 +177,7 @@ public class WorkerControllerTest {
 		when(futureRegisterObserver.get()).thenReturn(null);
 		when(workerServiceClientMock.setStoreRoutine(anyString())).thenReturn(futureStatus);
 
-		nodeController.addNode(serviceEndpoint);
+		workerController.addWorker(serviceEndpoint);
 
 		assertEquals(1, workers.size());
 		assertTrue(workerInfoMap.containsKey(workerInfo.getId()));
@@ -200,9 +197,8 @@ public class WorkerControllerTest {
 		when(workerServiceClientMock.takeControl(anyString())).thenReturn(futureStatus);
 		when(futureStatus.get()).thenThrow(new ExecutionException("failed", null));
 
-		nodeController.addNode(serviceEndpoint);
+		workerController.addWorker(serviceEndpoint);
 	}
-
 
 	@Test
 	public void notifyNodeInfo() throws Exception {
@@ -211,28 +207,27 @@ public class WorkerControllerTest {
 		NodeInfoDTO nodeInfo = new NodeInfoDTO();
 		nodeInfo.setParameters(new HashMap<>());
 		nodeInfo.setId(nId);
-		nodeInfo.getParameters().put("numberOfQueuedTasks", "1");
+		nodeInfo.getParameters().put("numberOfQueuedElements", "1");
 		nodeInfo.setLoad(1.1);
 
 		workers.add(nId);
 		workerInfoMap.put(nId, nodeInfo);
 
-		assertEquals(nodeInfo, nodeController.getNodeInfo(nId));
+		assertEquals(nodeInfo, workerController.getNodeInfo(nId));
 
 		// New nodeInfo + notification
 		NodeInfoDTO newNodeInfo = new NodeInfoDTO();
 		newNodeInfo.setId(nId);
-		nodeInfo.getParameters().put("numberOfQueuedTasks", "4");
+		nodeInfo.getParameters().put("numberOfQueuedElements", "4");
 		newNodeInfo.setLoad(2.1);
-		nodeController.notifyNodeInfo(nId, newNodeInfo);
-		assertEquals(newNodeInfo, nodeController.getNodeInfo(nId));
+		workerController.notifyNodeInfo(nId, newNodeInfo);
+		assertEquals(newNodeInfo, workerController.getNodeInfo(nId));
 	}
-
 
 	@Test(expected = UnknownNodeException.class)
 	public void notifyWorkerInfoFailed() throws Exception {
 		NodeInfoDTO nodeInfo = new NodeInfoDTO();
-		nodeController.notifyNodeInfo(UUID.randomUUID().toString(), nodeInfo);
+		workerController.notifyNodeInfo(UUID.randomUUID().toString(), nodeInfo);
 	}
 
 	@Test
@@ -254,7 +249,7 @@ public class WorkerControllerTest {
 		tIds.add(t2Id);
 
 		// Notify and proof
-		nodeController.notifyTasksReceived(nId, tIds);
+		workerController.notifyTasksReceived(nId, tIds);
 		assertFalse(workerTaskAssignment.isEmpty());
 		assertNotNull(workerTaskAssignment.get(nId));
 		assertTrue(workerTaskAssignment.get(nId).contains(t1Id));
@@ -284,7 +279,7 @@ public class WorkerControllerTest {
 		tIds.add(t3Id);
 
 		// Notify and proof
-		nodeController.notifyTasksNewState(nId, tIds, ExecutionState.SUCCESS);
+		workerController.notifyTasksNewState(nId, tIds, ExecutionState.SUCCESS);
 		assertFalse(workerTaskAssignment.isEmpty());
 		assertFalse(workerTaskAssignment.get(nId).contains(t1Id));
 		assertTrue(workerTaskAssignment.get(nId).contains(t2Id));
@@ -323,7 +318,7 @@ public class WorkerControllerTest {
 		when(future.get()).thenReturn(null);
 		when(schedulerServiceClientMock.removeWorker(anyString())).thenReturn(future);
 
-		nodeController.removeNode(nId2);
+		workerController.removeNode(nId2, true);
 
 		assertFalse(workers.contains(nId2));
 		assertFalse(workerInstanceMap.containsKey(nId2));
@@ -335,13 +330,11 @@ public class WorkerControllerTest {
 		assertEquals(2, workers.size());
 	}
 
-
 	@Test(expected = UnknownNodeException.class)
 	public void removeUnknownWorker() throws Exception {
 		String wId = UUID.randomUUID().toString();
-		nodeController.removeNode(wId);
+		workerController.removeNode(wId, true);
 	}
-
 
 	@Test
 	public void getWorkerServiceEndpoint() throws Exception {
@@ -358,25 +351,22 @@ public class WorkerControllerTest {
 		}
 
 		for (Map.Entry<String, ServiceEndpointDTO> e : endpoints.entrySet()) {
-			ServiceEndpointDTO endpoint = nodeController.getNodeServiceEndpoint(e.getKey());
+			ServiceEndpointDTO endpoint = workerController.getNodeServiceEndpoint(e.getKey());
 			assertEquals(e.getValue(), endpoint);
 		}
 	}
 
-
 	@Test(expected = UnknownNodeException.class)
 	public void getUnknownWorkerServiceEndpoint() throws Exception {
 		String wId = UUID.randomUUID().toString();
-		nodeController.getNodeServiceEndpoint(wId);
+		workerController.getNodeServiceEndpoint(wId);
 	}
-
 
 	@Test
 	public void getAndSetRoutines() throws Exception {
-		assertNotNull(nodeController.getStoreRoutineId());
+		assertNotNull(workerController.getStoreRoutineId());
 
 		String storeRoutineId = UUID.randomUUID().toString();
-		String partitionRoutineId = UUID.randomUUID().toString();
 
 		// Add 3 workers
 		String worker1Id = UUID.randomUUID().toString();
@@ -392,12 +382,11 @@ public class WorkerControllerTest {
 		when(futureState.get()).thenReturn(null);
 
 
-		nodeController.setStoreRoutineId(storeRoutineId);
-		assertEquals(storeRoutineId, nodeController.getStoreRoutineId());
+		workerController.setStoreRoutineId(storeRoutineId);
+		assertEquals(storeRoutineId, workerController.getStoreRoutineId());
 
 		verify(workerServiceClientMock, times(3)).setStoreRoutine(storeRoutineId);
 	}
-
 
 	@Test
 	public void getInstance() throws Exception {
@@ -406,6 +395,50 @@ public class WorkerControllerTest {
 
 		WorkerController wc2 = WorkerController.getInstance();
 		assertSame(wc, wc2);
+	}
+
+	@Test
+	public void findNodesForShutdownTest_running() {
+		WorkerController wc = WorkerController.getInstance();
+		String node1Id = UUID.randomUUID().toString();
+		NodeInfoDTO nodeInfoDTO1 = new NodeInfoDTO();
+		nodeInfoDTO1.setId(node1Id);
+		nodeInfoDTO1.putToParameters("numberOfQueuedElements", "1");
+		String node2Id = UUID.randomUUID().toString();
+		NodeInfoDTO nodeInfoDTO2 = new NodeInfoDTO();
+		nodeInfoDTO2.setId(node2Id);
+		nodeInfoDTO2.putToParameters("numberOfQueuedElements", "3");
+		String node3Id = UUID.randomUUID().toString();
+		NodeInfoDTO nodeInfoDTO3 = new NodeInfoDTO();
+		nodeInfoDTO3.setId(node3Id);
+		nodeInfoDTO3.putToParameters("numberOfQueuedElements", "2");
+		String node4Id = UUID.randomUUID().toString();
+		NodeInfoDTO nodeInfoDTO4 = new NodeInfoDTO();
+		nodeInfoDTO4.setId(node4Id);
+		nodeInfoDTO4.putToParameters("numberOfQueuedElements", "4");
+		int nrOfNodesToShutdown = 2;
+		Map<String, NodeInfoDTO> nodesMap = new HashMap<>();
+		nodesMap.put(node1Id, nodeInfoDTO1);
+		nodesMap.put(node2Id, nodeInfoDTO2);
+		nodesMap.put(node3Id, nodeInfoDTO3);
+		nodesMap.put(node4Id, nodeInfoDTO4);
+		wc.nodeInfoMap.clear();
+		wc.nodeInfoMap.putAll(nodesMap);
+
+		List<String> nodeIds = wc.findNodesForShutdown(nrOfNodesToShutdown);
+
+		Assert.assertEquals(nrOfNodesToShutdown, nodeIds.size());
+		Assert.assertTrue(nodeIds.contains(node1Id));
+		Assert.assertFalse(nodeIds.contains(node2Id));
+		Assert.assertTrue(nodeIds.contains(node3Id));
+		Assert.assertFalse(nodeIds.contains(node4Id));
+	}
+
+	@Test (expected = IllegalArgumentException.class)
+	public void findNodesForShutdownTest_wrongNumber() {
+		WorkerController wc = WorkerController.getInstance();
+
+		wc.findNodesForShutdown(10);
 	}
 
 	@Test
@@ -440,52 +473,170 @@ public class WorkerControllerTest {
 		workerTaskAssignment.put(worker3Id, worker3Tasks);
 
 		// Mocking actions
-//		verify(nodeController, times(1)).getWorkerClient((String)notNull());
-		// TODO: implement when code is finished
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(schedulerServiceClientMock.abortTask(worker1Id, task1)).thenReturn(future);
+
+		workerController.abortTask(task1);
+
+		assertTrue(workerTaskAssignment.get(worker1Id).contains(task1));
+		verify(schedulerServiceClientMock).abortTask(worker1Id, task1);
 	}
 
 	@Test
-	public void findNodesForShutdownTest_running() {
-		WorkerController wc = WorkerController.getInstance();
-		String node1Id = UUID.randomUUID().toString();
-		NodeInfoDTO nodeInfoDTO1 = new NodeInfoDTO();
-		nodeInfoDTO1.setId(node1Id);
-		nodeInfoDTO1.putToParameters("numberOfQueuedTasks", "1");
-		String node2Id = UUID.randomUUID().toString();
-		NodeInfoDTO nodeInfoDTO2 = new NodeInfoDTO();
-		nodeInfoDTO2.setId(node2Id);
-		nodeInfoDTO2.putToParameters("numberOfQueuedTasks", "3");
-		String node3Id = UUID.randomUUID().toString();
-		NodeInfoDTO nodeInfoDTO3 = new NodeInfoDTO();
-		nodeInfoDTO3.setId(node3Id);
-		nodeInfoDTO3.putToParameters("numberOfQueuedTasks", "2");
-		String node4Id = UUID.randomUUID().toString();
-		NodeInfoDTO nodeInfoDTO4 = new NodeInfoDTO();
-		nodeInfoDTO4.setId(node4Id);
-		nodeInfoDTO4.putToParameters("numberOfQueuedTasks", "4");
-		int nrOfNodesToShutdown = 2;
-		Map<String, NodeInfoDTO> nodesMap = new HashMap<>();
-		nodesMap.put(node1Id, nodeInfoDTO1);
-		nodesMap.put(node2Id, nodeInfoDTO2);
-		nodesMap.put(node3Id, nodeInfoDTO3);
-		nodesMap.put(node4Id, nodeInfoDTO4);
-		wc.nodeInfoMap.clear();
-		wc.nodeInfoMap.putAll(nodesMap);
+	public void abortTask_noWorkerTaskMapping() throws Exception {
+		String tId = UUID.randomUUID().toString();
 
-		List<String> nodeIds = wc.findNodesForShutdown(nrOfNodesToShutdown);
+		workerController.abortTask(tId);
 
-		Assert.assertEquals(nrOfNodesToShutdown, nodeIds.size());
-		Assert.assertTrue(nodeIds.contains(node1Id));
-		Assert.assertFalse(nodeIds.contains(node2Id));
-		Assert.assertTrue(nodeIds.contains(node3Id));
-		Assert.assertFalse(nodeIds.contains(node4Id));
+		verify(schedulerServiceClientMock, times(0)).abortTask(anyString(), anyString());
 	}
 
-	@Test (expected = IllegalArgumentException.class)
-	public void findNodesForShutdownTest_wrongNumber() {
-		WorkerController wc = WorkerController.getInstance();
+	@Test (expected = NodeExecutionException.class)
+	public void abortTask_failed() throws Exception {
+		String wId = UUID.randomUUID().toString();
+		String tId = UUID.randomUUID().toString();
+		Set<String> taskIds = new HashSet<>();
+		taskIds.add(tId);
 
-		wc.findNodesForShutdown(10);
+		workerTaskAssignment.put(wId, taskIds);
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenThrow(new TicketFailedException("failed"));
+		when(schedulerServiceClientMock.abortTask(wId, tId)).thenReturn(future);
+
+		workerController.abortTask(tId);
+	}
+
+	@Test
+	public void runTask() throws Exception {
+		String jId = UUID.randomUUID().toString();
+		TaskDTO task = new TaskDTO();
+		task.setJobId(jId);
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(schedulerServiceClientMock.scheduleTask(jId, task)).thenReturn(future);
+
+		workerController.runTask(task);
+
+		verify(schedulerServiceClientMock).scheduleTask(jId, task);
+	}
+
+	@Test (expected = NodeExecutionException.class)
+	public void runTask_failed() throws Exception {
+		String jId = UUID.randomUUID().toString();
+		TaskDTO task = new TaskDTO();
+		task.setJobId(jId);
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenThrow(new TicketFailedException("failed"));
+		when(schedulerServiceClientMock.scheduleTask(jId, task)).thenReturn(future);
+
+		workerController.runTask(task);
+	}
+
+	@Test
+	public void addJob() throws Exception {
+		String jId = UUID.randomUUID().toString();
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(schedulerServiceClientMock.addJob(jId)).thenReturn(future);
+
+		workerController.addJob(jId);
+
+		verify(schedulerServiceClientMock).addJob(jId);
+	}
+
+	@Test (expected = NodeExecutionException.class)
+	public void addJob_failed() throws Exception {
+		String jId = UUID.randomUUID().toString();
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenThrow(new TicketFailedException("failed"));
+		when(schedulerServiceClientMock.addJob(jId)).thenReturn(future);
+
+		workerController.addJob(jId);
+	}
+
+	@Test
+	public void removeJob() throws Exception {
+		String wId = UUID.randomUUID().toString();
+		String jId = UUID.randomUUID().toString();
+		String t1Id = UUID.randomUUID().toString();
+		String t2Id = UUID.randomUUID().toString();
+		Set<String> taskIds = new HashSet<>();
+		taskIds.add(t1Id);
+		taskIds.add(t2Id);
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(schedulerServiceClientMock.removeJob(jId)).thenReturn(future);
+		when(schedulerServiceClientMock.abortTask(wId, t1Id)).thenReturn(future);
+		when(schedulerServiceClientMock.abortTask(wId, t2Id)).thenReturn(future);
+
+		workerTaskAssignment.put(wId, taskIds);
+
+		workerController.abortTask(t1Id);
+		workerController.abortTask(t2Id);
+		workerController.deleteJob(jId);
+
+		verify(schedulerServiceClientMock).removeJob(jId);
+		verify(schedulerServiceClientMock, times(taskIds.size())).abortTask(eq(wId), anyString());
+	}
+
+	@Test (expected = NodeExecutionException.class)
+	public void removeJob_failedRemoveJob() throws Exception {
+		String jId = UUID.randomUUID().toString();
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenThrow(new TicketFailedException("failed"));
+		when(schedulerServiceClientMock.removeJob(jId)).thenReturn(future);
+
+		workerController.deleteJob(jId);
+	}
+
+	@Test
+	public void markJobAsComplete() throws Exception {
+		String jId = UUID.randomUUID().toString();
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(null);
+		when(schedulerServiceClientMock.markJobAsComplete(jId)).thenReturn(future);
+
+		workerController.markJobAsComplete(jId);
+
+		verify(schedulerServiceClientMock).markJobAsComplete(jId);
+	}
+
+	@Test (expected = NodeExecutionException.class)
+	public void markJobAsComplete_failed() throws Exception {
+		String jId = UUID.randomUUID().toString();
+
+		Future<Void> future = Mockito.mock(Future.class);
+		when(future.get()).thenThrow(new TicketFailedException("failed"));
+		when(schedulerServiceClientMock.markJobAsComplete(jId)).thenReturn(future);
+
+		workerController.markJobAsComplete(jId);
+	}
+
+	@Test
+	public void fetchFinishedTask() throws Exception {
+		String wId = UUID.randomUUID().toString();
+		TaskDTO task = new TaskDTO();
+		task.setId(UUID.randomUUID().toString());
+
+		Future<TaskDTO> future = Mockito.mock(Future.class);
+		when(future.get()).thenReturn(task);
+		when(workerServiceClientMock.fetchFinishedTask(task.getId())).thenReturn(future);
+
+		workerConnectionMap.put(wId, workerServiceClientMock);
+
+		TaskDTO fetchedTask = workerController.fetchFinishedTask(wId, task.getId());
+
+		assertEquals(task, fetchedTask);
+		verify(workerServiceClientMock).fetchFinishedTask(task.getId());
 	}
 }
 

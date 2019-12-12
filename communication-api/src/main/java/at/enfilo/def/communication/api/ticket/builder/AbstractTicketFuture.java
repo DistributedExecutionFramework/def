@@ -22,7 +22,7 @@ public abstract class AbstractTicketFuture<V> implements Future<V> {
 	private final Logger logger;
 	private final String ticketId;
 	private final ITicketServiceClient ticketServiceClient;
-	private final Future<TicketStatusDTO> ticketStatusFetcher;
+	private Future<TicketStatusDTO> ticketStatusFetcher;
 
 	private boolean isAlreadyCanceled = false;
 
@@ -35,9 +35,6 @@ public abstract class AbstractTicketFuture<V> implements Future<V> {
 		this.ticketServiceClient = ticketServiceClient;
 
 		this.logger = logger;
-		this.ticketStatusFetcher = executorService.submit(
-				() -> ticketServiceClient.waitForTicket(ticketId)
-		);
 	}
 
 	protected abstract boolean cancelInternalCommunication(boolean mayInterruptIfRunning);
@@ -47,6 +44,11 @@ public abstract class AbstractTicketFuture<V> implements Future<V> {
 	}
 
 	protected Future<TicketStatusDTO> getTicketStatusFetcher() {
+		if (this.ticketStatusFetcher == null) {
+			this.ticketStatusFetcher = executorService.submit(
+					() -> ticketServiceClient.waitForTicket(ticketId)
+			);
+		}
 		return ticketStatusFetcher;
 	}
 
@@ -63,7 +65,7 @@ public abstract class AbstractTicketFuture<V> implements Future<V> {
 
 			boolean isCanceledNowOrBefore = ticketStatus.equals(CANCELED) || ticketStatus.equals(UNKNOWN);
 			boolean isInternalCommunicationCanceled = cancelInternalCommunication(mayInterruptIfRunning);
-			boolean isTicketStatusFetchThreadCanceled = ticketStatusFetcher == null || ticketStatusFetcher.cancel(mayInterruptIfRunning) || ticketStatusFetcher.isCancelled();
+			boolean isTicketStatusFetchThreadCanceled = ticketStatusFetcher == null || getTicketStatusFetcher().cancel(mayInterruptIfRunning) || getTicketStatusFetcher().isCancelled();
 
 			isAlreadyCanceled = isCanceledNowOrBefore && isTicketStatusFetchThreadCanceled && isInternalCommunicationCanceled;
 		}
@@ -79,7 +81,7 @@ public abstract class AbstractTicketFuture<V> implements Future<V> {
 	@Override
 	public boolean isDone() {
 		// See javadoc for isDone method.
-		return ticketStatusFetcher.isDone() || isCancelled();
+		return getTicketStatusFetcher().isDone() || isCancelled();
 	}
 
 	@Override

@@ -9,7 +9,8 @@ package at.enfilo.def.transfer.dto;
 
 public enum NodeType implements org.apache.thrift.TEnum {
   WORKER(0),
-  REDUCER(1);
+  REDUCER(1),
+  CLIENT(2);
 
   private final int value;
 
@@ -34,6 +35,8 @@ public enum NodeType implements org.apache.thrift.TEnum {
         return WORKER;
       case 1:
         return REDUCER;
+      case 2:
+        return CLIENT;
       default:
         return null;
     }

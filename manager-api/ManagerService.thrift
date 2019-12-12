@@ -49,9 +49,45 @@ service ManagerService {
 
     /**
     * Adjusts the pool size of the given NodeType in the cluster with the given id.
-    * Returns a ticket id, state of the ticket is availabe over TicketService interface.
+    * Returns a ticket id, state of ticket is availabe over TicketService interface.
     **/
-    DTOs.TicketId adjustNodePoolSize(1: DTOs.Id cId, 2: i32 newNodePoolSize, DTOs.NodeType nodeType);
+    DTOs.TicketId adjustNodePoolSize(1: DTOs.Id cId, 2: i32 newNodePoolSize, 3: DTOs.NodeType nodeType);
+
+    /**
+    * Create a new ClientRoutine
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface. 
+    **/
+    DTOs.TicketId createClientRoutine(1: DTOs.RoutineDTO routine);
+
+    /**
+    * Create binary/executable for a ClientRoutine
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId createClientRoutineBinary(
+        1: DTOs.Id rId,
+        2: string binaryName,
+        3: string md5,
+        4: i64 sizeInBytes,
+        5: bool isPrimary
+    );
+
+    /**
+    * Uploads a RoutineBinaryChunk to the given RoutineBinary (rbId).
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId uploadClientRoutineBinaryChunk(1: DTOs.Id rbId, 2: DTOs.RoutineBinaryChunkDTO chunk);
+
+    /**
+    * Delete a ClientRoutine.
+    * Returns a ticket id, state of ticket is available over TicketService interface.
+    **/
+    DTOs.TicketId removeClientRoutine(1: DTOs.Id rcId);
+
+    /**
+    * Fetches a feature by name and version.
+    * Returns a ticket id, state of ticket is available over TicketService interface, real result over Response interface.
+    **/
+    DTOs.TicketId getFeatureByNameAndVersion(1: string name, 2: string version);
 }
 
 /**
@@ -78,4 +114,19 @@ service ManagerResponseService {
     * Returns a list of all registered clusters.
     */
     list<DTOs.Id> getClusterIds(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns Id of the new created ClientRoutine
+    **/
+    DTOs.Id createClientRoutine(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns Id of the uploaded ClientRoutineBinary
+    **/
+    DTOs.Id createClientRoutineBinary(1: DTOs.TicketId ticketId);
+
+    /**
+    * Returns a feature with a given name and version.
+    **/
+    DTOs.FeatureDTO getFeatureByNameAndVersion(1: DTOs.TicketId ticketId);
 }

@@ -83,21 +83,21 @@ export class NodeDetailsComponent implements OnInit, OnDestroy {
         maxNumberOfScheduledTasks = this.nodeService.getMaxNumberOfScheduledTasksForNode(node.id);
       }
 
-      if (this.node.numberOfRunningTasks > maxNumberOfRunningTasks) {
-        maxNumberOfRunningTasks = this.node.numberOfRunningTasks;
-      } else if (this.node.numberOfRunningTasks === 0) {
+      if (this.node.numberOfRunningElements > maxNumberOfRunningTasks) {
+        maxNumberOfRunningTasks = this.node.numberOfRunningElements;
+      } else if (this.node.numberOfRunningElements === 0) {
         maxNumberOfRunningTasks = 0;
       }
       this.nodeService.setMaxNumberOfRunningTasksForNode(this.node.id, maxNumberOfRunningTasks);
 
-      if (this.node.numberOfQueuedTasks > maxNumberOfScheduledTasks) {
-        maxNumberOfScheduledTasks = this.node.numberOfQueuedTasks;
-      } else if (this.node.numberOfQueuedTasks === 0) {
+      if (this.node.numberOfQueuedElements > maxNumberOfScheduledTasks) {
+        maxNumberOfScheduledTasks = this.node.numberOfQueuedElements;
+      } else if (this.node.numberOfQueuedElements === 0) {
         maxNumberOfScheduledTasks = 0;
       }
       this.nodeService.setMaxNumberOfScheduledTasksForNode(this.node.id, maxNumberOfScheduledTasks);
 
-      if ((this.node.numberOfRunningTasks + this.node.numberOfQueuedTasks) > 0) {
+      if ((this.node.numberOfRunningElements + this.node.numberOfQueuedElements) > 0) {
         this.hasTasks = true;
       }
 
@@ -151,7 +151,7 @@ export class NodeDetailsComponent implements OnInit, OnDestroy {
     if (this.nodeService.hasMaxNumberOfRunningTasksForNode(this.node.id)) {
       const maxNumberOfTasks = this.nodeService.getMaxNumberOfRunningTasksForNode(this.node.id);
       if (maxNumberOfTasks !== 0) {
-        return this.node.numberOfRunningTasks / maxNumberOfTasks * 100;
+        return this.node.numberOfRunningElements / maxNumberOfTasks * 100;
       }
     }
     return 0;
@@ -162,7 +162,7 @@ export class NodeDetailsComponent implements OnInit, OnDestroy {
     if (this.nodeService.hasMaxNumberOfScheduledTasksForNode(this.node.id)) {
       const maxNumberOfTasks = this.nodeService.getMaxNumberOfScheduledTasksForNode(this.node.id);
       if (maxNumberOfTasks !== 0) {
-        return this.node.numberOfQueuedTasks / maxNumberOfTasks * 100;
+        return this.node.numberOfQueuedElements / maxNumberOfTasks * 100;
       }
     }
     return 0;

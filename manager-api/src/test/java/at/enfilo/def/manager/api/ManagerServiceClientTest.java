@@ -7,18 +7,16 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.dto.TicketStatusDTO;
 import at.enfilo.def.manager.api.rest.IManagerResponseService;
 import at.enfilo.def.manager.api.rest.IManagerService;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
@@ -117,7 +115,7 @@ public class ManagerServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> futureDeleteCluster = client.deleteCluster(cId);
-		assertNull(futureDeleteCluster.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureDeleteCluster::isDone);
 	}
 
 	@Test
@@ -129,7 +127,7 @@ public class ManagerServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> futureAddCluster = client.addCluster(endpointDTO);
-		assertNull(futureAddCluster.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureAddCluster::isDone);
 	}
 
 	@Test
@@ -144,8 +142,79 @@ public class ManagerServiceClientTest {
 		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
 
 		Future<Void> futureResult = client.adjustNodePoolSize(cId, newNodePoolSize, nodeType);
-		assertNull(futureResult.get());
+		await().atMost(10, TimeUnit.SECONDS).until(futureResult::isDone);
 	}
+
+	@Test
+	public void createClientRoutine() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String name = UUID.randomUUID().toString();
+		List<FeatureDTO> requiredFeatures = Arrays.asList(new FeatureDTO());
+		String rId = UUID.randomUUID().toString();
+		List<String> arguments = Arrays.asList("argument");
+		RoutineDTO routine = new RoutineDTO();
+		routine.setName(name);
+		routine.setRequiredFeatures(requiredFeatures);
+		routine.setArguments(arguments);
+
+		when(managerServiceMock.createClientRoutine(routine)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(managerResponseServiceMock.createClientRoutine(ticketId)).thenReturn(rId);
+
+		Future<String> futureResult = client.createClientRoutine(routine);
+		assertEquals(rId, futureResult.get());
+	}
+
+	@Test
+	public void createClientRoutineBinary() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String rId = UUID.randomUUID().toString();
+		String rbId = UUID.randomUUID().toString();
+		String rbName = "name";
+		Random rnd = new Random();
+		long sizeInBytes = rnd.nextInt();
+		String md5 = UUID.randomUUID().toString();
+		boolean isPrimary = rnd.nextBoolean();
+
+		when(managerServiceMock.createClientRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+		when(managerResponseServiceMock.createClientRoutineBinary(ticketId)).thenReturn(rbId);
+
+		Future<String> futureResult = client.createClientRoutineBinary(rId, rbName, md5, sizeInBytes, isPrimary);
+		assertEquals(rbId, futureResult.get());
+	}
+	@Test
+	public void uploadClientRoutineBinaryChunk() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String rbId = UUID.randomUUID().toString();
+		Random rnd = new Random();
+		RoutineBinaryChunkDTO chunkDTO = new RoutineBinaryChunkDTO();
+		chunkDTO.setChunk((short)rnd.nextInt());
+		chunkDTO.setChunkSize(rnd.nextInt());
+		chunkDTO.setTotalChunks((short)rnd.nextInt());
+		byte[] data = new byte[8];
+		rnd.nextBytes(data);
+		chunkDTO.setData(data);
+
+		when(managerServiceMock.uploadClientRoutineBinaryChunk(rbId, chunkDTO)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> futureResult = client.uploadClientRoutineBinaryChunk(rbId, chunkDTO);
+		await().atMost(30, TimeUnit.SECONDS).until(futureResult::isDone);
+	}
+
+	@Test
+	public void removeClientRoutine() throws Exception {
+		String ticketId = UUID.randomUUID().toString();
+		String rId = UUID.randomUUID().toString();
+
+		when(managerServiceMock.removeClientRoutine(rId)).thenReturn(ticketId);
+		when(ticketServiceMock.waitForTicket(ticketId)).thenReturn(TicketStatusDTO.DONE);
+
+		Future<Void> futureResult = client.removeClientRoutine(rId);
+		await().atMost(30, TimeUnit.SECONDS).until(futureResult::isDone);
+	}
+
 
 	@Test
 	public void getServiceEndpoint() throws Exception {

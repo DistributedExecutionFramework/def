@@ -7,8 +7,7 @@ import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.impl.ticket.TicketRegistry;
 import at.enfilo.def.manager.api.rest.IManagerService;
 import at.enfilo.def.manager.api.thrift.ManagerService;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 
@@ -89,6 +88,54 @@ public class ManagerServiceImpl implements IManagerService, ManagerService.Iface
 	public String addCluster(ServiceEndpointDTO endpoint) {
 		ITicket ticket = ticketRegistry.createTicket(
 				() -> controller.addCluster(endpoint),
+				ITicket.SERVICE_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String createClientRoutine(RoutineDTO routine) {
+		ITicket ticket = ticketRegistry.createTicket(
+				String.class,
+				() -> controller.createClientRoutine(routine),
+				ITicket.SERVICE_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String createClientRoutineBinary(String rId, String binaryName, String md5, long sizeInBytes, boolean isPrimary) {
+		ITicket ticket = ticketRegistry.createTicket(
+				String.class,
+				() -> controller.createClientRoutineBinary(rId, binaryName, md5, sizeInBytes, isPrimary),
+				ITicket.HIGHER_THAN_NORMAL_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String uploadClientRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) {
+		ITicket ticket = ticketRegistry.createTicket(
+				() -> controller.uploadClientRoutineBinaryChunk(rbId, chunk),
+				ITicket.HIGHER_THAN_NORMAL_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String removeClientRoutine(String rId) {
+		ITicket ticket = ticketRegistry.createTicket(
+				() -> controller.removeClientRoutine(rId),
+				ITicket.SERVICE_PRIORITY
+		);
+		return ticket.getId().toString();
+	}
+
+	@Override
+	public String getFeatureByNameAndVersion(String name, String version) {
+		ITicket ticket = ticketRegistry.createTicket(
+				FeatureDTO.class,
+				() -> controller.getFeatureByNameAndVersion(name, version),
 				ITicket.SERVICE_PRIORITY
 		);
 		return ticket.getId().toString();

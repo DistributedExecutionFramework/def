@@ -386,17 +386,23 @@ public class ClusterCommandsTest extends ShellBaseTest {
 	}
 
 	@Test
-	public void setStoreRoutine() throws Exception {
+	public void setStoreRoutineWorker() throws Exception {
 		IClusterServiceClient clientMock = setupMocks();
 
 		String rId = UUID.randomUUID().toString();
+		NodeType nodeType = NodeType.WORKER;
 
 		Future<Void> futureMock = Mockito.mock(Future.class);
-		when(clientMock.setStoreRoutine(rId)).thenReturn(futureMock);
+		when(clientMock.setStoreRoutine(rId, nodeType)).thenReturn(futureMock);
 		when(futureMock.get()).thenReturn(null);
 
 		CommandResult result = shell.executeCommand(
-				String.format("%s --%s %s", CMD_CLUSTER_ROUTINE_SET_STORE, OPT_ROUTINE_ID, rId)
+				String.format("%s --%s %s --%s %s",
+						CMD_CLUSTER_ROUTINE_SET_STORE,
+						OPT_NODE_TYPE,
+						nodeType,
+						OPT_ROUTINE_ID,
+						rId)
 		);
 		assertTrue(result.isSuccess());
 		assertEquals(

@@ -9,7 +9,7 @@ import {AppConfig} from '../../config/app-config';
 import {Location} from '@angular/common';
 import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
-import {NavigationElement} from "../../routing/navigation-element";
+import {NavigationElement} from '../../routing/navigation-element';
 
 @Component({
   selector: 'app-cluster-overview',
@@ -113,9 +113,9 @@ export class ClusterOverviewComponent implements OnInit, OnDestroy {
     if (this.clusterService.hasMaxNumberOfTasksForCluster(cluster.id)) {
       maxNumberOfTasks = this.clusterService.getMaxNumberOfTasksForCluster(cluster.id);
     }
-    if (cluster.numberOfTasksToFinish > maxNumberOfTasks) {
-      maxNumberOfTasks = cluster.numberOfTasksToFinish;
-    } else if (cluster.numberOfTasksToFinish === 0) {
+    if (cluster.numberOfElementsToFinish > maxNumberOfTasks) {
+      maxNumberOfTasks = cluster.numberOfElementsToFinish;
+    } else if (cluster.numberOfElementsToFinish === 0) {
       maxNumberOfTasks = 0;
     }
     this.clusterService.setMaxNumberOfTasksForCluster(cluster.id, maxNumberOfTasks);
@@ -130,7 +130,7 @@ export class ClusterOverviewComponent implements OnInit, OnDestroy {
     if (this.clusterService.hasMaxNumberOfTasksForCluster(cluster.id)) {
       const maxNumberOfTasks = this.clusterService.getMaxNumberOfTasksForCluster(cluster.id);
       if (maxNumberOfTasks !== 0) {
-        return cluster.numberOfTasksToFinish / maxNumberOfTasks * 100;
+        return cluster.numberOfElementsToFinish / maxNumberOfTasks * 100;
       }
     }
     return 0;

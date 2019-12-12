@@ -77,4 +77,57 @@ public interface INodeService extends NodeService.Iface, IResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	String removeSharedResources(List<String> rIds);
+
+    @GET
+    @Path("/store-routine")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String getStoreRoutine();
+
+    @POST
+    @Path("/store-routine")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Override
+    String setStoreRoutine(String routineId);
+
+    @GET
+    @Path("/queue/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String getQueueIds();
+
+    @GET
+    @Path("/queue/{qId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Override
+    String getQueueInfo(@PathParam("qId") String qId);
+
+    @PUT
+    @Path("/queue/{qId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String createQueue(@PathParam("qId") String qId);
+
+    @DELETE
+    @Path("/queue/{qId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String deleteQueue(@PathParam("qId") String qId);
+
+    @POST
+    @Path("/queue/{qId}/pause")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String pauseQueue(@PathParam("qId") String qId);
+
+    @POST
+    @Path("/queue/{qId}/release")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    String releaseQueue(@PathParam("qId") String qId);
+
 }

@@ -4,8 +4,7 @@ import at.enfilo.def.cloud.communication.dto.AWSSpecificationDTO;
 import at.enfilo.def.communication.api.common.client.IServiceClient;
 import at.enfilo.def.communication.dto.ServiceEndpointDTO;
 import at.enfilo.def.communication.exception.ClientCommunicationException;
-import at.enfilo.def.transfer.dto.ClusterInfoDTO;
-import at.enfilo.def.transfer.dto.NodeType;
+import at.enfilo.def.transfer.dto.*;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -75,7 +74,62 @@ public interface IManagerServiceClient extends IServiceClient {
 	 * @param cId				the id of the cluster the node pool size shall be adjusted of
 	 * @param newNodePoolSize	the number of nodes of the given {@link NodeType} that shall be running in the cloud cluster
 	 * @param nodeType			the {@link NodeType} of the node pool that shall be adjusted
+	 * @throws ClientCommunicationException if a communication problem happens
 	 * @return
 	 */
 	Future<Void> adjustNodePoolSize(String cId, int newNodePoolSize, NodeType nodeType) throws ClientCommunicationException;
+
+	/**
+	 * Creates a new ClientRoutine.
+	 * @param routine - {@link RoutineDTO} with required attributes set
+	 * @throws ClientCommunicationException if a communication problem happens
+	 * @return future of created RoutineId
+	 */
+	Future<String> createClientRoutine(RoutineDTO routine) throws ClientCommunicationException;
+
+	/**
+	 * Uploads a binary to a specified Routine.
+	 *
+	 * @param rId - Routine
+	 * @param binaryName - name of the binary file
+	 * @param md5 - checksum
+	 * @param sizeInBytes - size of the binary file
+	 * @param isPrimary - Is binary primary? (e.g. java -jar <primary.jar>)
+	 * @return RoutineBinary id as Future
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<String> createClientRoutineBinary(
+			String rId,
+			String binaryName,
+			String md5,
+			long sizeInBytes,
+			boolean isPrimary
+	) throws ClientCommunicationException;
+
+	/**
+	 * Uploads a chunk to the given RoutineBinary (rbId).
+	 * @param rbId - RoutineBinary Id
+	 * @param chunk - chunk
+	 * @return TicketState as future
+	 * @throws ClientCommunicationException if some error occurred while communicate with service.
+	 */
+	Future<Void> uploadClientRoutineBinaryChunk(String rbId, RoutineBinaryChunkDTO chunk) throws ClientCommunicationException;
+
+	/**
+	 * Delete a specified ClientRoutine.
+	 *
+	 * @param rId - Client Routine Id.
+	 * @throws ClientCommunicationException if a communication problem happens
+	 */
+	Future<Void> removeClientRoutine(String rId) throws ClientCommunicationException;
+
+	/**
+	 * Fetches a feature with a given name and version.
+	 *
+	 * @param name - name of the feature
+	 * @param version - version of the feature
+	 * @return a {@link FeatureDTO} instance with the given name and version
+	 * @throws ClientCommunicationException if some error occurs while communicating with the service
+	 */
+	Future<FeatureDTO> getFeatureByNameAndVersion(String name, String version) throws ClientCommunicationException;
 }

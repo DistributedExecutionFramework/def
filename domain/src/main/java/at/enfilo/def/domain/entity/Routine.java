@@ -39,7 +39,7 @@ public class Routine extends AbstractEntity<String> {
     private Language language;
     private List<FormalParameter> inParameters;
     private FormalParameter outParameter;
-    private List<RoutineBinary> routineBinaries;
+    private Set<RoutineBinary> routineBinaries;
     private List<String> arguments;
     private Set<Feature> requiredFeatures;
 
@@ -115,7 +115,7 @@ public class Routine extends AbstractEntity<String> {
 		joinColumns = @JoinColumn(name = RRBMap.ROUTINE_ID_FIELD_NAME, referencedColumnName = Routine.ID_FIELD_NAME),
 		inverseJoinColumns = @JoinColumn(name = RRBMap.ROUTINE_BINARY_ID_FIELD_NAME, referencedColumnName = RoutineBinary.ID_FIELD_NAME)
 	)
-	public List<RoutineBinary> getRoutineBinaries() {
+	public Set<RoutineBinary> getRoutineBinaries() {
 		return routineBinaries;
 	}
 
@@ -176,7 +176,7 @@ public class Routine extends AbstractEntity<String> {
 		this.outParameter = outParameter;
 	}
 
-	public void setRoutineBinaries(List<RoutineBinary> routineBinaries) {
+	public void setRoutineBinaries(Set<RoutineBinary> routineBinaries) {
 		this.routineBinaries = routineBinaries;
 	}
 

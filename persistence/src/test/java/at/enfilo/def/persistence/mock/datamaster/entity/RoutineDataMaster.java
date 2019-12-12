@@ -3,10 +3,8 @@ package at.enfilo.def.persistence.mock.datamaster.entity;
 import at.enfilo.def.domain.entity.FormalParameter;
 import at.enfilo.def.domain.entity.Routine;
 import at.enfilo.def.domain.entity.Routine_;
-import at.enfilo.def.transfer.dto.ExecutionState;
 import at.enfilo.def.transfer.dto.RoutineType;
 
-import java.time.Instant;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -24,7 +22,7 @@ public class RoutineDataMaster extends DataMaster<Routine, String> {
         DUMMY_ROUTINE_1.setName(String.class.getName());
         DUMMY_ROUTINE_1.setDescription(String.class.getCanonicalName());
         DUMMY_ROUTINE_1.setRevision((short) 1);
-        DUMMY_ROUTINE_1.setType(RoutineType.MASTER);
+        DUMMY_ROUTINE_1.setType(RoutineType.CLIENT);
         DUMMY_ROUTINE_1.setInParameters(new LinkedList<>());
         DUMMY_ROUTINE_1.setOutParameter(new FormalParameter());
 
@@ -33,7 +31,7 @@ public class RoutineDataMaster extends DataMaster<Routine, String> {
 		DUMMY_ROUTINE_2.setName(Integer.class.getName());
 		DUMMY_ROUTINE_2.setDescription(Integer.class.getCanonicalName());
 		DUMMY_ROUTINE_2.setRevision((short) 2);
-		DUMMY_ROUTINE_2.setType(RoutineType.MASTER);
+		DUMMY_ROUTINE_2.setType(RoutineType.CLIENT);
         DUMMY_ROUTINE_2.setInParameters(new LinkedList<>());
         DUMMY_ROUTINE_2.setOutParameter(new FormalParameter());
     }

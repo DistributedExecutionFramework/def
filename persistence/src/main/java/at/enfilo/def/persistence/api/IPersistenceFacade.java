@@ -43,30 +43,6 @@ public interface IPersistenceFacade {
     IGroupDAO getNewGroupDAO();
 
     /**
-     * Returns an implementation of the IProgramDAO interface providing
-     * further operations with programs.
-     *
-     * @return an instance of IProgramDAO.
-     */
-    IProgramDAO getNewProgramDAO();
-
-    /**
-     * Returns an implementation of the IJobDAO interface providing
-     * further operations with jobs.
-     *
-     * @return an instance of IJobDAO.
-     */
-    IJobDAO getNewJobDAO();
-
-    /**
-     * Returns an implementation of the ITaskDAO interface providing
-     * further operations with tasks.
-     *
-     * @return an instance of ITaskDAO.
-     */
-    ITaskDAO getNewTaskDAO();
-
-    /**
      * Returns an implementation of the IRoutineDAO interface providing
      * further operations with routines.
      *

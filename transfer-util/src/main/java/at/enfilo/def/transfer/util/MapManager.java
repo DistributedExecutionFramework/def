@@ -38,8 +38,10 @@ public class MapManager {
     	// Hiding public constructor.
     }
 
-    public static <T, R> R map(T source, Class<R> destinationClass)
-	throws MapperException {
+    public static <T, R> R map(T source, Class<R> destinationClass) throws MapperException {
+    	if (source == null) {
+    		return null;
+		}
         try {
         	R destination = null;
         	if (destinationClass != null) {
@@ -62,12 +64,12 @@ public class MapManager {
 
 	public static <T, R> R map(T source, Class<R> destinationClass, R destination)
 	throws MapperException {
+		if (source == null) {
+			return null;
+		}
 		try {
-			if (source != null) {
-				Class<?> sourceClass = source.getClass();
-				return getConverter(sourceClass, destinationClass).map(source, destination);
-			}
-			throw new MapperException("Received source object is null.");
+			Class<?> sourceClass = source.getClass();
+			return getConverter(sourceClass, destinationClass).map(source, destination);
 
 		} catch (UnsupportedMappingException | IllegalStateException | IllegalArgumentException e) {
 			throw new MapperException(e);

@@ -15,7 +15,7 @@ public class Template {
 
     Template(ITemplateDataProvider dataProvider, String in) {
         this.dataProvider = dataProvider;
-        template = split(in);
+        this.template = split(in);
     }
 
     List<String> getTemplate() {
@@ -29,9 +29,10 @@ public class Template {
                 String current = template.get(i);
                 switch (TemplatePart.match(current)) {
                     case PLACEHOLDER:
-                        String placeholder = dataProvider.resolvePlaceholder(current.substring(1, current.length() - 1));
-                        if (placeholder != null) {
-                            template.set(i, placeholder);
+                        String placeholder = current.substring(1, current.length() - 1);
+                        String placeholderResult = dataProvider.resolvePlaceholder(placeholder);
+                        if (placeholderResult != null) {
+                            template.set(i, placeholderResult);
                         } else {
                             template.remove(i);
                             checkDoubleWhitespace(i);
@@ -39,9 +40,10 @@ public class Template {
                         parsed = false;
                         break;
                     case VARIABLE:
-                        String variable = dataProvider.resolveVariable(current.substring(2, current.length() - 1));
-                        if (variable != null) {
-                            List<String> varResult = split(variable);
+                        String variable = current.substring(2, current.length() - 1);
+                        String variableResult = dataProvider.resolveVariable(variable);
+                        if (variableResult != null) {
+                            List<String> varResult = split(variableResult);
                             template.set(i, varResult.get(0));
                             template.addAll(i + 1, varResult.subList(1, varResult.size()));
                         } else {
@@ -51,17 +53,13 @@ public class Template {
                         parsed = false;
                         break;
                     case LOOP:
-                        String[] loopSplit = current.split(":");
-                        String loopVar = loopSplit[0].substring(2, loopSplit[0].length() - 1);
-                        String loopBody = loopSplit[1].substring(0, loopSplit[1].length() - 1);
-                        String pH = dataProvider.resolvePlaceholder(loopVar);
+                        String[] loopSplit = split(current, ':');
+                        String pH = dataProvider.resolvePlaceholder(loopSplit[0]);
                         if (pH != null && !pH.isEmpty()) {
                             List<String> loopResult = new ArrayList<>();
                             for (String curVar : pH.split(" ")) {
-                                loopResult.addAll(split(loopBody.replace("{}", curVar)));
-                                loopResult.add(" ");
+                                loopResult.addAll(split(loopSplit[1].replace("{}", curVar)));
                             }
-                            loopResult.remove(loopResult.size() - 1);
                             template.set(i, loopResult.get(0));
                             template.addAll(i + 1, loopResult.subList(1, loopResult.size()));
                         } else {
@@ -71,12 +69,8 @@ public class Template {
                         parsed = false;
                         break;
                     case OPTIONAL:
-                        String[] optionalSplit = current.length() - current.replace(":", "").length() == 1 ?
-                                current.split(":") : split(current, ":", 1);
-
-                        String optionalVar = optionalSplit[0].substring(2, optionalSplit[0].length() - 1);
-                        String optionalBody = optionalSplit[1].substring(0, optionalSplit[1].length() - 1);
-                        String optionalTemplate = dataProvider.resolveOptional(optionalVar, optionalBody);
+                        String[] optionalSplit = split(current, ':');
+                        String optionalTemplate = dataProvider.resolveOptional(optionalSplit[0], optionalSplit[1]);
                         if (optionalTemplate != null) {
                             template.set(i, optionalTemplate);
                         } else {
@@ -107,24 +101,32 @@ public class Template {
         }
     }
 
-    private String[] split(String string, String pattern, int ignoreFirstN) {
-        String[] split = string.split(pattern);
-        if (ignoreFirstN < split.length) {
-            String[] result = new String[split.length - ignoreFirstN];
-            StringBuilder first = new StringBuilder(split[0]);
-            int i;
-            for (i = 1; i <= ignoreFirstN; i++) {
-                first.append(pattern).append(split[i]);
-            }
-            result[0] = first.toString();
-            for (int j = 1; j < result.length; j++, i++) {
-                result[j] = split[i];
-            }
-            return result;
+    private String[] split(String string, char pattern) {
+        string = string.substring(1, string.length() - 1);
+        String[] split = new String[2];
+        int splitIdx = 0;
+        int counter = 0;
+        while (string.charAt(splitIdx) != pattern) {
+            char curChar = string.charAt(splitIdx);
+            if (COMMAND_TEMPLATE_DELIMITERS.containsKey(curChar)) {
+                counter++;
+                splitIdx++;
 
-        } else {
-            return new String[]{string};
+                do {
+                    if (string.charAt(splitIdx) == curChar) {
+                        counter++;
+                    } else if (string.charAt(splitIdx) == COMMAND_TEMPLATE_DELIMITERS.get(curChar)) {
+                        counter--;
+                    }
+                    splitIdx++;
+                } while (counter > 0 && splitIdx < string.length());
+                continue;
+            }
+            splitIdx++;
         }
+        split[0] = string.substring(1, splitIdx - 1);
+        split[1] = string.substring(splitIdx + 1);
+        return split;
     }
 
     private List<String> split(String in) {
@@ -139,7 +141,7 @@ public class Template {
             if (COMMAND_TEMPLATE_DELIMITERS.containsKey(in.charAt(i))) {
                 if (i > 0) {
                     template.add(in.substring(0, i));
-                    in = in.substring(i, in.length());
+                    in = in.substring(i);
                     i = 0;
                 }
 
@@ -158,8 +160,9 @@ public class Template {
 
                 int end = i > in.length() ? in.length() : i;
                 template.add(in.substring(0, end));
-                in = in.substring(end, in.length());
+                in = in.substring(end);
                 i = 0;
+                continue;
             }
             i++;
         }

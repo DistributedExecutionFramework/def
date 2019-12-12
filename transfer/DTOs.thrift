@@ -92,7 +92,8 @@ struct JobDTO {
    10: i32 failedTasks,
    11: Id mapRoutineId,
    12: optional Id reduceRoutineId,
-   13: optional list<ResourceDTO> reducedResults
+   13: optional list<ResourceDTO> reducedResults,
+   14: list<string> messages
 }
 
 struct ProgramDTO {
@@ -100,11 +101,24 @@ struct ProgramDTO {
     2: ExecutionState state,
     3: i64 createTime,
     4: i64 finishTime,
-    5: optional bool masterLibraryRoutine = false,
+//    5: optional bool masterLibraryRoutine = false,
     6: Id userId,
     7: string name,
-    8: string description
-    9: i32 nrOfJobs
+    8: string description,
+    9: i32 nrOfJobs,
+    10: map<string, Id> sharedResources,
+    11: optional Id clientRoutineId,
+    12: optional map<string, ResourceDTO> results,
+    13: list<string> messages
+}
+
+struct ReduceJobDTO {
+    1: Id jobId,
+    2: JobDTO job,
+    3: ExecutionState state,
+    4: i64 startTime,
+    5: i64 finishTime,
+    6: list<string> messages
 }
 
 struct DataTypeDTO {
@@ -126,7 +140,7 @@ enum RoutineType {
     MAP = 1,
     STORE = 2,
     REDUCE = 3,
-    MASTER = 4
+    CLIENT = 4
 }
 
 struct RoutineDTO {
@@ -155,8 +169,16 @@ struct RoutineBinaryDTO {
     2: string md5,
     3: i64 sizeInBytes,
     4: bool primary,
-    5: optional binary data,
-    6: optional string url
+    5: string url,
+    6: string name,
+    7: string executionUrl
+}
+
+struct RoutineBinaryChunkDTO {
+    1: i16 chunk,
+    2: i16 totalChunks,
+    3: i32 chunkSize,
+    4: binary data
 }
 
 struct RoutineInstanceDTO {
@@ -190,7 +212,8 @@ enum CloudType {
 
 enum NodeType {
     WORKER = 0,
-    REDUCER = 1
+    REDUCER = 1,
+    CLIENT = 2
 }
 
 /**
@@ -219,7 +242,7 @@ struct NodeEnvironmentDTO {
 
 /**
 * QueueInfo Data Transfer Object.
-* Contains all relevant queuePriorityWrapper information.
+* Contains all relevant Task-Queue information.
 */
 struct QueueInfoDTO {
     1: Id id,
@@ -241,9 +264,10 @@ struct ClusterInfoDTO {
     6: list<string> activePrograms,
     7: i32 numberOfWorkers,
     8: i32 numberOfReducers,
-    9: Id defaultMapRoutineId,
-   10: Id storeRoutineId,
-   11: string host
+    9: i32 numberOfClientRoutineWorkers,
+   10: Id defaultMapRoutineId,
+   11: Id storeRoutineId,
+   12: string host
 }
 
 //
@@ -260,4 +284,17 @@ enum SortingCriterion {
     RUNTIME_FROM_LONGEST,
     RUNTIME_FROM_SHORTEST,
     NO_SORTING
+}
+
+//
+// Parameter Server specific DTOs
+//
+
+enum ParameterType {
+    READ_WRITE
+}
+
+enum ParameterProtocol {
+    PRIMITIVE,
+    DEFAULT
 }

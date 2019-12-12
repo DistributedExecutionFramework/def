@@ -1,5 +1,6 @@
-scheduling-strategy: at.enfilo.def.scheduler.strategy.RoundRobinSchedulingStrategy
-wait-for-complete: false
+task-scheduling-strategy: at.enfilo.def.scheduler.worker.strategy.RoundRobinTaskSchedulingStrategy
+reduce-scheduling-strategy: at.enfilo.def.scheduler.reducer.strategy.DefaultReduceSchedulingStrategy
+
 notification-from-node:
   periodically: false
   period-duration: -1
@@ -20,17 +21,17 @@ library-endpoint:
 
 def-servers:
   rest:
-    enabled: true
+    enabled: false
     port: 40020
-    bind-address: 127.0.0.1
+    bind-address: 0.0.0.0
     url-pattern: /api/*
   thrift-tcp:
     enabled: true
     port: 40022
-    bind-address: 127.0.0.1
+    bind-address: 0.0.0.0
   thrift-http:
-    enabled: true
+    enabled: false
     port: 40021
-    bind-address: 127.0.0.1
+    bind-address: 0.0.0.0
     url-pattern: /api/*
 

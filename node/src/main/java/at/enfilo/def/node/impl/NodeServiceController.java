@@ -15,12 +15,15 @@ import at.enfilo.def.dto.cache.DTOCache;
 import at.enfilo.def.dto.cache.UnknownCacheObjectException;
 import at.enfilo.def.logging.api.ContextIndicator;
 import at.enfilo.def.logging.api.IDEFLogger;
-import at.enfilo.def.logging.impl.ContextSetBuilder;
+import at.enfilo.def.node.api.exception.QueueNotExistsException;
 import at.enfilo.def.node.observer.api.client.INodeObserverServiceClient;
 import at.enfilo.def.node.observer.api.client.factory.NodeObserverServiceClientFactory;
+import at.enfilo.def.node.queue.Queue;
+import at.enfilo.def.node.queue.QueuePriorityWrapper;
 import at.enfilo.def.node.util.ClusterRegistration;
 import at.enfilo.def.node.util.NodeConfiguration;
 import at.enfilo.def.transfer.dto.*;
+import org.apache.thrift.TBase;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -28,9 +31,12 @@ import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-public abstract class NodeServiceController {
+public abstract class NodeServiceController<T extends TBase> implements IStateChangeListener {
 
 	private static final long CLUSTER_REGISTRATION_DELAY = 10;
 	private static final TimeUnit CLUSTER_REGISTRATION_DELAY_UNIT = TimeUnit.SECONDS;
@@ -43,15 +49,25 @@ public abstract class NodeServiceController {
     private final NodeObserverServiceClientFactory nodeObserverServiceClientFactory;
     private final IDEFLogger logger;
     private final DTOCache<ResourceDTO> sharedResources;
+    protected final List<ExecutorService> executorServices;
+
+    protected final Object elementLock;
+    protected final Set<String> runningElements;
+    protected final Set<String> finishedElements;
+    protected final DTOCache<T> elementCache;
 
     private String cId; // cluster id.
+	private String storeRoutineId;
 
     protected NodeServiceController(
-		NodeType nodeType,
-        List<INodeObserverServiceClient> observers,
-        NodeConfiguration nodeConfiguration,
-        NodeObserverServiceClientFactory nodeObserverServiceClientFactory,
-        IDEFLogger logger
+			NodeType nodeType,
+        	List<INodeObserverServiceClient> observers,
+        	Set<String> finishedElements,
+        	NodeConfiguration nodeConfiguration,
+        	NodeObserverServiceClientFactory nodeObserverServiceClientFactory,
+        	String dtoCacheContext,
+        	Class<T> cls,
+        	IDEFLogger logger
     ) {
     	this.nodeType = nodeType;
         this.observers = observers;
@@ -59,6 +75,12 @@ public abstract class NodeServiceController {
         this.nodeConfiguration = nodeConfiguration;
         this.logger = logger;
         this.sharedResources = DTOCache.getInstance(DTO_RESOURCE_CACHE_CONTEXT, ResourceDTO.class);
+        this.executorServices = new LinkedList<>();
+		this.elementLock = new Object();
+		this.finishedElements = finishedElements;
+		this.runningElements = new HashSet<>();
+		this.elementCache = DTOCache.getInstance(dtoCacheContext, cls);
+		this.storeRoutineId = nodeConfiguration.getStoreRoutineId();
 
         // Auto registration on cluster
         if (this.nodeConfiguration.isClusterRegistration()) {
@@ -168,10 +190,27 @@ public abstract class NodeServiceController {
 	}
 
 	/**
-	 * Returns specific parameters for {@link NodeInfoDTO}. (see getInfo())
+	 * Returns parameters for {@link NodeInfoDTO}. (see getInfo())
 	 * @return
 	 */
-    protected abstract Map<String, String> getNodeInfoParameters();
+	protected Map<String, String> getNodeInfoParameters() {
+    	Map<String, String> params = new HashMap<>();
+		params.put("numberOfQueues", Integer.toString(getQueuePriorityWrapper().getNumberOfQueues()));
+		params.put("numberOfQueuedElements", Integer.toString(getQueuePriorityWrapper().getNumberOfQueuedElements()));
+		params.put("numberOfRunningElements", Integer.toString(getNumberOfRunningElements()));
+		params.put("storeRoutineId", storeRoutineId);
+		synchronized (elementLock) {
+			params.put("runningElements", runningElements.stream().collect(Collectors.joining(" ")));
+		}
+    	return params;
+	}
+
+	private int getNumberOfRunningElements() {
+		synchronized (elementLock) {
+			logger.debug("Fetch number of running {}s.", getElementName());
+			return runningElements.size();
+		}
+	}
 
 	/**
 	 * Register an observer at this node.
@@ -267,19 +306,46 @@ public abstract class NodeServiceController {
     	try {
             NodeInfoDTO info = getInfo();
             logger.debug(
-                "Notify observer (\"{}\") with new WorkerInfo: \"{}\".",
+                "Notify observer on {} with new NodeInfo: {}.",
                 observer.getServiceEndpoint(),
                 info
             );
             observer.notifyNodeInfo(nodeConfiguration.getId(), info);
         } catch (ClientCommunicationException e) {
             logger.error(
-                "Error while notify observer (\"{}\") with new WorkerInfo.",
+                "Error while notify observer on {} with new NodeInfo.",
                 observer.getServiceEndpoint(),
                 e
             );
         }
     }
+
+    public T fetchFinishedElement(String eId) throws Exception {
+    	synchronized (elementLock) {
+    		logger.debug(getLogContext(eId), "Fetch finished {}.", getElementName());
+    		if(!finishedElements.contains(eId)) {
+    			String msg = String.format("%s is not known as finished %s by this node.", getElementName(), getElementName());
+    			logger.error(getLogContext(eId), msg);
+				throwException(eId, msg);
+			}
+		}
+
+		try {
+			T element = elementCache.fetch(eId);
+			synchronized (elementLock) {
+				finishedElements.remove(eId);
+			}
+			elementCache.remove(eId);
+			return element;
+		} catch (IOException e) {
+			logger.error(getLogContext(eId), "Error while fetching finished {} from cache.", getElementName(), e);
+			throw e;
+		} catch (UnknownCacheObjectException e) {
+			logger.error(getLogContext(eId), "Error while fetching finished {} from cache.", getElementName(), e);
+			throwException(eId, e.getMessage());
+		}
+		return null;
+	}
 
     /**
      * Helper method that converts PeriodUnit to TimeUnit.
@@ -294,20 +360,6 @@ public abstract class NodeServiceController {
             case SECONDS: // seconds are default
             default: return TimeUnit.SECONDS;
         }
-    }
-
-    /**
-     * Helper method that provides logging context for a given task.
-     *
-     * @param task - task to be used for logging context.
-     * @return logging context index.
-     */
-    protected Set<ITuple<ContextIndicator, ?>> getLogContext(TaskDTO task) {
-        return new ContextSetBuilder()
-            .add(ContextIndicator.PROGRAM_CONTEXT, task.getProgramId())
-            .add(ContextIndicator.JOB_CONTEXT, task.getJobId())
-            .add(ContextIndicator.TASK_CONTEXT, task.getId())
-            .build();
     }
 
     protected NodeConfiguration getNodeConfiguration() {
@@ -326,4 +378,200 @@ public abstract class NodeServiceController {
 	public ResourceDTO getSharedResource(String rId) throws IOException, UnknownCacheObjectException {
 		return sharedResources.fetch(rId);
 	}
+
+	public String getStoreRoutineId() { return storeRoutineId; }
+
+	public void setStoreRoutineId(String storeRoutineId) {
+    	this.storeRoutineId = storeRoutineId;
+		executorServices.forEach(es -> es.setStoreRoutineId(storeRoutineId));
+	}
+
+	public QueueInfoDTO getQueueInfo(String qId) throws QueueNotExistsException {
+    	return getQueuePriorityWrapper().getQueue(qId).toQueueInfoDTO();
+	}
+
+	public void createQueue(String qId) {
+    	// if queue doesn't already exist
+		if (!getQueuePriorityWrapper().containsQueue(qId)) {
+			// create queue, release queue
+			Queue queue = createQueueInstance(qId);
+			queue.release();
+
+			// register queue
+			getQueuePriorityWrapper().addQueue(queue);
+		}
+	}
+
+	public void pauseQueue(String qId) throws QueueNotExistsException {
+    	getQueuePriorityWrapper().getQueue(qId).pause();
+	}
+
+	public void deleteQueue(String qId) throws QueueNotExistsException {
+    	getQueuePriorityWrapper().deleteQueue(qId);
+	}
+
+	public void releaseQueue(String qId) throws QueueNotExistsException {
+    	getQueuePriorityWrapper().getQueue(qId).release();
+	}
+
+	public void queueElements(String qId, List<T> elements) throws QueueNotExistsException {
+    	Queue<T> queue = getQueuePriorityWrapper().getQueue(qId);
+    	try {
+    		for (T element : elements) {
+    			setState(element, ExecutionState.SCHEDULED);
+    			queue.queue(element);
+    			logger.info(getLogContext(element), "Queued {} successful.", getElementName());
+			}
+
+			// Notify all observers
+			List<String> eIds = getElementIds(elements);
+    		notifyObservers(getNodeConfiguration().getId(), eIds);
+
+		} catch (InterruptedException e) {
+    		logger.error("Interrupted while queueing {}s.", getElementName());
+    		Thread.currentThread().interrupt();
+		}
+	}
+
+	protected void abortElement(String eId, T element, ExecutionState currentState) {
+    	if (runningElements.contains(eId)) {
+    		logger.info(getLogContext(element), "Try to abort {}.", getElementName());
+    		abortRunningElement(eId);
+    		logger.info(getLogContext(element), "{} aborted.", getElementName());
+		} else {
+    		// Remove task from queue
+			logger.info(getLogContext(element), "Remove {} from queue.", getElementName());
+			removeElementFromQueues(eId);
+		}
+		setState(element, ExecutionState.FAILED);
+    	elementCache.cache(eId, element);
+    	notifyStateChanged(eId, currentState, ExecutionState.FAILED);
+	}
+
+	protected void abortRunningElement(String eId) {
+		logger.debug(getLogContext(eId), "{0} is running. Try to abort.", getElementName());
+		for (ExecutorService executor: getExecutorServices()) {
+			if (executor.getRunningElement() != null && executor.getRunningElement().equalsIgnoreCase(eId)) {
+				executor.cancelRunningElement();
+				break;
+			}
+		}
+		logger.info("Running {} aborted.", getElementName());
+	}
+
+    /**
+     * Move a list of elements to another node and notifies observers dependent on isNotificationRequired flag.
+     *
+     * @param qId - id of queue (job).
+     * @param elementIds - elements (Id list) to move.
+     * @param targetNodeEndpoint - service endpoint of target node.
+     * @param isNotificationRequired - true: notify registered observers.
+     */
+	private void moveElements(
+			String qId,
+			List<String> elementIds,
+			ServiceEndpointDTO targetNodeEndpoint,
+			boolean isNotificationRequired
+	) throws ClientCreationException, QueueNotExistsException {
+    	logger.debug("Move {}s from queue with id {}.", getElementName(), qId);
+    	Queue queue = getQueuePriorityWrapper().getQueue(qId);
+
+		List<T> elementsToMove = new LinkedList<>();
+		for (String eId: elementIds) {
+			elementsToMove.add((T)queue.remove(eId));
+		}
+		try {
+			Future<Void> moveElements = queueElements(qId, elementsToMove, targetNodeEndpoint);
+			logger.info(
+			        "Moving {}s to node \"{}\" done with state \"{}\".",
+                    getElementName(),
+                    targetNodeEndpoint,
+                    moveElements.get()
+            );
+		} catch (ClientCommunicationException | InterruptedException | ExecutionException | IllegalAccessException e) {
+		    logger.error("Error while moving {} to target node.", getElementName(), e);
+        }
+
+        // Notify observers
+        if (isNotificationRequired) {
+            logger.debug("Notify all observer.");
+            notifyAllObservers(this::notifyObserverNodeInfo);
+        }
+	}
+
+	public void moveElements(String qId, List<String> elementIds, ServiceEndpointDTO targetNodeEndpoint)
+		throws ClientCreationException, QueueNotExistsException {
+    	moveElements(qId, elementIds, targetNodeEndpoint, true);
+	}
+
+	public void moveAllElements(ServiceEndpointDTO targetNodeEndpoint) throws ClientCreationException, QueueNotExistsException {
+    	logger.debug("Try to move all {}s to target node: \"{}\".", getElementName());
+
+    	for (Queue queue: getQueues()) {
+    	    moveElements(queue.getQueueId(), queue.getQueuedElements(), targetNodeEndpoint, false);
+        }
+
+        // Notify observers
+        logger.debug("Notify all observers.");
+    	notifyAllObservers(this::notifyObserverNodeInfo);
+	}
+
+	public List<String> getQueuedElements(String qId) throws QueueNotExistsException {
+		return getQueuePriorityWrapper().getQueue(qId).getQueuedElements();
+	}
+
+	@Override
+	public void notifyStateChanged(String eId, ExecutionState oldState, ExecutionState newState) {
+		logger.debug(getLogContext(eId), "Notify state changed of {} from state {} to {}.", getElementName(), oldState, newState);
+		synchronized (elementLock) {
+			switch (oldState) {
+				case RUN:
+					runningElements.remove(eId);
+					break;
+				case SCHEDULED:
+				case SUCCESS:
+				case FAILED:
+				default:
+					break;
+			}
+			switch (newState) {
+				case RUN:
+					runningElements.add(eId);
+					break;
+				case SUCCESS:
+				case FAILED:
+					finishedElements.add(eId);
+					finishedExecutionOfElement(eId);
+					break;
+				case SCHEDULED:
+				default:
+					break;
+			}
+
+			// Notify observers
+			List<String> elementList = Collections.singletonList(eId);
+			logger.debug("Notify all observers.");
+			notifyAllObservers(observerClient -> observerClient.notifyElementsNewState(
+					getNodeConfiguration().getId(),
+					elementList,
+					newState
+			));
+		}
+	}
+
+	protected abstract QueuePriorityWrapper getQueuePriorityWrapper();
+	protected abstract List<? extends ExecutorService> getExecutorServices();
+	protected abstract Queue createQueueInstance(String qId);
+	public abstract List<String> getQueueIds();
+	protected abstract void throwException(String eId, String message) throws Exception;
+	protected abstract Set<ITuple<ContextIndicator, ?>> getLogContext(T element);
+	protected abstract Set<ITuple<ContextIndicator, ?>> getLogContext(String elementId);
+	protected abstract void removeElementFromQueues(String eId);
+	protected abstract void setState(T element, ExecutionState state);
+	protected abstract List<String> getElementIds(List<T> elements);
+	protected abstract List<? extends Queue> getQueues() throws QueueNotExistsException;
+	protected abstract Future<Void> queueElements(String qId, List<T> elementsToQueue, ServiceEndpointDTO targetNodeEndpoint) throws ClientCreationException, ClientCommunicationException, IllegalAccessException;
+	protected abstract void notifyObservers(String nId, List<String> eIds);
+	protected abstract void finishedExecutionOfElement(String eId);
+	protected abstract String getElementName();
 }

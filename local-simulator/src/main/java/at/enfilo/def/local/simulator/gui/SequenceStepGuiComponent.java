@@ -4,8 +4,8 @@ import at.enfilo.def.local.simulator.Simulator;
 import at.enfilo.def.local.simulator.SimulatorConfiguration;
 import at.enfilo.def.logging.api.IDEFLogger;
 import at.enfilo.def.logging.impl.DEFLoggerFactory;
-import at.enfilo.def.node.api.RoutineCreationException;
-import at.enfilo.def.node.api.RoutineExecutionException;
+import at.enfilo.def.node.api.exception.RoutineCreationException;
+import at.enfilo.def.node.api.exception.RoutineExecutionException;
 import at.enfilo.def.node.routine.factory.RoutineProcessBuilderFactory;
 import at.enfilo.def.node.routine.exec.SequenceStep;
 import at.enfilo.def.node.util.NodeConfiguration;
@@ -96,7 +96,7 @@ public class SequenceStepGuiComponent extends GuiComponent {
 			case STORE:
 				background = new Background(new BackgroundFill(Color.web("#aaeeff"), CornerRadii.EMPTY, Insets.EMPTY));
 				break;
-			case MASTER:
+			case CLIENT:
 			case REDUCE:
 			default:
 				background = new Background(new BackgroundFill(Color.web("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY));

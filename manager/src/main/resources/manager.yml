@@ -1,4 +1,4 @@
-id: test_id
+id: manager1
 vpn-ip: 172.27.232.16
 
 cloud-communication-endpoint:
@@ -6,11 +6,16 @@ cloud-communication-endpoint:
   port: 40052
   protocol: THRIFT_TCP
 
-cluster-endpoint:
+cloud-cluster-endpoint:
   port: 40012
   protocol: THRIFT_TCP
 
+cloud-library-endpoint:
+  port: 40042
+  protocol: THRIFT_TCP
+
 library-endpoint:
+  host: localhost
   port: 40042
   protocol: THRIFT_TCP
 

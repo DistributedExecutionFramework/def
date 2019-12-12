@@ -31,21 +31,4 @@ public class PersistenceFacadeTest {
         assertNotNull(dao);
     }
 
-    @Test
-    public void getNewProgramDAOTest() {
-        IProgramDAO dao = persistenceFacade.getNewProgramDAO();
-        assertNotNull(dao);
-    }
-
-    @Test
-    public void getNewJobDAOTest() {
-        IJobDAO dao = persistenceFacade.getNewJobDAO();
-        assertNotNull(dao);
-    }
-
-    @Test
-    public void getNewTaskDAOTest() {
-        ITaskDAO dao = persistenceFacade.getNewTaskDAO();
-        assertNotNull(dao);
-    }
 }
