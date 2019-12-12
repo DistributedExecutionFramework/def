@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="style.css">
+	<script type="text/javascript" src="programsScript.js"></script>
+	<meta charset="utf-8">
+</head>
+<body>
+	<h1>Programme</h1><br>
+	<p>Der DEF Web-Manager dient für das Monitoring der laufenden und abgeschlossenen Programme, die im DEF bearbeitet werden bzw. wurden. Es wird eine Übersicht über alle Programme geboten, unterteilt in laufende und abgeschlossene Programme, sowie eine Detail-Ansicht der einzelnen Programme, Jobs und Tasks.</p>
+
+	<p>Zusätzlich zu deren Überwachung wird die Möglichkeit geboten, laufende Programme, Jobs und Tasks abzubrechen. Weiters können abgeschlossene Programme über den DEF Web-Manager gelöscht werden.</p>
+
+	<p>Inhalt:</p>
+	<ol>
+		<li><a href="#program-overview">Programme-Übersicht</a></li>
+		<li><a href="#program-details">Programm-Details</a></li>
+		<li><a href="#job-details">Job-Details</a></li>
+		<li><a href="#task-details">Task-Details</a></li>
+	</ol>
+
+	<br>
+	<div class="header" id="program-overview">
+		<h2>Programme-Übersicht</h2>
+	</div> 
+	<div class="content">
+		<p>Die Startseite des DEF Web-Managers stellt die Programme-Übersicht dar. Hier werden die aktuell laufenden sowie die abgeschlossenen Programme, sofern diese nicht bereits gelöscht wurden, dargestellt. Zu den laufenden Programmen zählen sowohl die Programme, die gerade bearbeitet werden, als auch die, die sich in der Wartschlange für die Bearbeitung befinden.</p>
+
+		<p>In der folgenden Grafik ist die Programme-Übersicht zu sehen, in der sich weder laufende noch abgeschlossenen Programme befinden.</p><br>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht.png" alt="Programme-Übersicht"><br><br>
+
+		<p>Wird über einen DEF-Client ein neues Programm auf dem DEF gestartet, ist dieses in der Programme-Übersicht zu sehen.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_laufendeProgramme.png" alt="Programme-Übersicht mit laufenden Programmen"><br><br>
+
+		<p id="programInfoDescription">Die Tabellen für die laufenden und abgeschlossenen Programme enthalten folgende Informationen über das jeweilige Programm:</p>
+		<ul>
+			<li>ID</li>
+			<li>Name</li>
+			<li>Start-Zeitpunkt</li>
+			<li>Laufzeit</li>
+			<li>Jobs</li>
+			<li>User</li>
+			<li>Status</li>
+		</ul>
+		<a class="anchor" id="idDescription"></a>
+		<p>Bei der ID handelt es sich um eine sogenannte UUID, welche 32 Zeichen lang ist und vom DEF automatisch generiert wird. Sie dient als eindeutige Identifkationsnummer des Programms innerhalb des DEFs. Da die gesamte ID für die Benutzer in der Programme-Übersicht meist nicht relevant sein wird, wird der Übersichtlichkeit halber nur ein Teil der ID dargestellt. Wird doch die ganze ID benötigt, ist diese in der Detail-Ansicht des Programms zu finden oder beim Platzieren der Maus über dem ID-Feld.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_Programm_id.png" alt="Tooltip der ID-Spalte"><br><br>
+
+		<p>Der Name des Programms stellt eine optionale Information dar, die vom Benutzer selbstständig vergeben wird. Er dient als einfacheres Identifikationsmerkmal für die Benutzer. </p>
+
+		<p>Der Start-Zeitpunkt eines Programmes wird als Datum inklusive Uhrzeit im Format "dd.MM.yyyy hh:mm:ss" angegeben. Ein Programm wird gestartet, sobald es durch einen Client erzeugt wird.</p>
+
+		<a class="anchor" id="runtimeDescription"></a>
+		<p>Die Laufzeit eines Programms wird im Format "hh:mm:ss" angegeben und stellt bei den laufenden Programme die Zeit vom Start des Programms bis zum aktuellen Zeitpunkt dar und bei den abgeschlossenen Programmen die Zeit vom Start des Programms bis die letzte Berechnung erledigt wurde.</p>
+
+		<p>Die Darstellung der Job-Informationen ist ebenfalls unterschiedlich bei den laufenden und abgeschlossenen Programmen, so wird bei den laufenden Programmen dargestellt, wie viele der vorhandenen Jobs bereits abgearbeitet wurden, im Format [Anzahl der abgeschlossenen Jobs] / [Gesamtanzahl der Jobs]. Bei den abgeschlossenen Jobs wird angezeigt, wie viele Jobs das Programm beinhaltet. Bei den laufenden Programmen wird dies zudem mit Hilfe eines Tooltips übersichtlicher dargestellt.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_Programm_Jobs.png" alt="Tooltip der Job-Spalte"><br><br>
+
+		<p>Beim User wird der Username des Benutzers dargestellt, der das Programm über den DEF-Client gestartet hat. In den dargestellten Grafiken sind die User-Informationen leer, da der DEF Web-Manager sowie das DEF selbst aktuell noch kein umfangreiches Benutzer-Management bereitstellt.<p>
+
+		<p>Beim Status des Programms wird durch Icons dargestellt, in welchem Ausführungsschritt sich das Programm aktuell befindet. Folgende Status sind vorhanden:</p><br>
+
+		<a class="anchor" id="statusTable"></a>
+		<table class="borderedTableLeftBound">
+			<thead>
+				<th>Icon</th>
+				<th>Status</th>
+			</thead>
+			<tr>
+				<td><img class="icon" src="./img/ic_schedule_black_24px.svg"></td>
+				<td>In der Warteschlange</td>
+			</tr>
+			<tr>
+				<td><img class="icon" src="./img/ic_sync_black_24px.svg"></td>
+				<td>In Bearbeitung</td>
+			</tr>
+			<tr>
+				<td><img class="icon" src="./img/ic_done_black_24px.svg"></td>
+				<td>Erfolgreich bearbeitet</td>
+			</tr>
+			<tr>
+				<td><img class="icon" src="./img/ic_error_black_24px.svg"></td>
+				<td>Fehler aufgetreten</td>
+			</tr>
+		</table><br>
+
+		<p>Zusätzlich zum Icon wird beim Platzieren der Maus über dem Status-Icon der Status in Worten dargestellt.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_Programm_Status.png"><br><br>
+
+		<p>Neben der Programme-Übersicht gibt es zusätzlich eine Detail-Ansicht jedes Programms. Diese kann entweder durch Doppelklick auf den Tabellen-Eintrag des jeweiligen Programms oder durch einfaches Klicken auf das Info-Icon in der letzten Tabellenspalte erreicht werden.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_Programm_Details.png"><br><br>
+
+		<p>Ist ein Programm abgeschlossen, entweder weil die Berechnungen beendet sind oder weil ein Fehler aufgetreten ist, wird es in den abgeschlossenen Programmen dargestellt, solange es noch nicht gelöscht wurde.</p>
+
+		<img class="image" src="./img/program-overview/Programme_Übersicht_laufendUndAbgeschlossen.png" style="width: 50%; max-width: 700px;"><br>
+
+		<p>Durch Doppelklick auf den Tabellen-Eintrag oder einfaches Klicken auf das Details-Icon kann zur Detail-Ansicht des entsprechenden Programms gewechselt werden.</p>
+
+		<br><br>
+	</div>
+
+	<!--  KAPITEL 2  -->
+	
+	<div class="header" id="program-details">
+		<h2>Programm-Details</h2>
+	</div>
+	<div class="content">
+		<p>In den Programm-Details werden zusätzliche Informationen zum jeweiligen Programm dargestellt. Diese umfassen die Programm-Infos, die Darstellung des Fortschritts der Berechnungen und die Auflistung der Jobs, die zum entsprechenden Programm gehören.</p>
+
+		<img class="image" src="./img/program-details/Programme_Details.png"><br><br>
+
+		<p>Die Programm-Infos enthalten die folgenden Punkte:</p>
+		<ul>
+			<li>ID</li>
+			<li>Name</li>
+			<li>Start-Zeitpunkt</li>
+			<li>End-Zeitpunkt (wenn es sich um ein abgeschlossenes Programm handelt)</li>
+			<li>Laufzeit</li>
+			<li>Beschreibung</li>
+			<li>Status</li>
+			<li>Jobs</li>
+		</ul>
+		<p>Bei der ID handelt es sich, wie bei der <a href="#idDescription">Programme-Übersicht</a> bereits beschrieben, um eine 32 Zeichen lange Identifikationsnummer, die das DEF für die Identifikation des Programms innerhalb des Systems verwendet.</p>
+
+		<a class="anchor" id="nameChangeDescription"></a>
+		<p>Standardmäßig hat ein Programm keinen Namen. Um es den Benutzern jedoch zu erleichtern, bestimmte Programme wiederzufinden und zu identifizieren, kann individuell ein Name für jedes Programm vergeben werden. Durch Klicken auf den Ändern-Button hinter dem Namensfeld öffnet sich ein Textfeld, in das der Programm-Name eingetippt werden kann. </p>
+
+		<img class="image" src="./img/program-details/Programme_Details_Name.png" style="width: 50%; max-width: 500px;"><br><br>
+
+		<p>Befindet man sich im Editier-Modus erscheinen hinter dem Textfeld zwei neue Buttons. Einer, um die Änderungen am Namen zu speichern, und einer, um die Änderungen zu verwerfen und den Editier-Vorgang abzubrechen.</p>
+
+		<img class="image" src="./img/program-details/Programme_Details_Name_Speichern.png" style="width: 35%; max-width: 500px;">
+		<img class="image" src="./img/program-details/Programme_Details_Name_Abbrechen.png" style="width: 35%; max-width: 500px;"><br><br>
+
+		<p>Der Start-Zeitpunkt eines Programmes wird im Format "dd.MM.yyyy hh:mm:ss" dargestellt und entspricht dem Zeitpunkt, zu dem das Programm über einen DEF-Client erstellt wurde.</p>
+
+		<p>Handelt es sich um ein bereits abgeschlossenes Programm, wird zusätzlich der End-Zeitpunkt, welcher das Ende der letzten Berechnung kennzeichnet, im Format "dd.MM.yyyy hh:mm:ss" dargestellt.</p>
+
+		<p>Die Laufzeit eines Programmes stellt bei laufenden Programmen die Zeit vom Start des Programmes bis zum aktuellen Zeitpunkt dar. Bei abgeschlossenen Programmen handelt es sich dabei um die Zeit zwischen dem Start- und Endzeitpunkt des Programms.</p>
+
+		<p>Die Beschreibung eines Programmes, die rein für die einfachere Identifizierung der Programme und Programm-Inhalte durch die Benutzer dient, kann ebenfalls individuell angepasst werden. Für den Änderungsvorgang gilt dasselbe wie für die <a href="#nameChangeDescription">Namens-Änderung</a>.</p>
+
+		<img class="image" src="./img/program-details/Programme_Details_Beschreibung_fertig.png" style="width: 50%; max-width: 500px;"><br><br>
+
+		<p>Der Status des Programms wird, wie in der Programme-Übersicht, über Icons dargestellt. Beim Bewegen des Mauszeigers über das Icon wird der Status in Worten dargestellt. Die vorhandenen Status sind <a href="#statusTable">hier</a> aufgelistet.</p>
+
+		<p>Zusätzlich wird die Anzahl aller Jobs, die dieses Programm beinhaltet, aufgelistet.</p>
+
+		<p>Über den Fortschritts-Indikator rechts neben den Programm-Infos wird der aktuelle Fortschritt der Berechnungen dargestellt. Befindet sich das Programm in Bearbeitung, wird durch eine Prozent-Zahl angezeigt, wie viel Prozent aller Tasks bereits fertig berechnet wurden. Ist das Programm bereits abgeschlossen, wird über eine Statusmeldung angezeigt, ob die Berechnungen erfolgreich waren, oder ob ein Fehler aufgetreten. ist.</p>
+
+		<img class="image" src="./img/program-details/Programme_Details_Failed.png" style="max-width: 700px;"><br><br>
+
+		<p>Unter den Programm-Infos werden alle Jobs, die zu diesem Programm gehören, in einer Tabelle dargestellt.</p>
+
+		<img class="image" src="./img/program-details/Programme_Details_Jobs.png" style="width: 50%; max-width: 500px;"><br><br>
+
+		<p>Die folgenden Daten können aus dieser Tabelle gelesen werden:</p>
+		<ul>
+			<li>ID</li>
+			<li>Erstellungs-Zeitpunkt</li>
+			<li>Start-Zeitpunkt</li>
+			<li>Laufzeit</li>
+			<li>Tasks</li>
+			<li>Status</li>
+		</ul>
+		<a class="anchor" id="creationTimeDescription"></a>
+		<p>Der Unterschied der Job-Tabelle zur <a href="#program-overview">Programme-Übersicht</a> ist dieser, dass es hier sowohl einen Erstellungs- als auch einen Start-Zeitpunkt gibt, was bei den Programmen ein und dasselbe war. Dies hat den Grund, dass es nicht zwingend notwendig ist, dass sofort mit der Bearbeitung eines Jobs begonnen wird, sobald er erstellt wurde. Werden mehrere Jobs und Tasks erstellt, die nicht alle sofort von den verfügbaren Ressourcen bearbeitet werden können, kommen diese in eine Warteschlange. Somit können der Zeitpunkt der Erstellung und der Zeitpunkt des Starts eines Jobs voneinander abweichen.</p>
+
+		<p>Die Laufzeit stellt, wie beim <a href="#runtimeDescription">Programm</a> auch, die Zeit zwischen dem Start des Jobs und dem aktuellen Zeitpunkt (bei laufenden Jobs) oder dem End-Zeitpunkt der letzten Berechnung (bei abgeschlossenen Jobs) dar.</p>
+
+		<p>In der Task-Spalte wird die Anzahl der bereits abgearbeiteten Tasks im Verhältnis zur Gesamtanzahl der Tasks dargestellt.</p>
+
+		<p>Die Status der Jobs entsprechen den <a href="#statusTable">Status der Programme</a> und werden ebenfalls mit Hilfe von Icons dargestellt.</p>
+
+		<p>In der Job-Tabelle stehen ebenfalls Tooltips zur Verfügung, die beim Bewegen des Mauszeigers über die einzelnen Optionen eingeblendet werden.</p>
+
+		<p>Durch Doppelklick auf den entsprechenden Tabellen-Eintrag oder durch einfaches Klicken auf das Info-Icon jeweils am Ende des Eintrags können die Job-Details geöffnet werden.</p>
+
+		<a class="anchor" id="programAbortionDescription"></a>
+		<p>Neben dem Monitoring der Programme bietet der DEF Web-Managern den Benutzern auch die Möglichkeit, ein Programm abzubrechen. Dies kann über den Button mit der Aufschrift "Programm abbrechen", der sich unter der Job-Tabelle befindet, in die Wege geleitet werden. Wird auf diesen Button gedrückt, erscheint ein Fenster mit der Frage, ob das Programm wirklich abgebrochen werden soll und den Auswahlmöglichkeiten "Programm abbrechen" und "Zurück".</p>
+
+		<img class="image" src="./img/program-details/Programme_Details_abbrechen.png" style="width: 40%; max-width: 500px;"><br><br>
+
+		<p>Durch Klicken auf "Programm abbrechen", wird die Bearbeitung des Programms inklusive aller zugehörigen Jobs und Tasks abgebrochen. Die bereits abgeschlossenen Jobs und Tasks behalten ihren Status, während die noch nicht abgeschlossenen den Status "Fehler aufgetreten" bekommen. Der Status des Programms selbst wird ebenfalls auf "Fehler aufgetreten" gesetzt.</p><br>
+
+		<img class="image" src="./img/program-details/Programme_Details_Failed_LoeschenButton.png"><br><br>
+
+		<p>Wurde ein Programm abgebrochen, ist es anschließend in der Programme-Übersicht unter "Abgeschlossene Programme" zu finden. Es können nur Programme abgebrochen werden, die sich in der Warteschlange oder aktuell in Bearbeitung befinden. Bei abgeschlossenen Programmen gibt es die Möglichkeit, diese zu löschen. Dies kann über den "Programm löschen"-Button erreicht werden, der sich auf der Programm-Details-Seite unter der Job-Tabelle befindet, wie in der darüberliegenden Grafik zu sehen ist.</p>
+
+		<p>Wird auf "Programm löschen" geklickt, erscheint, wie beim <a href="#programAbortionDescription">Abbrechen eines Programms</a>, ein Fenster mit der Frage, ob das Programm wirklich gelöscht werden soll, mit den Auswahlmöglichkeiten "Programm löschen" und "Zurück".</p><br>
+
+		<img class="image" src="./img/program-details/Programme_Details_Loeschen.png" style="width: 40%; max-width: 500px;"><br><br>
+
+		<p>Wird auf "Programm löschen" geklickt, wird das entsprechende Programm inklusive aller Jobs und Tasks gelöscht.</p>
+	</div>
+	<br>
+	<!--  KAPITEL 3  -->
+
+	<div class="header" id="job-details">
+		<h2>Job-Details</h2>
+	</div>
+	<div class="content">
+		<p>In den Job-Details werden zusätzliche Informationen zum jeweiligen Job dargestellt. Diese umfassen die Jobs-Infos, die Darstellung des Fortschritts der Berechnungen und die Auflistung der Tasks, die zum entsprechenden Job gehören.</p>
+
+		<img class="image" src="./img/program-jobs/Programme_Job.png"><br><br>
+
+		<p>Die Job-Infos enthalten die folgenden Punkte:</p>
+		<ul>
+			<li>ID</li>
+			<li>Erstellungs-Zeitpunkt</li>
+			<li>Start-Zeitpunkt</li>
+			<li>End-Zeitpunkt (wenn es sich um einen abgeschlossenen Job handelt)</li>
+			<li>Laufzeit</li>
+			<li>Map-Routine-ID</li>
+			<li>Reduce-Routine-ID</li>
+			<li>Status</li>
+			<li>Tasks</li>
+		</ul>
+
+		<a class="anchor" id="jobInfosDescription"></a>
+		<p>Genau wie ein <a href="#idDescription">Programm</a> hat ein Job eine 32 Zeichen lange UUID, die vom DEF automatisch generiert wird und zur Identifikation des Jobs innerhalb des Systems verwendet wird.</p>
+
+		<p>Der <a href="#creationTimeDescription">Erstellungs-Zeitpunkt</a> des Jobs wird im Format "dd.MM.yyyy hh:mm:ss" angegeben.</p>
+
+		<p>Da es sein kann, dass ein Job nach seiner Erstellung zuerst in eine Warteschlange platziert wird, bevor er abgearbeitet wird, kann der Start-Zeitpunkt vom Erstellungs-Zeitpunkt abweichen. Der Start-Zeitpunkt wird ebenfalls im Format "dd.MM.yyyy hh:mm:ss" angegeben.</p>
+
+		<p>Handelt es sich bei dem dargestellten Job um einen bereits abgeschlossenen, wird zudem der End-Zeitpunkt, an dem die letzte Berechnung des Jobs beendet wurde, dargestellt. Dies erfolgt ebenfalls im Format "dd.MM.yyyy hh:mm:ss".</p>
+
+		<p>Bei einem abgeschlossenen Job markiert die Laufzeit die Zeit vom Start bis zum Ende des Jobs. Bei einem laufenden Job markiert sie die Zeit vom Start des Jobs bis zum aktuellen Zeitpunkt.</p>
+
+		<p>Bei der Erstellung eines Progamms über den DEF-Client kann eine Map-Routine angegeben werden, die vom DEF für den Map-Prozess verwendet wird. Es wird nur die ID der entsprechend hinterlegten Routine angegeben. Wenn der Menüpunkt "Bibliothek" im DEF Web-Manager fertig implementiert wurde, soll hier direkt auf die Informationen der entsprechenden Routine verlinkt werden.</p>
+
+		<p>Bei einem Job kann optional eine Reduce-Routine definiert werden, die die ermittelten Ergebnisse der Tasks des entsprechenden Jobs reduziert. Hier wird aktuell ebenfalls nur die ID dieser Reduce-Routine angegeben. Wie auch bei der Map-Routine soll hier in weiterer Folge eine direkte Verlinkung auf die Informationen der entsprechenden Routine hergestellt werden.</p>
+
+		<p>Die möglichen Status eines Jobs entsprechen den <a href="#statusTable">Status eines Programms</a>. Diese werden über Icons und Tooltips mit Beschreibungen dargestellt.</p>
+
+		<p>Bei den Job-Infos wird direkt dargestellt, wie viele Tasks sich ingesamt innerhalb des entsprechenden Jobs befinden, wie viele davon bereits erfolgreich bearbeitet wurden, wie viele gerade in Bearbeitung sind, wie viele sich noch in der Warteschlange befinden und wie viele fehlgeschlagen sind. Beim Bewegen des Mauszeigers über die Task-Anzahl erscheint eine genaue Auflistung.</p>
+
+		<img class="image" src="./img/program-jobs/Programme_Job_Details.png" style="width: 50%; max-width: 500px;"><br><br>
+
+		<p>Über den Fortschritts-Indikator rechts neben den Job-Infos wird der aktuelle Fortschritt der Berechnungen dargestellt. Befindet sich der Job in Bearbeitung, wird durch eine Prozent-Zahl angezeigt, wie viel Prozent aller Tasks bereits fertig berechnet wurden. Ist das Programm bereits abgeschlossen, wird über eine Statusmeldung angezeigt, ob die Berechnungen erfolgreich waren oder ob ein Fehler aufgetreten ist.</p>
+
+		<p>Unter den Job-Infos befindet sich eine Tabelle, in der die Tasks aufgelistet werden, die zum entsprechenden Job gehören. Da ein Job unter Umständen sehr viele Tasks haben kann, werden hier standardmäßig nur zehn dargestellt. Die Anzahl der dargestellten Tasks kann jedoch angepasst werden. Zudem werden standardmäßig nur die Tasks dargestellt, die fehlgeschlagen sind, also den Status "Failed" oder "Fehler aufgetreten" aufweisen. Dies hat den Grund, dass für die Benutzer meist nur die Details einzelner Tasks von Bedeutung sind, wenn diese fehlgeschlagen sind und überprüft werden soll, woran das liegen könnte. Über ein Auswahlmenü ist es jedoch möglich, auch Tasks mit anderen Status aufzulisten.</p>
+
+		<img class="image" src="./img/program-jobs/Programme_Job_Task_Auswahl.png" style="width: 50%; max-width: 500px;"><br><br>
+
+		<p>Die entsprechenden Tasks werden in einer Tabelle dargestellt.</p>
+
+		<img class="image" src="./img/program-jobs/Programme_Job_Tasks.png" style="max-width: 700px;"><br>
+
+		<p>Aus der Tabelle können folgende Informationen zu den jeweiligen Tasks gelesen werden:</p>
+
+		<ul>
+			<li>ID</li>
+			<li>Erstellungs-Zeitpunkt</li>
+			<li>Start-Zeitpunkt</li>
+			<li>Laufzeit</li>
+			<li>Status</li>
+		</ul>
+
+		<p>Durch Doppelklick auf den jeweiligen Tabellen-Eintrag oder durch einfaches Klicken auf das Info-Icon am Ende des Eintrags können die Task-Details geöffnet werden.</p>
+
+		<p>Wie bei einem <a href="#programAbortionDescription">Programm</a> ist es auch möglich, einen Job abzubrechen. Dies kann über den Button "Job abbrechen", der sich bei laufenden Programmen unter der Task-Tabelle befindet, ausgeführt werden. Wird auf "Job abbrechen" geklickt, erscheint ein Fenster mit der Frage, ob der Job wirklich abgebrochen werden soll und den Auswahlmöglichkeiten "Job abbrechen" und "Zurück". Wird auf "Job abbrechen" geklickt, werden die Berechnungen des Jobs abgebrochen. Alle Tasks, die bereits abgeschlossen wurden, behalten ihren Status, während alle Tasks, die sich entweder in der Warteschlange oder in Bearbeitung befinden, den Status "Fehler aufgetreten" bekommen. Der Status des Jobs wird ebenfalls auf "Fehler aufgetreten" gesetzt.</p>
+
+		<img class="image" src="./img/program-jobs/Programme_Job_abbrechen.png" style="width: 40%; max-width: 500px;"><br>
+
+		<p>Nur Jobs, die sich in der Warteschlange oder in Bearbeitung befinden können abgebrochen werden. Das Löschen von abgeschlossenen Jobs wird nicht bereitgestellt.</p>
+
+		<br>
+	</div>
+	
+	<div class="header" id="task-details">
+		<h2>Task-Details</h2>
+	</div>
+	<div class="content">
+		<p>In den Task-Details werden zusätzliche Informationen zum jeweiligen Task dargestellt. Diese umfassen die Task-Infos, die Darstellung des aktuellen Status und die Eingabeparameter sowie die Ergebnisse, sofern diese vorliegen.</p>
+
+		<img class="image" src="./img/program-tasks/Programme_Task.png"><br><br>
+
+		<p>Die Task-Infos enthalten die folgenden Punkte:</p>
+
+		<ul>
+			<li>ID</li>
+			<li>Erstellungs-Zeitpunkt</li>
+			<li>Start</li>
+			<li>Laufzeit</li>
+			<li>Ende (wenn der Task bereits abgeschlossen ist)</li>
+			<li>Status</li>
+			<li>Objective-Routine-ID</li>
+			<li>Map-Routine-ID</li>
+		</ul>
+
+		<p>Die Infos zu ID, Erstellungs-Zeitpunkt, Start, Laufzeit, Ende und Status entsprechen denselben Informationen wie sie bei <a href="#idDescription">Programmen</a> und <a href="#jobInfosDescription">Jobs</a> erwähnt werden. Die Map-Routine-ID gibt die ID der Routine an, die für den Map-Prozess verwendet wird.</p>
+
+		<p>Die Objective-Routine-ID verweist auf die Routine, die die eigentliche Berechnung, die der Task ausführen soll, darstellt. Sobald der Menüpunkt "Bibliothek" im DEF Web-Manager fertiggestellt wurde, soll hier eine direkte Verlinkung auf die Routine-Informationen gesetzt werden.</p>
+
+		<p>Neben den Task-Infos wird der aktuelle Status des entsprechenden Tasks dargestellt. Der initiale Status ist <a href="#statusTable">"In der Warteschlange"</a>.</p>
+
+		<img class="image" src="./img/program-tasks/Programme_Task_Scheduled.png" style="max-width: 700px;"><br><br>
+
+		<p>Wird der Task aus der Warteschlange genommen und die Bearbeitung gestartet, ändert sich der Status auf "In Bearbeitung".</p>
+
+		<img class="image" src="./img/program-tasks/Programme_Task_Run.png" style="max-width: 700px;"><br><br>
+
+		<p>Wurde der Task fertig bearbeitet, hängt der schlussendliche Status von dem Ergebnis der Bearbeitung ab. Konnte der Task erfolgreich bearbeitet werden, erhält er den Status "Erfolgreich bearbeitet".</p>
+
+		<img class="image" src="./img/program-tasks/Programme_Task_Success.png" style="max-width: 700px;"><br><br>
+
+		<p>Ist bei der Bearbeitung des Tasks ein Fehler aufgetreten, bekommt er den Status "Fehler aufgetreten".</p>
+
+		<img class="image" src="./img/program-tasks/Programme_Task_Failed.png" style="max-width: 700px;"><br><br>
+
+		<p>Unter den Task-Infos werden die Eingabeparameter aufgelistet. Diese haben jeweils einen Namen, einen Datentyp und einen Wert, welcher den tatsächlichen Eingabedaten entspricht. Handelt es sich bei einem Eingabeparameter um einen Standard-Datentyp, kann der Wert entsprechend richtig dargestellt werden. Handelt es sich um einen individuellen Datentyp, wird nur die Anzahl der Bytes der Daten dargestellt.</p>
+
+		<p>Wurde der Task erfolgreich bearbeitet, liegen Ergebnisse vor. Diese werden unter den Eingabeparametern dargestellt. Jedes Ergebnis hat einen Key, der vom Map-Prozess verwendet wurde, einen Datentyp und die Daten selbst. Wie auch bei den Eingabeparametern können Daten mit Standard-Datentypen direkt dargestellt werden, während bei individuellen Datentypen nur die Anzahl der Bytes angegeben wird.</p>
+	</div>
+</body>
+</html>
+	

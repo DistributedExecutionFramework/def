@@ -1,0 +1,74 @@
+<div class="managerContainer">
+
+  <header class="header">
+    <nav class="navbar navbar-dark bg-dark justify-content-between">
+      <a class="navbar-brand" routerLink="programs">
+        <fa-icon [icon]="['fa', 'rocket']" class="logo"></fa-icon>
+        DEF Web-Manager
+      </a>
+      <div class="d-flex flex-row btn-group">
+        <a href="./assets/documentation/index.html">
+          <fa-icon [icon]="['fa', 'question-circle']" class="header-icon" tooltip="Help" placement="bottom"></fa-icon>
+        </a>
+        <div>
+          <a class="dropdown header-icon" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"  tooltip="User Data" placement="bottom">
+            <label>{{this.currentUserName}}</label>
+            <fa-icon [icon]="['fa', 'user-circle']"></fa-icon>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right">
+            <label>Username:</label>
+            <div class="d-flex align-items-center">
+              <input class="form-control" [(ngModel)]="this.displayedUserName">
+              <button class="btn btn-outline-success btn-sm" tooltip="Save" (click)="this.changeUserName()">
+                <fa-icon [icon]="['fa', 'check']" class="text-success"></fa-icon>
+              </button>
+              <button class="btn btn-outline-danger btn-sm" tooltip="Cancel" (click)="this.displayedUserName = this.currentUserName;">
+                <fa-icon [icon]="['fa', 'times']" class="text-danger"></fa-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <a (click)="this.logout();">
+          <fa-icon [icon]="['fa', 'sign-out-alt']" class="header-icon" tooltip="Sign Out" placement="bottom"></fa-icon>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <aside class="sidebar">
+    <ul class="menu-navigation">
+      <li class="{{isSelected(menuSelection.Programs) ? 'selected': ''}}">
+        <a routerLink="programs">
+          <fa-icon [icon]="['fa', 'sync']"></fa-icon>
+          Programs
+        </a>
+      </li>
+      <li class="{{isSelected(menuSelection.Clusters) ? 'selected': ''}}">
+        <a routerLink="clusters">
+          <fa-icon [icon]="['fa', 'server']"></fa-icon>
+          Clusters
+        </a>
+      </li>
+      <li class="{{isSelected(menuSelection.Library) ? 'selected' : ''}}">
+        <a routerLink="library">
+          <fa-icon [icon]="['fa', 'database']"></fa-icon>
+          Library
+        </a>
+      </li>
+      <li class="{{isSelected(menuSelection.Resources) ? 'selected' : ''}}">
+        <a routerLink="resources">
+          <fa-icon [icon]="['fa', 'archive']"></fa-icon>
+          Resources
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+</div>
+
+

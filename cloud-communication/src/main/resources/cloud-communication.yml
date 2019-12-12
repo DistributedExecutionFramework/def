@@ -1,0 +1,16 @@
+id: cc_testId
+
+def-servers:
+  rest:
+    enabled: true
+    port: 40050
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40051
+    bind-address: 0.0.0.0
+  thrift-tcp:
+    enabled: true
+    port: 40052
+    bind-address: 0.0.0.0

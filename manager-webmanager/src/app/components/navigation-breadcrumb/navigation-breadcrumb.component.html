@@ -1,0 +1,15 @@
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li *ngFor="let navigationElement of this.navigationPath"
+        class="breadcrumb-item"
+        tooltip="{{navigationElement.getTooltipText()}}">
+      <a routerLink="{{navigationElement.getRoute()}}">{{navigationElement.getName()}}</a>
+    </li>
+    <li class="breadcrumb-item active"
+        aria-current="page"
+        tooltip="{{this.activeNavigationElement.getTooltipText()}}">
+      {{this.activeNavigationElement.getName()}}
+    </li>
+  </ol>
+</nav>
+

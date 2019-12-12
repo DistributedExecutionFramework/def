@@ -1,0 +1,37 @@
+<div class="content add-feature-content" xmlns="http://www.w3.org/1999/html">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate class="add-feature-form">
+    <div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="name">Name</label>
+        <input type="text" [(ngModel)]="this.name" class="form-content form-control" id="name" placeholder="Name" name="name" required>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="version">Version</label>
+        <input type="text" [(ngModel)]="this.version" class="form-content form-control" id="version" placeholder="Version" name="version" required>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="group">Group</label>
+        <input type="text" [(ngModel)]="this.group" class="form-content form-control" id="group" placeholder="Group" name="group">
+      </div>
+    </div>
+    <div>
+      <div *ngIf="!this.submitting">
+        <button class="btn btn-primary">
+          <fa-icon [icon]="['fa', 'save']"></fa-icon>
+          <b> Add Feature</b>
+        </button>
+      </div>
+      <div class="loading" *ngIf="this.submitting">
+        <ngx-loading [show]="this.submitting"></ngx-loading>
+      </div>
+    </div>
+  </form>
+</div>

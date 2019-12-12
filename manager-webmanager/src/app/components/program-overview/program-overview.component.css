@@ -1,0 +1,20 @@
+.program-overview-content {
+  grid-template-areas:
+    "navigation"
+    "open-programs"
+    "finished-programs";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.open-programs {
+  grid-area: open-programs;
+}
+
+.finished-programs {
+  grid-area: finished-programs;
+}

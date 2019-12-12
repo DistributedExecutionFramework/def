@@ -1,0 +1,25 @@
+library-type: MASTER
+#library-type: SLAVE # MASTER | SLAVE
+library-endpoint:
+  port: 40042
+  host: manager
+  protocol: THRIFT_TCP
+
+store-driver: at.enfilo.def.library.util.store.driver.fs.FSStoreDriver
+store-endpoint-url: file:/tmp/def
+
+def-servers:
+  rest:
+    enabled: false
+    port: 40040
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40041
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40042
+    bind-address: 0.0.0.0

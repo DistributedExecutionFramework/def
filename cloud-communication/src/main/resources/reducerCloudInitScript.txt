@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd /home/ec2-user/library/
+sh startLibrary.sh &
+cd /home/ec2-user/reducer/
+sh startReducer.sh &

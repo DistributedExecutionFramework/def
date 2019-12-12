@@ -1,0 +1,261 @@
+<div class="content library-overview-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+        [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div class="tabs">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <button *ngIf="this.activeTab == this.tabs.ROUTINES" class="nav-link active"><b>Routines</b></button>
+        <button *ngIf="this.activeTab != this.tabs.ROUTINES" class="nav-link btn btn-link" type="button"
+                routerLink="../routines">Routines</button>
+      </li>
+      <li class="nav-item">
+        <button *ngIf="this.activeTab == this.tabs.DATA_TYPES" class="nav-link active"><b>Data types</b></button>
+        <button *ngIf="this.activeTab != this.tabs.DATA_TYPES" class="nav-link btn btn-link" type="button"
+                routerLink="../datatypes">Data types</button>
+      </li>
+      <li class="nav-item">
+        <button *ngIf="this.activeTab == this.tabs.FEATURES" class="nav-link active"><b>Features</b></button>
+        <button *ngIf="this.activeTab != this.tabs.FEATURES" class="nav-link btn btn-link" type="button"
+                routerLink="../features">Features</button>
+      </li>
+      <li class="nav-item">
+        <button *ngIf="this.activeTab == this.tabs.TAGS" class="nav-link active"><b>Tags</b></button>
+        <button *ngIf="this.activeTab != this.tabs.TAGS" class="nav-link btn btn-link" type="button"
+                routerLink="../tags">Tags</button>
+      </li>
+    </ul>
+  </div>
+
+
+  <div class="tab-content" *ngIf="this.activeTab == this.tabs.ROUTINES">
+    <div class="row">
+      <div class="col input-group mb-3 pr-1">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="routineFilter">
+            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+          </span>
+        </div>
+        <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
+               aria-describedby="routineFilter"
+      [(ngModel)]="this.routinesFilter" (change)="this.findRoutines()"/>
+    </div>
+      <div class="col-auto pl-1">
+        <a routerLink="./routine-add" class="float-right">
+          <button class="btn btn-success">
+            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            Add routine
+          </button>
+        </a>
+      </div>
+    </div>
+
+    <table class="table table-striped table-hover overview-table">
+      <thead>
+      <tr class="d-flex">
+        <th class="table-col-1">Id</th>
+        <th class="table-col-2">Name</th>
+        <th class="table-col-4">Description</th>
+        <th class="table-col-1 text-center">Type</th>
+        <th class="table-col-2">Required Features</th>
+        <th class="table-col-1">Version</th>
+        <th class="table-col-1">Public</th>
+      </tr>
+      </thead>
+
+      <tbody *ngIf="this.routinesLoading">
+        <tr>
+          <td colspan="7">
+            <div class="loading">
+              <ngx-loading [show]="this.routinesLoading"></ngx-loading>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+      <tbody *ngIf="!this.routinesLoading">
+        <tr class="d-flex" *ngFor="let routine of this.routines;" (click)="this.openRoutineDetails(routine)">
+          <td class="table-col-1 text-monospace text-truncate" tooltip="{{routine.id}}">{{routine.id}}</td>
+          <td class="table-col-2 text-justify text-truncate">{{routine.name}}</td>
+          <td class="table-col-4 text-justify">{{routine.description}}</td>
+          <td class="table-col-1 text-center text-secondary">
+            <fa-icon [icon]="['fa', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fa', 'random']" *ngIf="this.libraryService.isMapRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fa', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fa', 'save']" *ngIf="this.libraryService.isStoreRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fa', 'desktop']" *ngIf="this.libraryService.isClientRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+          </td>
+          <td class="table-col-2">
+            <app-feature-list [features]="routine.requiredFeatures"></app-feature-list>
+          </td>
+          <td class="table-col-1">{{routine.revision}}</td>
+          <td class="table-col-1"><fa-icon [icon]="['fa', 'check']" *ngIf="routine.privateRoutine"></fa-icon></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="tab-content" *ngIf="this.activeTab == this.tabs.DATA_TYPES">
+    <div class="row">
+      <div class="col input-group mb-3 pr-1">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="dataTypeFilter">
+            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+          </span>
+        </div>
+        <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
+               aria-describedby="dataTypeFilter"
+               [(ngModel)]="this.dataTypesFilter" (change)="this.findDataTypes()"/>
+      </div>
+      <div class="col-auto pl-1">
+        <a routerLink="./datatype-add" class="float-right">
+          <button class="btn btn-success">
+            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            Add data type
+          </button>
+        </a>
+      </div>
+    </div>
+    <div>
+      <table class="table table-striped table-hover overview-table">
+        <thead>
+        <tr class="d-flex">
+          <th class="table-col-2">Id</th>
+          <th class="table-col-10">Name</th>
+        </tr>
+        </thead>
+        <tbody *ngIf="this.dataTypesLoading">
+        <tr>
+          <td colspan="6">
+            <div class="loading">
+              <ngx-loading [show]="this.dataTypesLoading"></ngx-loading>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+        <tbody *ngIf="!this.dataTypesLoading">
+        <tr class="d-flex" *ngFor="let dataType of this.dataTypes" (click)="this.openDataTypeDetails(dataType)">
+          <td class="table-col-2 text-monospace text-truncate" tooltip="{{dataType.id}}">{{dataType.id}}</td>
+          <td class="table-col-10">{{dataType.name}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <div class="tab-content" *ngIf="this.activeTab == this.tabs.FEATURES">
+    <div class="row">
+      <div class="col input-group mb-3 pr-1">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="featuresFilter">
+            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+          </span>
+        </div>
+        <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
+               aria-describedby="featuresFilter"
+               [(ngModel)]="this.featuresFilter" (change)="this.findFeatures()"/>
+      </div>
+      <div *ngIf="this.loginService.isAdmin()" class="col-auto pl-1">
+        <a routerLink="./feature-add" class="float-right">
+          <button class="btn btn-success">
+            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            Add Feature
+          </button>
+        </a>
+      </div>
+      <div *ngIf="!this.loginService.isAdmin()" class="col-auto pl-0"></div>
+    </div>
+    <div>
+      <table class="table table-striped">
+        <thead>
+        <tr class="d-flex">
+          <th class="table-col-1">Id</th>
+          <th class="table-col-2">Name</th>
+          <th class="table-col-2">Group</th>
+          <th class="table-col-1">Version</th>
+          <th class="table-col-6">Extensions</th>
+        </tr>
+        </thead>
+        <tbody *ngIf="this.featuresLoading">
+        <tr>
+          <td colspan="5">
+            <div class="loading">
+              <ngx-loading [show]="this.featuresLoading"></ngx-loading>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+        <tbody *ngIf="!this.featuresLoading">
+        <tr class="d-flex" *ngFor="let feature of this.features">
+          <td class="table-col-1 text-monospace text-truncate" tooltip="{{feature.id}}">{{feature.id}}</td>
+          <td class="table-col-2">{{feature.name}}</td>
+          <td class="table-col-2">{{feature.group}}</td>
+          <td class="table-col-1">{{feature.version}}</td>
+          <td class="table-col-6 pr-0">
+            <table class="table table-sm" *ngIf="feature.extensions.length > 0">
+              <thead>
+              <tr class="d-flex">
+                <th class="table-col-2">Id</th>
+                <th class="table-col-6">Name</th>
+                <th class="table-col-2">Version</th>
+                <th class="table-col-2"></th>
+              </tr>
+              </thead>
+              <tbody>
+                <tr class="d-flex" *ngFor="let extFeature of feature.extensions">
+                  <td *ngIf="extFeature.id != 'new'" class="table-col-2 text-monospace text-truncate" tooltip="{{extFeature.id}}">{{extFeature.id}}</td>
+                  <td *ngIf="extFeature.id != 'new'" class="table-col-6">{{extFeature.name}}</td>
+                  <td *ngIf="extFeature.id != 'new'" class="table-col-2">{{extFeature.version}}</td>
+                  <td *ngIf="extFeature.id != 'new'" class="table-col-2"></td>
+
+                  <td *ngIf="extFeature.id == 'new'" class="table-col-2"></td>
+                  <td *ngIf="extFeature.id == 'new'" class="table-col-6">
+                    <div class="input-group">
+                      <input type="text" class="form-control" [(ngModel)]="extFeature.name" placeholder="Name" aria-label="Name" />
+                    </div>
+                  </td>
+                  <td *ngIf="extFeature.id == 'new'" class="table-col-2">
+                    <div class="input-group">
+                      <input type="text" class="form-control" [(ngModel)]="extFeature.version" placeholder="Version" aria-label="Version" />
+                    </div>
+                  </td>
+                  <td *ngIf="extFeature.id == 'new'" class="table-col-2">
+                    <div class="input-group">
+                      <button class="btn btn-outline-success mr-1" (click)="this.saveNewExtension(feature)">
+                        <fa-icon [icon]="['fa', 'check']"></fa-icon>
+                      </button>
+                      <button class="btn btn-outline-danger" (click)="this.cancelAddExtension(feature)">
+                        <fa-icon [icon]="['fa', 'times']"></fa-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button *ngIf="this.showAddExtension(feature)" class="btn btn-outline-success btn-sm float-right mr-2" (click)="this.addExtension(feature)">
+                <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+                Add Extension
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <div class="tab-content" *ngIf="this.activeTab == this.tabs.TAGS">
+    <h2>Tags</h2>
+    Filter: <input type="text" value="*"/>
+  </div>
+
+
+
+</div>
+

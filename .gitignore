@@ -1,0 +1,5 @@
+*.log
+*.class
+**/build
+**/out
+**/demo-routines.jar

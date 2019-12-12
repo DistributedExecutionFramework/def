@@ -1,0 +1,67 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.1",
+    "signature": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.1": {
+      "agentconf-csharp-client/1.0.0": {
+        "dependencies": {
+          "client_api": "1.0.0.0",
+          "common": "0.0.0.0",
+          "Thrift45": "0.11.0.1"
+        },
+        "runtime": {
+          "agentconf-csharp-client.dll": {}
+        }
+      },
+      "client_api/1.0.0.0": {
+        "runtime": {
+          "client_api.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "common/0.0.0.0": {
+        "runtime": {
+          "common.dll": {
+            "assemblyVersion": "0.0.0.0",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Thrift45/0.11.0.1": {
+        "runtime": {
+          "Thrift45.dll": {
+            "assemblyVersion": "0.11.0.1",
+            "fileVersion": "0.11.0.1"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "agentconf-csharp-client/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "client_api/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "common/0.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Thrift45/0.11.0.1": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

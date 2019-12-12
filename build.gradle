@@ -1,0 +1,219 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+    }
+}
+
+// General plugins
+plugins {
+    id 'org.sonarqube' version '2.6.2'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+    id 'org.hidetake.ssh' version '2.8.0'
+}
+
+apply plugin: "io.spring.dependency-management"
+
+
+dependencyManagement {
+    imports {
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.228'
+    }
+}
+
+// all projects
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+
+    group 'at.enfilo'
+    version '1.4.6'
+
+    sourceCompatibility = 1.8
+
+    project.ext {
+        // Testing start.
+        junitVersion = '4.+'
+        awaitilityVersion = '+'
+        mockitoVersion = '2.+'
+        // Testing end.
+
+        // Logging start.
+        slf4jVersion = '1.7.+'
+        log4j2Version = '+'
+        // Logging end.
+
+        // Bean utils start.
+        jacksonVersion = '+'
+        validationapiVersion = '+'
+        reflectionsVersion = '0.9.10'
+        // Bean utils end.
+
+        // Frontend start.
+        javaxServletVersion = '+'
+        jsfVersion = '+'
+        // Frontend end.
+
+        // Servers start.
+        // Jetty + Jersey
+        jettyVersion = '9.4.7.v20170914'
+        jerseyVersion = '2.25.1'
+        jaxRsVersion = '+'
+        javaxAnnotationVersion = '+'
+        mimepullVersion = '1.9.7'
+
+        // Thrift
+        thriftVersion = '0.11.0'
+        // Servers end.
+
+        // Clients start.
+        cxfVersion = '+'
+        // Clients end.
+
+        // ORM and Database dependencies start.
+        javaxPersistenceVersion = '+'
+
+        // Hibernate
+        hibernateVersion = '5.+'
+        hibernatejpaVersion = '+'
+        hibernatec3p0Version = '5.+'
+        jpamodelgenVersion = '5.+'
+        mysqlconnectorVersion = '6.0.3'
+
+        // H2 Database
+        h2Version = '+'
+        // ORM and Database dependencies end.
+
+        // Cloud communication / Cloud API start
+        openStack4jVersion = '+'
+        // Cloud communication / Cloud API end
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        // https://mvnrepository.com/artifact/junit/junit
+        testCompile group: 'junit', name: 'junit', version: junitVersion
+        // https://mvnrepository.com/artifact/org.awaitility/awaitility
+        testCompile group: 'org.awaitility', name: 'awaitility', version: awaitilityVersion
+    }
+
+    task copyDemoRoutines(type: Copy) {
+        from (project(':demo-routines').getBuildDir()) {
+            include '**/*-all.jar'
+        }
+        into sourceSets.main.output.resourcesDir.path
+        includeEmptyDirs = false
+        eachFile {
+            f -> f.name = 'demo-routines.jar'
+        }
+    }
+    task copyDemoRoutinesToProject(type: Copy) {
+        from (project(':demo-routines').getBuildDir()) {
+            include '**/*-all.jar'
+        }
+        into projectDir
+        includeEmptyDirs = false
+        eachFile {
+            f -> f.name = 'demo-routines.jar'
+        }
+    }
+    copyDemoRoutines.dependsOn copyDemoRoutinesToProject
+}
+
+subprojects {
+	apply plugin: 'com.github.johnrengelman.shadow'
+
+    dependencies {
+        // https://mvnrepository.com/artifact/org.mockito/mockito-core
+        testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+    }
+
+    jar {
+        manifest {
+            attributes("DEF-Version": version)
+        }
+    }
+
+    task allDeps(type: DependencyReportTask) {}
+
+    task alljavadoc(type: Javadoc) {
+        source subprojects.collect { it.sourceSets.main.allJava }
+        classpath = files(subprojects.collect { it.sourceSets.main.compileClasspath })
+        destinationDir = file("${buildDir}/docs/javadoc")
+    }
+
+    task javadocJar(type: Jar, dependsOn: alljavadoc) {
+        classifier = 'javadoc'
+        from alljavadoc.destinationDir
+    }
+
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from subprojects.collect { it.sourceSets.main.allSource }
+    }
+
+    shadowJar.finalizedBy javadocJar
+    shadowJar.finalizedBy sourcesJar
+}
+
+
+// Sonarqube Integration
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'Prototype2'
+        property 'sonar.sourceEncoding', 'UTF-8'
+    }
+}
+
+// Integration Test
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+dependencies {
+    integrationTestCompile project(':manager')
+    integrationTestCompile project(':cluster')
+    integrationTestCompile project(':worker-node')
+    integrationTestCompile project(':reducer-node')
+    integrationTestCompile project(':scheduler')
+    integrationTestCompile project(':library')
+    integrationTestCompile project(':client-api')
+    integrationTestCompile project(':cloud-communication')
+    integrationTestCompile project(':manager-webservice')
+    // https://mvnrepository.com/artifact/com.h2database/h2
+    integrationTestCompile group: 'com.h2database', name: 'h2', version: h2Version
+    // https://mvnrepository.com/artifact/junit/junit
+    compile group: 'junit', name: 'junit', version: junitVersion
+}
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+integrationTest {
+    jacoco {
+        append = true
+        destinationFile = file("$buildDir/jacoco/test-it.exec")
+    }
+}
+check.dependsOn integrationTest
+copyDemoRoutines.dependsOn project(':library').compileJava
+integrationTest.dependsOn copyDemoRoutines
+integrationTest.dependsOn project(':cloud-communication').compileJava
+integrationTest.mustRunAfter test

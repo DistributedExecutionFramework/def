@@ -1,0 +1,23 @@
+.datatype-details-content {
+  grid-template-areas:
+    "navigation"
+    "datatype-details";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.datatype-details {
+  grid-area: datatype-details;
+}
+
+.datatype-card-desc {
+  width: 10%;
+}
+
+.datatype-card-content {
+  width: 90%;
+}

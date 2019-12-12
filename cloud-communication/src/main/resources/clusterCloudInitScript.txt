@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd /home/ec2-user/library/
+sh startLibrary.sh &
+cd /home/ec2-user/scheduler/
+sh startScheduler.sh &
+cd /home/ec2-user/cluster/
+sh startCluster.sh &

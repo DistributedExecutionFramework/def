@@ -1,0 +1,19 @@
+dependencies {
+    compile project(':security')
+    compile project(':logging')
+
+    // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
+    compile group: 'org.apache.thrift', name: 'libthrift', version: thriftVersion
+
+    // https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
+    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: jaxRsVersion
+
+    // Apache CXF
+    compile group: 'org.apache.cxf', name: 'cxf-rt-rs-client', version: cxfVersion
+
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider
+    compile group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: jacksonVersion
+
+    // https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-multipart
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: jerseyVersion
+}

@@ -1,0 +1,18 @@
+<div class="login-container">
+  <header class="header">
+    <nav class="navbar navbar-dark bg-dark justify-content-between">
+      <a class="navbar-brand" routerLink="./">
+        <fa-icon [icon]="['fa', 'rocket']" class="logo"></fa-icon>
+        DEF Web-Manager
+      </a>
+    </nav>
+  </header>
+
+  <main class="login-main">
+    <h4>Login</h4>
+    <input class="form-control" [(ngModel)]="this.userName" (focus)="inputGetsFocus();" (blur)="this.inputLosesFocus();"  (keyup.enter)="login();">
+    <button class="btn btn-outline-dark" (click)="login();">Continue</button>
+  </main>
+</div>
+
+

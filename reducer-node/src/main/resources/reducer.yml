@@ -1,0 +1,146 @@
+store-routine: 2a2fa500-fb5b-340b-8b80-2c4fae4921b3
+
+def-servers:
+  rest:
+    enabled: false
+    port: 40070
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40071
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40072
+    bind-address: 0.0.0.0
+    url-pattern: /*
+
+ticket-service:
+  threads: 2
+
+# sample environment configuration:
+#
+environment:
+  - name: java
+    version: 1.8.0.181
+    group: language
+    cmd: 'java ({rbs}:-cp {}) {arg0} {args} {pipes}'
+  - name: python
+    version: 3.7
+    group: language
+    cmd: 'python3 {rbs} {args} {pipes}'
+    ext:
+      - name: numpy
+        version: 1.15.1
+  - name: csharp
+    version: 5.10.1.47
+    group: language
+    cmd: 'mono {rbp} {rbs} {args} {pipes}'
+  - name: 'matlab-runtime'
+    version: 9.4
+    group: language
+    cmd: '{rb} {args} {pipes}'
+    env:
+      LD_LIBRARY_PATH: '{$matlabPath}/runtime/glnxa64:{$matlabPath}/bin/glnxa64:{$matlabPath}/sys/os/glnxa64:{$matlabPath}/sys/opengl/lib/glnxa64'
+    var:
+      matlabPath: '/usr/local/MATLAB/MATLAB_Runtime/v94'
+
+
+# Environment configuration tutorial:
+#
+# This section is used to register the installed features on each node. This could be various languages in different
+# versions, libraries, or other Software (e.g. CUDA framework for GPU computing).
+#
+# Each such feature can have the following properties:
+# name: a simple string to name the feature. Does not need to be unique
+# version: the version of the feature. Must only contain numbers and dots
+# group: optional, determines to which group the feature belongs.
+#       Currently there is only "language" (e.g. for Java, Python, ...) which is used to execute a routine
+# cmd: mandatory for each feature with group "language", optional if not. Defines the command builder pattern.
+#       See below for more information on using structures
+# extensions: optional, extensions to the feature, e.g. an installed
+#             library (numpy in python would be such an extension).
+# environment: optional, defines any environment variables that need to be set before executing a routine
+#              (e.g. LD_LIBRARY_PATH for MATLAB). Only executed if the routine requires this feature.
+#               See below for more information on using structures.
+# variables: optional, cmd and environment can use variables defined here.
+#
+# An extension can have many of the same properties as a feature:
+# name: a simple string to name the extension. Does not need to be unique
+# version: the version of the extension. Must only contain numbers and dots
+# cmd: optional, defines an additional part of the command builder if specified.
+#       See below for more information on using structures
+# environment: optional, defines any environment variables that need to
+#              be set before executing a routine. Only executed if the routine requires this extension
+#              See below for more information on using structures
+# variables: optional, cmd and environment can use variables defined here.
+#
+# A command template or environment variable can be built in a template form that uses the following structures:
+# Literals: 'java'
+# Placeholders: 'java -cp {rb}'
+# Loops: 'java -cp ({rbs}:{}:)'
+# Variables: 'java -cp {$ex}'
+# Optionals: 'java -cp [{cuda(9.4)}:{$ex}]'
+#
+# The following section uses an example of a java routine that is given the routine binaries rb1 as primary, rb2 and rb3
+# as well as the arguments arg1 arg2 and arg3 at runtime
+#
+# Placeholders: {<Placeholder>}
+#
+# Placeholders are predefined keywords in curly brackets that will be replaced with the correct data when building the
+# command for running the routine. Curly brackets will be interpreted as literals if no placeholder matches.
+# {rb}    a routine binary (increments index per use), e.g.: 'java -cp {rb}:{rb}:{rb}' will be parsed to 'java -cp rb1:rb2:rb3'
+# {rbs}   all routine binaries separated by whitespace, e.g.: 'java -cp {rbs}' will be parsed to 'java -cp rb1 rb2 rb3'
+# {rbp}   the primary routine, if this is used it will not appear in {rb}, e.g.: 'java -cp {rbp} {rb}' will be parsed to 'java -cp rb1 rb2'
+# {arg}   an argument (increments index per use), e.g.: 'java -cp {rbp} {arg} {arg} {arg}' will be parsed to 'java -cp rb1 arg1 arg2 arg3'
+# {arg0}  an argument with index 0 (can be any number, 0-indexed), e.g.: 'java -cp {rbp} {arg0}' will be parsed to 'java -cp rb1 arg1'
+# {args}  all arguments separated by whitespace, e.g.: see {rbs}
+# {in}    the in pipe, will be parsed to the file path of the in pipe
+# {out}   the out pipe, gets automatically omitted in some cases where there is no out pipe (e.g. store type routine), will be parsed to the file path of the out pipe
+# {ctrl}  the ctrl pipe, will be parsed to the file path of the control pipe
+# {pipes} equals to {in} {out} {ctrl}, will be parsed to the file path of all pipes relevant to the routine separated by a whitespace
+# {cmd}   only valid in an optional, will be replaced with the cmd of the referenced feature or extension
+#
+# Loops: ({rbs | args | pipes}:<Literal | Structure>{}<Literal | Structure>)
+#
+# Loops are created by using the following pattern: ({rbs | args | pipes}:<Literal | Structure>{}<Literal | Structure>)
+# Loops mark repeating segments that can create a pattern for each element of {rbs} or {args} or {pipes} as the counting
+# variable. Whitespaces are preserved, parenthesis are interpreted as literals if it does not match the correct pattern.
+# Inside the loop body, arbitrary nested structures can be used.
+# Example for a loop:
+# 'java -cp ({rbs}:{}:)'    will be parsed to       'java -cp rb1:rb2:rb3:'
+# The parenthesis denote the loop block, {rbs} is the counting variable, the first semicolon denotes the end of the counting
+# variable and the start of the loop body, the empty curly brackets will be replaced by the current element at index of the loop
+# variable, the second semicolon will be interpreted as a literal. In pseudocode this would equal the following code segment:
+# foreach(rb in rbs) {result = result + rb.toString() + ":"}
+#
+# Variables: {$<Variable>}
+#
+# Variables are very similar to Placeholders, but the value can be defined by the user in the 'var' section of the configuration
+# of a feature or extension. Variable names need to be unique inside a single 'var' section, but can be repeated across
+# different features or extensions. Variables used in a feature cmd or environment variable will only be searched in the
+# 'var' section of that feature. An extension can also use the variables defined in the feature that the extension belongs
+# to. If the same variable name is used in a feature and an extension of that feature, the variable in the extension will
+# therefore be shadowed by the variable in the feature.
+#
+# Optionals: [{<Feature | Extension>}:<Literal | Structure>]
+#
+# Optionals denote template blocks that will only be added, if a condition is met. The condition is if the routine that
+# should be executed requires a certain other feature or extension. If the routine does not require the feature or extension
+# in the condition, the optional block will be ignored. Inside the optional block, arbitrary nested structures are allowed.
+# Variables referenced in an optional block will first be searched in the 'var' section of the current feature, then in the
+# 'var' section of the referenced feature and lastly in the 'var' section of all referenced extensions. It will return the
+# first matching variable and shadow any that occur later in this matching hierarchy.
+# Example of an optional:
+# 'java [{java(>1.8):dl4j}:-cp {$dl4jPath}]'
+# The square brackets denote the optional block, {java(>1.8):dl4j} is the optional condition that states that this block
+# should only be inserted if the routine requires a java version greater than 1.8 (current feature) and the dl4j extension
+# in any version. The first semicolon after the optional condition denotes the end of the condition and the start of the
+# optional body. Inside the body arbitrary literals and structures can be used. The variable {$dl4jPath} will first be
+# searched in the 'var' section of the Java 1.8 feature and afterwards in the 'var' section of the dl4j extension.
+# Another example:
+# 'java [{matlab-runtime(>9.4)}:-cp {$matlabPath}]'
+# This optional references the matlab-runtime feature in a version greater than 9.4 and searches first inside the 'var'
+# section of the Java feature for the variable {$matlabPath} and afterwards in the 'var' section of the matlab-runtime.

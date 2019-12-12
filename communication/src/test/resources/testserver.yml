@@ -1,0 +1,13 @@
+def-servers:
+  rest:
+    enabled: true
+    port: 9993
+    bind-address: 127.0.0.1
+  thrift-tcp:
+    enabled: true
+    port: 9992
+    bind-address: 127.0.0.1
+  thrift-http:
+    enabled: true
+    port: 9991
+    bind-address: 127.0.0.1

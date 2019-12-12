@@ -1,0 +1,18 @@
+﻿<Properties StartupConfiguration="{10374158-5033-4808-8F7A-6DD21493C6B7}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="client-api/client/DEFClient.cs">
+    <Files>
+      <File FileName="client-api/client/DEFClient.cs" Line="170" Column="8" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.routine-api PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Release" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/client-api/DEFClient.cs" relfile="client-api/DEFClient.cs" line="138" column="1" />
+      <Breakpoint file="/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/client-api/DEFClient.cs" relfile="client-api/DEFClient.cs" line="139" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.ItemProperties.client-api PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>

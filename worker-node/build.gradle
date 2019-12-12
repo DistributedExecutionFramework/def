@@ -1,0 +1,104 @@
+apply plugin: 'application'
+
+dependencies {
+    compile project(':worker-node-api')
+    compile project(':node')
+
+    // https://mvnrepository.com/artifact/com.github.oshi/oshi-core
+    //compile group: 'com.github.oshi', name: 'oshi-core', version: '3.7.2'
+
+    // Test
+    testCompile project(':demo-routines')
+}
+
+
+mainClassName = 'at.enfilo.def.worker.server.Worker'
+
+shadowJar {
+    exclude 'worker.yml'
+    exclude 'demo-routines.jar'
+    exclude 'log4j2.xml'
+}
+
+jar {
+    exclude '**/demo-routines.jar'
+}
+
+remotes {
+    defHost {
+        host = 'localhost'
+        user = 'def'
+        password = 'def'
+    }
+}
+
+// run 'gradle deploy -Phost=<ip>'
+task deploy {
+    doLast {
+        ssh.run {
+            settings {
+                knownHosts = allowAnyHosts
+            }
+
+            String host = project.getProperties().get('host')
+            remotes.defHost.host = host
+
+            println 'Try to deploy on ' + remotes.defHost.host
+
+            session(remotes.defHost) {
+                executeScript file('src/main/sh/stop.sh')
+                executeScript file('src/main/sh/clean.sh')
+                copy {
+                    from "$buildDir/libs"
+                    from "$buildDir/resources/main"
+                    into "$buildDir/worker/"
+                }
+                put from: "$buildDir/worker", into: "."
+                executeScript file('src/main/sh/start.sh')
+            }
+        }
+    }
+}
+
+task restart {
+    doLast {
+        ssh.run {
+            settings {
+                knownHosts = allowAnyHosts
+            }
+
+            String host = project.getProperties().get('host')
+            remotes.defHost.host = host
+
+            println 'Try to restart on ' + remotes.defHost
+            session(remotes.defHost) {
+                executeScript file('src/main/sh/stop.sh')
+                executeScript file('src/main/sh/start.sh')
+            }
+        }
+    }
+}
+
+task stop {
+    doLast {
+        ssh.run {
+            settings {
+                knownHosts = allowAnyHosts
+            }
+
+            String host = project.getProperties().get('host')
+            remotes.defHost.host = host
+
+            println 'Try to stop ' + remotes.defHost.host
+
+            session(remotes.defHost) {
+                executeScript file('src/main/sh/stop.sh')
+            }
+        }
+    }
+}
+
+deploy.dependsOn shadowJar
+
+compileTestJava.dependsOn copyDemoRoutines
+copyDemoRoutines.dependsOn project(':demo-routines').shadowJar

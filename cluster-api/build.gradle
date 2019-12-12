@@ -1,0 +1,6 @@
+dependencies {
+    // Project dependencies
+    compile project(':execlogic-api')
+    compile project(':worker-node-api')
+    compile project(':node-api')
+}

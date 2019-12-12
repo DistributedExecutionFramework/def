@@ -1,0 +1,21 @@
+.library-overview-content {
+  grid-template-areas:
+    "navigation"
+    "tabs"
+    "tab-content";
+  grid-template-rows: auto auto;
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.tabs {
+  grid-area: tabs;
+}
+
+.tab-content {
+  grid-area: tab-content;
+}

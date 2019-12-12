@@ -1,0 +1,5 @@
+dependencies {
+    // Project dependencies
+    compile project(':communication-api')
+    compile project(':node-api')
+}

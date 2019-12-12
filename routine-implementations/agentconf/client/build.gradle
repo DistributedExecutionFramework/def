@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+}
+
+group 'at.enfilo.def'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile name: 'client-api-1.3.0-all'
+}

@@ -1,0 +1,6 @@
+dependencies {
+    compile project(':routine-api')
+    compile project(':transfer') // TODO
+}
+
+test.dependsOn shadowJar

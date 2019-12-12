@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':transfer')
+
+    // https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
+    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: jaxRsVersion
+
+    // https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api
+    compile group: 'javax.annotation', name: 'javax.annotation-api', version: javaxAnnotationVersion
+}

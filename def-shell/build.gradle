@@ -1,0 +1,27 @@
+dependencies {
+    compile project(':manager-api')
+    compile project(':library-admin-api')
+    compile project(':cluster-api')
+    compile project(':worker-node-api')
+    compile project(':reducer-node-api')
+
+    compile 'org.springframework.shell:spring-shell:+'
+
+    testCompile project(':communication')
+}
+
+
+apply plugin: 'application'
+
+mainClassName = 'at.enfilo.def.client.DEFShell'
+
+defaultTasks 'installApp'
+
+run {
+    standardInput = System.in
+}
+
+shadowJar {
+    mergeServiceFiles('META-INF/spring.*')
+}
+

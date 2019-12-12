@@ -1,0 +1,207 @@
+<div class="content add-routine-content" xmlns="http://www.w3.org/1999/html">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <form class="add-routine-form" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+    <div>
+      <h4>General</h4>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="routineName">Name</label>
+        <input type="text" [(ngModel)]="this.name" class="form-content form-control" id="routineName"
+               placeholder="Name" name="routineName" required>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="routineDescription">Description</label>
+        <textarea class="form-content form-control" [(ngModel)]="this.description" id="routineDescription"
+                  name="routineDescription"
+                  placeholder="Description" rows="2" required></textarea>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="routineType">Type</label>
+        <select class="form-content form-control" name="routineType" id="routineType" [(ngModel)]="this.type" required>
+          <option *ngFor="let routineType of this.getRoutineTypes()" value="{{routineType}}">
+            {{this.getRoutineTypeName(routineType)}}
+          </option>
+        </select>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="routineLanguage">Language</label>
+        <select class="form-content form-control" name="routineLanguage" id="routineLanguage" [(ngModel)]="this.languageFeature" (change)="this.languageChange()" required>
+          <option *ngFor="let feature of this.languageFeatures" [ngValue]="feature">{{feature.name}} {{feature.version}}</option>
+        </select>
+      </div>
+      <div class="form-group d-flex" *ngIf="this.languageFeature && this.languageFeature.extensions && this.languageFeature.extensions.length > 0">
+        <label class="form-desc" for="routineType">Extensions</label>
+        <div class="form-content">
+        <div class="row pl-3">
+          <div class="feature extension" *ngFor="let extension of this.languageFeature.extensions" (click)="this.setRequiredFeature(extension)">
+            <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fa', 'check']"></fa-icon>
+            {{extension.name}}
+            <span class="divider"></span>
+            <span class="version">{{extension.version}}</span>
+          </div>
+        </div>
+        </div>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="routineArguments">Arguments</label>
+        <textarea class="form-content form-control" [(ngModel)]="this.arguments" id="routineArguments" name="routineArguments"
+                  placeholder="Arguments" rows="2"></textarea>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc">Private</label>
+        <div class="form-content form-check">
+          <input type="checkbox" class="form-check-input" name="routinePrivate" [(ngModel)]="this.private">
+        </div>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc">Required Features</label>
+        <div class="form-content h-25 pl-3 pr-3 pre-scrollable">
+          <div class="row" *ngFor="let feature of this.nonLanguageFeatures">
+            <div class="feature" (click)="this.setRequiredFeature(feature)">
+              <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(feature)" [icon]="['fa', 'check']"></fa-icon>
+              {{feature.name}}
+              <span class="divider"></span>
+              <span class="version">{{feature.version}}</span>
+            </div>
+            <div class="pl-3">
+              <div class="row">
+              <div class="feature extension" *ngFor="let extension of feature.extensions" (click)="this.setRequiredFeature(extension)">
+                <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fa', 'check']"></fa-icon>
+                {{extension.name}}
+                <span class="divider"></span>
+                <span class="version">{{extension.version}}</span>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>Input Parameters</h4>
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>DataType</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let inParam of this.inParameters;">
+          <td><input type="text" [(ngModel)]="inParam.name" placeholder="Name" class="form-control"
+                     name="{{inParam.id}}.name" id="{{inParam.id}}.name" required/>
+          </td>
+          <td><textarea [(ngModel)]="inParam.description" placeholder="Description" rows="2" name="{{inParam.id}}.desc"
+                        class="form-control"></textarea>
+          </td>
+          <td>
+            <ng-select [items]="dataTypes | async" [(ngModel)]="inParam.dataType" bindLabel="name" [clearable]="false"
+                       name="{{inParam.id}}.dataType" [markFirst]="true"></ng-select>
+          </td>
+          <td>
+            <button type="button" class="btn btn-outline-danger" (click)="this.removeInParameter(inParam)" name="{{inParam.id}}.remove">
+              <fa-icon [icon]="['fa', 'times']"></fa-icon>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-outline-success" (click)="this.addInParameter()" name="addInParameter">
+        <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+      </button>
+    </div>
+
+    <div>
+      <h4>Output Parameter</h4>
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>DataType</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td><input type="text" [(ngModel)]="this.outParameter.name" placeholder="Name" name="outParameterName"
+                     class="form-control" required/></td>
+          <td><textarea [(ngModel)]="this.outParameter.description" placeholder="Description" rows="2"
+                        name="outParameterDescription"
+                        class="form-control"></textarea></td>
+          <td>
+            <ng-select [items]="dataTypes | async" [(ngModel)]="this.outParameter.dataType" bindLabel="name" [clearable]="false"
+                       name="outParameterType" [markFirst]="true"></ng-select>
+          </td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <div>
+      <h4>Binaries</h4>
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th>Routine Binary File</th>
+          <th>Primary</th>
+          <th>Size</th>
+          <th>MD5</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let routineBinary of this.routineBinaries;">
+          <td>
+            <input type="file" class="form-control-file" id="{{routineBinary.id}}.file" name="{{routineBinary.id}}.file" (change)="this.fileSelect(routineBinary, $event)" required>
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input" [(ngModel)]="routineBinary.primary" name="{{routineBinary.id}}.primary" />
+          </td>
+          <td>{{routineBinary.sizeInBytes}}</td>
+          <td>{{routineBinary.md5}}</td>
+          <td>
+            <button class="btn btn-outline-danger" (click)="this.removeRoutineBinary(routineBinary)">
+              <fa-icon [icon]="['fa', 'times']"></fa-icon>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-outline-success" (click)="this.addRoutineBinary()">
+        <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+      </button>
+    </div>
+
+    <div>
+      <p class="important-note">
+        Note: The form fields marked with a red line at the beginning are required fields!
+      </p>
+    </div>
+    
+    <div>
+      <div *ngIf="!this.submitting">
+        <button class="btn btn-primary">
+          <fa-icon [icon]="['fa', 'upload']"></fa-icon>
+          <b> Submit</b>
+        </button>
+      </div>
+      <div class="loading" *ngIf="this.submitting">
+        <ngx-loading [show]="this.submitting"></ngx-loading>
+      </div>
+    </div>
+
+  </form>
+
+</div>

@@ -1,0 +1,44 @@
+<div class="content datatype-details-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div *ngIf="this.dataType" class="card datatype-details">
+
+    <h4 class="card-header">{{this.dataType.name}}</h4>
+
+    <div class="card-body">
+      <label class="desc">Id</label>
+      <label class="text-monospace">{{this.dataType.id}}</label>
+
+      <label class="desc">Name</label>
+      <label>{{this.dataType.name}}</label>
+
+      <div class="desc">Schema</div>
+      <pre class="code-area d-flex mb-0">
+        <code highlight [textContent]="this.dataType.schema"></code>
+      </pre>
+
+      <label class="desc">Resources</label>
+      <div class="d-flex">
+        <div class="mr-2">
+          <select class="form-control" name="language" id="language" [(ngModel)]="this.language">
+            <option value="Java">Java</option>
+            <option value="Python">Python</option>
+            <option value="CSHARP">C#</option>
+            <option value="MATLAB">MATLAB</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" (click)="this.generateAndDownloadDataTypes()">
+          <fa-icon [icon]="['fa', 'download']"></fa-icon>
+          Generate & Download
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

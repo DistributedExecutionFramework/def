@@ -1,0 +1,14 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="WEB-INF/template/template.xhtml">
+    <ui:define name="title">AUTH</ui:define>
+
+    <ui:define name="content">
+        <h:panelGroup layout="block" styleClass="panel-group">
+            <h:panelGroup layout="block" id="login_form">
+                <ui:insert name="login_form"><ui:include src="WEB-INF/template/login_form.xhtml" /></ui:insert>
+            </h:panelGroup>
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

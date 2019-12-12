@@ -1,0 +1,59 @@
+.cluster-details-content {
+  grid-template-areas:
+    "navigation navigation"
+    "cluster-details performance-data"
+    "worker-area worker-area"
+    "reducer-area reducer-area";
+  grid-template-columns: 1fr 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+.cluster-details {
+  grid-area: cluster-details;
+}
+
+.performance-data {
+  grid-area: performance-data;
+}
+
+.node-area {
+  display: grid;
+  grid-template-areas:
+    "node-heading"
+    "nodes";
+  grid-template-columns: 1fr;
+  grid-gap: 15px;
+}
+
+.node-heading {
+  grid-area: node-heading;
+}
+
+.node-heading h4 {
+  padding: 0;
+  margin: 0;
+}
+
+.nodes {
+  grid-area: nodes;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  -ms-grid-columns: minmax(260px, 1fr);
+  grid-gap: 20px;
+}
+
+.worker-area {
+  grid-area: worker-area;
+}
+
+.reducer-area {
+  grid-area: reducer-area;
+}
+
+.missing-info {
+  color: grey;
+  margin-bottom: 20px;
+}

@@ -1,0 +1,28 @@
+dependencies {
+    compile project(':configuration')
+    compile project(':transfer-util')
+    compile project(':persistence-metamodel')
+
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-core
+    compile group: 'org.hibernate', name: 'hibernate-core', version: hibernateVersion
+
+    // https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api
+    compile group: 'org.hibernate.javax.persistence', name: 'hibernate-jpa-2.1-api', version: hibernatejpaVersion
+
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-c3p0
+    compile group: 'org.hibernate', name: 'hibernate-c3p0', version: hibernatec3p0Version
+
+    // TODO: add more drivers
+
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    compile group: 'mysql', name: 'mysql-connector-java', version: mysqlconnectorVersion
+
+    // https://mvnrepository.com/artifact/com.h2database/h2
+    testCompile group: 'com.h2database', name: 'h2', version: h2Version
+}
+
+
+//task generateMetamodel(type: JavaCompile) {
+//    project(':persistence-metamodel').tasks.build.execute()
+//}
+compileJava.dependsOn(':persistence-metamodel:generateMetamodel')

@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':transfer')
+    compile project(':configuration')
+}

@@ -1,0 +1,29 @@
+.resources-content {
+  grid-template-areas:
+    "navigation"
+    "client-api"
+    "routine-api"
+    "tools";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.client-api {
+  grid-area: client-api;
+}
+
+.routine-api {
+  grid-area: routine-api;
+}
+
+.resources-content pre {
+  margin: 0;
+}
+
+.tools {
+  grid-area: tools;
+}

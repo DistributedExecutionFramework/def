@@ -1,0 +1,9 @@
+dependencies {
+    // Project dependencies
+    compile project(':communication-api')
+
+    // TODO Consider to remove after new routine-binary concept will be released.
+    compile project(':transfer-util')
+    compile project(':demo-routines')
+}
+

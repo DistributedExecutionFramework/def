@@ -1,0 +1,21 @@
+store-routine: 92979065-f681-32bf-be17-94271ec3900a
+working-dir: /tmp/def
+exec-threads: 1
+
+def-servers:
+  rest:
+    enabled: true
+    port: 40030
+    bind-address: 127.0.0.1
+    url-pattern: /api/*
+  thrift-http:
+    enabled: true
+    port: 40031
+    bind-address: 127.0.0.1
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40032
+    bind-address: 127.0.0.1
+    url-pattern: /*
+

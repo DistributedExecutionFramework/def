@@ -1,0 +1,33 @@
+.job-details-content {
+  grid-template-areas:
+    "navigation navigation"
+    "job-details progress"
+    "out-params out-params"
+    "tasks tasks";
+  grid-template-columns: auto 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.job-details {
+  grid-area: job-details;
+}
+
+.out-params {
+  grid-area: out-params;
+}
+
+.progress {
+  grid-area: progress;
+}
+
+.tasks {
+  grid-area: tasks;
+}
+
+.task-list {
+  margin-bottom: 15px;
+}

@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':manager-api') // includes ':execlogic-api'
+    testCompile project(':base-datatypes')
+}

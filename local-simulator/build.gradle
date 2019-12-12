@@ -1,0 +1,9 @@
+apply plugin: 'application'
+
+mainClassName = 'at.enfilo.def.local.simulator.Simulator'
+
+dependencies {
+    compile project(':worker-node')
+    compile project(':execlogic')
+    compile project(':library')
+}

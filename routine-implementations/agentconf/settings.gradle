@@ -1,0 +1,10 @@
+rootProject.name = 'agentconf'
+include 'agentconf-routine'
+include 'agentconf-client'
+include 'demoroutine'
+include 'client'
+include 'reduceroutine'
+include 'mm43DRoutine'
+include 'numberVisitsUniqueLevelplotRoutine'
+include 'numberVisitsUniqueNewestLevelplotRoutine'
+

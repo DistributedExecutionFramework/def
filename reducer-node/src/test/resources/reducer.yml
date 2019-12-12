@@ -1,0 +1,19 @@
+def-servers:
+  rest:
+    enabled: false
+    port: 40030
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40031
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40032
+    bind-address: 0.0.0.0
+    url-pattern: /*
+
+ticket-service:
+  threads: 4

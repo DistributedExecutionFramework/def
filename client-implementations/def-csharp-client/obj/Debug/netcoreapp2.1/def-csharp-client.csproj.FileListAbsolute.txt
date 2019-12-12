@@ -1,0 +1,15 @@
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/def-csharp-client.deps.json
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/def-csharp-client.runtimeconfig.json
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/def-csharp-client.runtimeconfig.dev.json
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/def-csharp-client.dll
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/def-csharp-client.pdb
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/client_api.dll
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/common.dll
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/bin/Debug/netcoreapp2.1/Thrift45.dll
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.csproj.CoreCompileInputs.cache
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.AssemblyInfoInputs.cache
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.AssemblyInfo.cs
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.csproj.CopyComplete
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.dll
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.pdb
+/Users/admin/Documents/rosa/def-csharp-client/def-csharp-client/obj/Debug/netcoreapp2.1/def-csharp-client.csprojAssemblyReference.cache

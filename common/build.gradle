@@ -1,0 +1,4 @@
+dependencies {
+    // https://mvnrepository.com/artifact/org.reflections/reflections
+    compile group: 'org.reflections', name: 'reflections', version: reflectionsVersion
+}

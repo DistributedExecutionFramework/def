@@ -1,0 +1,29 @@
+.task-detail-content {
+  grid-template-areas:
+    "navigation navigation"
+    "task-details progress"
+    "in-params in-params"
+    "out-params out-params";
+  grid-template-columns: auto 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.task-details {
+  grid-area: task-details;
+}
+
+.progress {
+  grid-area: progress;
+}
+
+.in-params {
+  grid-area: in-params;
+}
+
+.out-params {
+  grid-area: out-params;
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <!--<PatternLayout pattern="[%-4level] | %d{HH:mm:ss.SSS} | [THREAD: %t | CLASS: %c] | [CONTEXT: %X]-> %msg%n"/>-->
+            <PatternLayout pattern="%-5level %d{HH:mm:ss.SSS} %c - %msg (%X)%n"/>
+        </Console>
+        <Socket name="Graylog" protocol="udp" host="logger" port="12201">
+            <GelfLayout compressionType="OFF"/>
+        </Socket>
+        <RollingFile name="FileAppender" append="true" fileName="cluster.log" filePattern="cluster_log.%i.gz">
+            <PatternLayout pattern="%-5level %d{HH:mm:ss.SSS} %c - %msg (%X)%n"/>
+	    <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="20 MB" />
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${baseDir}" maxDepth="1">
+                    <IfFileName glob="cluster.log.*.gz" />
+                    <IfAccumulatedFileSize exceeds="100 MB" />
+                    <IfAccumulatedFileCount exceeds="5" />
+               </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+        <Async name="Async">
+            <AppenderRef ref="FileAppender"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="debug" additivity="true">
+            <AppenderRef ref="Graylog"/>
+            <AppenderRef ref="Async" />
+            <!--<AppenderRef ref="Console"/>-->
+        </Root>
+    </Loggers>
+</Configuration>

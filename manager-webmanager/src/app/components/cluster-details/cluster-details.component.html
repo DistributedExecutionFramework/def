@@ -1,0 +1,251 @@
+<div class="content cluster-details-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <!-- CLUSTER DETAILS -->
+
+  <div class="cluster-details">
+    <div class="card">
+      <h4 class="card-header">Cluster Info</h4>
+
+      <div *ngIf="this.clusterLoading" class="loading">
+        <ngx-loading [show]="this.clusterLoading"></ngx-loading>
+      </div>
+
+      <div class="card-body" *ngIf="!this.clusterLoading && this.cluster">
+        <label class="desc">Name</label>
+        <label>{{this.cluster.name}}</label>
+
+        <label class="desc">ID</label>
+        <label class="text-monospace">{{this.cluster.id}}</label>
+
+        <label class="desc">IP</label>
+        <label>{{this.cluster.host}}</label>
+
+        <label class="desc">Cloud-Typ</label>
+        <label>{{this.cluster.cloudType}}</label>
+
+        <label class="desc">Manager-ID</label>
+        <label class="text-monospace">{{this.cluster.managerId}}</label>
+
+        <label class="desc">Standard-Map-Routine</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{this.cluster.defaultMapRoutineId}}"
+           class="text-monospace">{{this.cluster.defaultMapRoutineId}}</a>
+
+        <label class="desc">Store-Routine</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{this.cluster.storeRoutineId}}" class="text-monospace">{{this.cluster.storeRoutineId}}</a>
+
+        <label class="desc">Features</label>
+        <div class="pl-3">
+          <div *ngIf="this.featuresLoading" class="loading">
+            <ngx-loading [show]="this.featuresLoading"></ngx-loading>
+          </div>
+          <app-feature-list
+            [features]="cluster.features"
+            [featureCount]="cluster.featureCount">
+          </app-feature-list>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER PERFORMANCE DATA -->
+  <div class="performance-data" *ngIf="!this.clusterLoading && this.cluster">
+    <div class="card">
+      <h4 class="card-header">Performance Data</h4>
+
+      <div class="card-body">
+        <label class="desc">Workers</label>
+        <label>{{this.cluster.numberOfWorkers}}</label>
+
+        <label class="desc">Reducers</label>
+        <label>{{this.cluster.numberOfReducers}}</label>
+
+        <label class="desc">Cores</label>
+        <label>{{this.cluster.numberOfCores}}</label>
+
+        <label class="desc">&#8709;&nbsp;Load</label>
+        <div class="progress"
+             tooltip="&#8709; Load: {{this.cluster.averageLoad | number:'.2-2'}}, &#8709; Cores: {{this.cluster.averageNumberOfCores}}">
+          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+               [style.width.%]="this.cluster.averageLoadPercent">
+            <span>{{this.cluster.averageLoad | number:'.2-2'}}</span>
+            <div class="progress-bar-marker bg-dark" [style.left.%]="this.cluster.averageNumberOfCoresPercent"></div>
+          </div>
+        </div>
+
+        <label class="desc">Tasks</label>
+        <div>
+          <label
+            tooltip="Open total: {{this.cluster.numberOfTasksToFinish}}, Scheduled: {{this.cluster.numberOfQueuedTasks}}, Running: {{this.cluster.numberOfRunningTasks}}">
+            {{this.cluster.numberOfTasksToFinish}} / {{this.cluster.numberOfQueuedTasks}} /
+            {{this.cluster.numberOfRunningTasks}}
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WORKERS -->
+  <div class="node-area worker-area">
+    <div class="node-heading">
+      <h4>Workers</h4>
+    </div>
+
+    <div *ngIf="this.workersLoading" class="loading">
+      <ngx-loading [show]="this.workersLoading"></ngx-loading>
+    </div>
+
+    <div *ngIf="!this.workersLoading && this.cluster">
+      <div *ngIf="this.workers.length > 0" class="nodes">
+        <div class="card node-card" *ngFor="let worker of this.workers">
+          <div class="card-header d-flex align-items-center justify-content-between" (click)="openDetailsView(worker)">
+            <fa-icon [icon]="['fa', 'microchip']" size="1x"></fa-icon>
+            <div class="float-right w-50 text-monospace text-truncate" tooltip="{{worker.id}}">{{worker.id}}</div>
+          </div>
+
+          <div class="card-body pb-1" (click)="openDetailsView(worker)">
+            <label class="desc">IP</label>
+            <label>{{worker.host}}</label>
+
+            <label class="desc">Cores</label>
+            <label>{{worker.numberOfCores}}</label>
+
+            <label class="desc">Queues</label>
+            <label>{{worker.numberOfQueues}}</label>
+
+            <label class="desc">Load</label>
+            <div class="progress" tooltip="Load: {{worker.load | number:'.2-2'}}, Cores: {{worker.numberOfCores}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getLoadPercentForNode(worker, this.workerType)">
+                <span>{{worker.load | number:'.2-2'}}</span>
+                <div class="progress-bar-marker bg-dark"
+                     [style.left.%]="this.getNumberOfCoresPercentForNode(worker, this.workerType)"></div>
+              </div>
+            </div>
+
+            <label class="desc">Tasks</label>
+            <div class="progress"
+                 tooltip="Open total: {{worker.numberOfTasksToFinish}}, Scheduled: {{worker.numberOfQueuedTasks}}, Running: {{worker.numberOfRunningTasks}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getTasksPercentForNode(worker, this.workerType)">
+                <span>{{worker.numberOfTasksToFinish}}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body pt-0" style="cursor: default;">
+            <label class="desc" style="cursor: default;">Features</label>
+            <div class="pl-3">
+              <div class="float-right">
+                <a routerLink="." (click)="this.toggleShowNodeFeatures(worker)">
+                  <fa-icon *ngIf="!this.showNodeFeatures.get(worker.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
+                  <fa-icon *ngIf="this.showNodeFeatures.get(worker.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                </a>
+              </div>
+              <div *ngIf="this.showNodeFeatures.get(worker.id)">
+                <div *ngIf="this.nodeFeaturesLoading.get(worker.id)" class="loading">
+                  <ngx-loading [show]="this.nodeFeaturesLoading.get(worker.id)"></ngx-loading>
+                </div>
+                <app-feature-list [features]="worker.features"></app-feature-list>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="this.workers.length === 0" class="missing-info">
+          No workers registered
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- REDUCERS -->
+  <div class="node-area reducer-area">
+    <div class="node-heading">
+      <h4>Reducers</h4>
+    </div>
+
+    <div *ngIf="this.reducersLoading" class="loading">
+      <ngx-loading [show]="this.reducersLoading"></ngx-loading>
+    </div>
+
+    <div *ngIf="!this.reducersLoading && this.cluster">
+
+      <div *ngIf="this.reducers.length > 0" class="nodes">
+        <div class="card node-card" *ngFor="let reducer of this.reducers">
+          <a id="{{reducer.id}}"></a>
+          <div class="card-header d-flex align-items-center justify-content-between"
+               (click)="openDetailsView(reducer)">
+            <fa-icon [icon]="['fa', 'compress-arrows-alt']" size="1x"></fa-icon>
+            <div class="float-right w-50 text-monospace text-truncate" tooltip="{{reducer.id}}">{{reducer.id}}</div>
+          </div>
+
+          <div class="card-body pb-1" (click)="openDetailsView(reducer)">
+            <label class="desc">IP</label>
+            <label>{{reducer.host}}</label>
+
+            <label class="desc">Cores</label>
+            <label>{{reducer.numberOfCores}}</label>
+
+            <label class="desc">Queues</label>
+            <label>{{reducer.numberOfQueues}}</label>
+
+            <label class="desc">Load</label>
+            <div class="progress"
+                 tooltip="Load: {{reducer.load | number:'.2-2'}}, Cores: {{reducer.numberOfCores}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getLoadPercentForNode(reducer, this.reducerType)">
+                <span>{{reducer.load | number:'.2-2'}}</span>
+                <div class="progress-bar-marker bg-dark"
+                     [style.left.%]="this.getNumberOfCoresPercentForNode(reducer, this.reducerType)"></div>
+              </div>
+            </div>
+
+            <label class="desc">Tasks</label>
+            <div class="progress"
+                 tooltip="Open total: {{reducer.numberOfTasksToFinish}}, Scheduled: {{reducer.numberOfQueuedTasks}}, Running: {{reducer.numberOfRunningTasks}}">
+              <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                   [style.width.%]="this.getTasksPercentForNode(reducer, this.reducerType)">
+                <span>{{reducer.numberOfTasksToFinish}}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body pt-0" style="cursor: default;">
+            <label class="desc" style="cursor: default;">Features</label>
+            <div class="pl-3">
+              <div class="float-right">
+                <a routerLink="." (click)="this.toggleShowNodeFeatures(reducer)">
+                  <fa-icon *ngIf="!this.showNodeFeatures.get(reducer.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
+                  <fa-icon *ngIf="this.showNodeFeatures.get(reducer.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                </a>
+              </div>
+              <div *ngIf="this.showNodeFeatures.get(reducer.id)">
+                <div *ngIf="this.nodeFeaturesLoading.get(reducer.id)" class="loading">
+                  <ngx-loading [show]="this.nodeFeaturesLoading.get(reducer.id)"></ngx-loading>
+                </div>
+                <app-feature-list [features]="reducer.features"></app-feature-list>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div *ngIf="this.reducers.length === 0" class="missing-info">
+        No reducers registered
+      </div>
+
+    </div>
+  </div>
+
+</div>

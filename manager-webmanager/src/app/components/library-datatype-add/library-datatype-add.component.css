@@ -1,0 +1,30 @@
+.add-datatype-content {
+  grid-template-areas:
+    "navigation"
+    "formular";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.add-datatype-form {
+  grid-area: formular;
+  display: grid;
+  grid-gap: 10px;
+}
+
+.form-desc {
+  width: 15%;
+}
+
+.form-content {
+  width: 85%;
+}
+
+#accordion .card-header {
+  cursor: pointer;
+  color: grey;
+}

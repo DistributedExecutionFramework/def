@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+
+        <property name="javax.persistence.schema-generation.database.action">create</property>
+
+        <property name="connection.autocommit">true</property>
+        <property name="connection.release_mode">auto</property>
+
+        <property name="hibernate.current_session_context_class">thread</property>
+
+        <property name="hibernate.c3p0.min_size">5</property>
+        <property name="hibernate.c3p0.timeout">500</property>
+        <property name="hibernate.c3p0.idle_test_periods">1000</property>
+        <property name="hibernate.c3p0.validate">true</property>
+        <property name="hibernate.connection.provider_class">org.hibernate.c3p0.internal.C3P0ConnectionProvider</property>
+
+        <!-- MAPPING CLASSES DECLARATION -->
+        <mapping class="at.enfilo.def.domain.entity.FormalParameter"/>
+        <mapping class="at.enfilo.def.domain.entity.Group"/>
+        <mapping class="at.enfilo.def.domain.entity.Job"/>
+        <mapping class="at.enfilo.def.domain.entity.Routine"/>
+        <mapping class="at.enfilo.def.domain.entity.RoutineBinary"/>
+        <mapping class="at.enfilo.def.domain.entity.Program"/>
+        <mapping class="at.enfilo.def.domain.entity.Tag"/>
+        <mapping class="at.enfilo.def.domain.entity.Task"/>
+        <mapping class="at.enfilo.def.domain.entity.User"/>
+        <mapping class="at.enfilo.def.domain.entity.DataType"/>
+        <mapping class="at.enfilo.def.domain.entity.Feature"/>
+
+        <mapping class="at.enfilo.def.domain.map.JTMap"/>
+        <mapping class="at.enfilo.def.domain.map.RFPMap"/>
+        <mapping class="at.enfilo.def.domain.map.RRBMap"/>
+        <mapping class="at.enfilo.def.domain.map.PGMap"/>
+        <mapping class="at.enfilo.def.domain.map.PJMap"/>
+        <mapping class="at.enfilo.def.domain.map.UGMap"/>
+        <mapping class="at.enfilo.def.domain.map.RFMap"/>
+
+    </session-factory>
+</hibernate-configuration>

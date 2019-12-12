@@ -1,0 +1,7 @@
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/bin/Debug/common.dll
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/bin/Debug/common.pdb
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/bin/Debug/Thrift45.dll
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/obj/Debug/common.csproj.CoreCompileInputs.cache
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/obj/Debug/common.csproj.CopyComplete
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/obj/Debug/common.dll
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/common/obj/Debug/common.pdb

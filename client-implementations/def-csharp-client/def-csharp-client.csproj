@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>def_csharp_client</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="libs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Thrift45">
+      <HintPath>libs\Thrift45.dll</HintPath>
+    </Reference>
+    <Reference Include="common">
+      <HintPath>libs\common.dll</HintPath>
+    </Reference>
+    <Reference Include="client_api">
+      <HintPath>libs\client_api.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

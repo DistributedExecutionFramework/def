@@ -1,0 +1,136 @@
+<div class="content add-datatype-content" xmlns="http://www.w3.org/1999/html">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate class="add-datatype-form">
+    <div>
+      <div class="form-group d-flex">
+        <label class="form-desc" for="name">Name</label>
+        <input type="text" [(ngModel)]="this.name" class="form-content form-control" id="name" (change)="this.generateSchema()"
+               placeholder="Name" name="name" required>
+      </div>
+      <div class="form-group d-flex mb-0">
+        <label class="form-desc">Schema</label>
+          <pre *ngIf="this.syntaxHighlighting" class="form-content card code-area" style="padding: 10px;">
+            <code highlight contenteditable="true" name="schema" [(ngModel)]="this.schema"></code>
+          </pre>
+          <textarea *ngIf="!this.syntaxHighlighting" class="form-content code-area" name="schema" [(ngModel)]="this.schema" cols="50" rows="10"></textarea>
+      </div>
+      <div class="form-group d-flex">
+        <label class="form-desc"></label>
+        <div class="form-content">
+          <input type="checkbox" [(ngModel)]="this.syntaxHighlighting" [ngModelOptions]="{standalone: true}"> Syntax highlighting
+        </div>
+      </div>
+
+        <div id="accordion">
+          <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between"
+                 id="headingHelp"
+                 data-toggle="collapse"
+                 data-target="#collapseHelp"
+                 aria-expanded="false"
+                 aria-controls="collapseHelp"
+                 (click)="this.isHelpCollapsed = !this.isHelpCollapsed">
+                How Do I Create a New Data Type?
+                <fa-icon *ngIf="this.isHelpCollapsed" [icon]="['fa', 'caret-down']"></fa-icon>
+                <fa-icon *ngIf="!this.isHelpCollapsed" [icon]="['fa', 'caret-up']"></fa-icon>
+            </div>
+
+            <div id="collapseHelp"
+                 class="collapse"
+                 aria-labelledby="headingHelp"
+                 data-parent="#accordion">
+              <div class="card-body-with-one-column">
+                <p class="important-note">
+                  The first line in the struct definition that says <strong>1: optional Id _id = ""</strong> is always
+                  necessary in order to use this data type within the DEF. So make sure to include this line in every
+                  new data type you create!
+                </p>
+
+                <div>
+                  <h4>What is Thrift?</h4>
+                  <p>
+                    <em>
+                      Thrift is a software framework for scalable cross-language services development. It combines a
+                      software stack with a code generation engine to build services that work efficiently and seamlessly
+                      between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, JavaScript, Node.js, Smalltalk,
+                      and OCaml.
+                    </em>
+                    <br>
+                    <label style="float:right;">- from the <a href="http://thrift.apache.org" target="_blank">Thrift Website</a></label>
+                  </p>
+                </div>
+
+                <div>
+                  <h4>Types</h4>
+                  <p>
+                    The Thrift type system consists of pre-defined base types, user-defined structs, container types,
+                    exceptions and service definitions.
+                  </p>
+                </div>
+
+                <div>
+                  <h5>Base Types</h5>
+                  <ul>
+                    <li><code>bool</code>: A boolean value (true or false), one byte</li>
+                    <li><code>byte</code>: A signed byte</li>
+                    <li><code>i16</code>: A 16-bit signed integer</li>
+                    <li><code>i32</code>: A 32-bit signed integer</li>
+                    <li><code>i64</code>: A 64-bit signed integer</li>
+                    <li><code>double</code>: A 64-bit floating point number</li>
+                    <li><code>binary</code>: a byte array</li>
+                    <li><code>string</code>: Encoding agnostic text or binary string</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h5>Containers</h5>
+                  <ul>
+                    <li><code>list&lt;t1&gt;</code>: An ordered list of elements of type <code>t1</code>. May contain duplicates.</li>
+                    <li><code>set&lt;t1&gt;</code>: An unordered set of unique elements of type <code>t1</code>.</li>
+                    <li><code>map&lt;t1, t2&gt;</code>: A map of strictly unique keys of type <code>t1</code> to values of type <code>t2</code>.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h5>Structs</h5>
+                  <p>
+                    A Thrift struct is conceptually similar to a C struct — a convenient way of grouping together (and
+                    encapsulating) related items. Structs translate to classes in object-oriented languages.
+                  </p>
+                  <label>Example of a Thrift struct used by the DEF:</label>
+                  <pre class="form-content card code-area" style="padding: 10px;">
+                    <code highlight contenteditable="false" name="exampleSchema" [(ngModel)]="this.exampleSchema"></code>
+                  </pre>
+                </div>
+
+                <p>
+                  For more information on Thrift visit <a href="https://diwakergupta.github.io/thrift-missing-guide/#_types" target="_blank">Thrift: The Missing Guide</a>
+                </p>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+    </div>
+    <div>
+      <div *ngIf="!this.submitting">
+        <button class="btn btn-primary">
+          <fa-icon [icon]="['fa', 'save']"></fa-icon>
+          <b> Add Data Type</b>
+        </button>
+      </div>
+      <div class="loading" *ngIf="this.submitting">
+        <ngx-loading [show]="this.submitting"></ngx-loading>
+      </div>
+    </div>
+  </form>
+</div>

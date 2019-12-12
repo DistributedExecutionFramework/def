@@ -1,0 +1,21 @@
+configurations {
+    jpamodelgen
+}
+
+dependencies {
+    compile project(':domain')
+
+    // https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api
+    compile group: 'org.hibernate.javax.persistence', name: 'hibernate-jpa-2.1-api', version: hibernatejpaVersion
+
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-jpamodelgen
+    jpamodelgen group: 'org.hibernate', name: 'hibernate-jpamodelgen', version: jpamodelgenVersion
+}
+
+task generateMetamodel(type: JavaCompile) {
+    source = project(":domain").sourceSets.main.java
+    classpath = configurations.compile + configurations.jpamodelgen
+    options.compilerArgs = ['-proc:only']
+    destinationDir = sourceSets.main.java.srcDirs.iterator().next()
+}
+compileJava.dependsOn generateMetamodel

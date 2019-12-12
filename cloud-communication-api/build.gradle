@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':logging')
+    compile project(':communication-api')
+}

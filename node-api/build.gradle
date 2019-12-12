@@ -1,0 +1,6 @@
+dependencies {
+    // Project dependencies
+    compile project(':library-api')
+    compile project(':node-observer-api')
+    compile project(':routine-api')
+}

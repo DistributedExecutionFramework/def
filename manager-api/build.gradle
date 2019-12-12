@@ -1,0 +1,5 @@
+dependencies {
+    // Project dependencies
+    compile project(':execlogic-api')
+    compile project(':cloud-communication-api')
+}

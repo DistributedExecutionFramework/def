@@ -1,0 +1,24 @@
+.worker-details-content {
+  grid-template-areas:
+    "navigation navigation"
+    "node-details performance-data"
+    "running-tasks running-tasks";
+  grid-template-columns: 1fr 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.node-details {
+  grid-area: node-details;
+}
+
+.performance-data {
+  grid-area: performance-data;
+}
+
+.running-tasks {
+  grid-area: running-tasks;
+}

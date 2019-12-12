@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd ~/library/
+sh startLibrary.sh &
+cd ~/worker/
+sh startWorker.sh &

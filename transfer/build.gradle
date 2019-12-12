@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':common')
+
+    // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
+    compile group: 'org.apache.thrift', name: 'libthrift', version: thriftVersion
+
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+}

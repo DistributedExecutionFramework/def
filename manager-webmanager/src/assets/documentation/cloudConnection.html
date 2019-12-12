@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="style.css">
+	<script type="text/javascript" src="cloudConnectionScript.js"></script>
+	<meta charset="utf-8">
+</head>
+<body>
+	<h1>Public Cloud-Anbindung</h1><br>
+	<p>Das DEF bietet die Möglichkeit, Ressourcen aus einer Public Cloud zu verwenden, wenn eine private Infrastruktur nicht zur Verfügung steht, nicht die notwenigen Rahmenbedingungen bietet oder zusätzlich erweitert werden soll.</p>
+
+	<p>Zum aktuellen Zeitpunkt unterstützt das DEF die Anbindung an eine AWS-Cloud, weitere Public-Cloud-Umgebungen folgen eventuell.</p>
+
+	<p>Um das DEF auf einer AWS-Cloud laufen zu lassen, müssen zunächst einige Konfigurationen getätigt werden, die im Folgenden genau erklärt werden.</p>
+
+	<p>Inhalt:</p>
+	<ol>
+		<li><a href="#aws">Amazon Web Services (AWS)</a></li>
+		<ol>
+			<li><a href="#aws_configuration">AWS-Konfigurationen</a></li>
+			<ol>
+				<li><a href="#aws_configuration_account">AWS-Account einrichten</a></li>
+				<li><a href="#aws_configuration_iam">IAM-Einstellungen vornehmen</a></li>
+        <li><a href="#aws_configuration_createVPC">Virtual Private Cloud (VPC) erstellen</a></li>
+				<li><a href="#aws_configuration_startOpenVPN">OpenVPN-Instanz starten</a></li>
+				<li><a href="#aws_configuration_configureOpenVPN">OpenVPN-Instanz konfigurieren</a></li>
+			</ol>
+			<li><a href="#aws_openVPNconfiguration">OpenVPN-Server-Konfigurationen</a></li>
+			<ol>
+				<li><a href="#aws_openVPNconfiguration_server">OpenVPN-Server konfigurieren</a></li>
+				<li><a href="#aws_openVPNconfiguration_client">OpenVPN-Client installieren</a></li>
+        <li><a href="#aws_openVPNconfiguration_adminUI">Einstellungen im Admin-UI des OpenVPN-Servers</a></li>
+			</ol>
+			<li><a href="#aws_connectToVPN">Verbindung zu VPN-Netzwerk herstellen</a></li>
+		</ol>
+	</ol>
+
+	<br>
+	<div class="header" id="aws">
+		<h2>Amazon Web Services (AWS)</h2>
+	</div>
+	<div class="content">
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<!-- AWS Konfigurationen -->
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<div class="header" id="aws_configuration">
+			<h3>AWS-Konfigurationen</h3>
+		</div>
+		<div class="content">
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- AWS-Account einrichten -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_configuration_account">
+				<h4>AWS-Account einrichten</h4>
+			</div>
+			<div class="content">
+				<p>Ein neuer AWS-Account kann unter folgendem <a href="https://portal.aws.amazon.com/billing/signup#/start" target="_blank">Link</a> erstellt werden. Für die Registrierung wird eine gültige E-Mail-Adresse sowie eine Kreditkarte benötigt. Um die Registrierung erfolgreich abzuschließen, muss den Anweisungen auf der Webseite gefolgt werden.</p>
+
+				<p>Um die weiteren Konfigurationen vornehmen zu können, muss ein erfolgreicher Login mit den definierten Login-Daten erfolgen.</p>
+			</div>
+
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- IAM-Einstellungen vornehmen -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_configuration_iam">
+				<h4>IAM-Einstellungen vornehmen</h4>
+			</div>
+			<div class="content">
+				<p>Das AWS Identity and Access Management (IAM) wird für die sichere Verwaltung von Zugriffen auf AWS-Services und -Ressourcen verwendet. Genauere Informationen dazu können <a href="https://aws.amazon.com/de/iam/" target="_blank">hier</a> gefunden werden.</p>
+
+				<p>Nach dem erfolgreichen Login erscheint das Benutzer-Dashboard mit einem Suchfeld, wie in der folgenden Abbildung zu sehen ist. In dieses Suchfeld muss "IAM" eingetippt werden. Um den IAM-Service zu öffnen, muss auf den erscheinenden Vorschlag getippt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_openIAM.png"><br><br>
+
+				<p>Der IAM-Service kann auch durch Klicken auf "Services" in der Menüleiste am oberen Browser-Rand und anschließende Auswahl von "IAM" in der Kategorie "Security, Identity & Compliance" geöffnet werden.</p>
+
+				<p>Die Startseite des IAM-Service sieht folgendermaßen aus:</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_overview.png"><br><br>
+
+				<p>Der erste Schritt ist das Erstellen einer neuen IAM-Gruppe. Dies kann in der Gruppen-Übersicht gemacht werden, die über den Menüpunkt "Groups" in der Menüleiste am linken Browser-Rand erreichbar ist.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_overview.png"><br><br>
+
+				<p>Durch Klicken auf den "Create New Group"-Button öffnet sich ein Wizard, mit desssen Hilfe eine neue Gruppe erzeugt werden kann. Hier kann zunächst der Name für die IAM-Gruppe definiert werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_create_groupName.png"><br><br>
+
+				<p>In der rechten unteren Ecke befindet sich der "Next Step"-Button, mit dem zum nächsten Schritt gewechselt werden kann. Hier kann eine Policy zur Gruppe hinzugefügt werden. Es soll hier nichts ausgewählt werden, sondern wieder auf den "Next Step"-Button geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_create_policy.png"><br><br>
+
+				<p>Der letzte Schritt ist die Review, bei der die getroffenen Einstellung noch einmal betrachtet werden können.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_create_review.png"><br><br>
+
+				<p>In unserem Fall wurde nur der Gruppen-Name gesetzt. Durch Klicken auf "Create Group" wird die IAM-Gruppe erzeugt und in der Gruppen-Übersicht aufgelistet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_overview_newGroup.png"><br><br>
+
+				<p>Als nächstes muss einen Policy erzeugt werden, die definiert, welche Handlungen erlaubt sind und welche nicht, und zu der neu erstellten Gruppe hinzugefügt werden. Dafür muss auf den Eintrag der neuen Gruppe in der Liste geklickt werden, sodass sich die Gruppen-Details öffnen. Im Tab "Permissions" unter "Inline Policies" kann eine neue Policy erzeugt werden, in dem auf den "click here"-Link gedrückt wird. </p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_details.png"><br><br>
+
+				<p>Es öffnet sich eine Seite, über die ausgewählt werden kann, wie die Policy erzeugt werden soll. Hier muss "Custom Policy" ausgewählt und auf "Select" gedrückt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_policy.png">
+
+				<p>Nun muss der Name der Policy und die Policy selbst definiert werden. Dafür muss folgender Code in das Feld "Policy Document" kopiert werden.</p>
+
+				<code style="border: solid 1px black;">
+	{
+    		"Version": "2012-10-17",
+    		"Statement": [
+        		{
+           			"Sid": "Stmt1528103945000",
+            			"Effect": "Allow",
+            			"Action": [
+                			"ec2:AuthorizeSecurityGroupIngress",
+                			"ec2:CreateSecurityGroup",
+                			"ec2:DescribeSecurityGroups",
+                			"ec2:RevokeSecurityGroupIngress",
+                			"ec2:RunInstances",
+                			"ec2:DescribeInstances",
+                			"ec2:DescribeInstanceStatus",
+                			"ec2:TerminateInstances"
+            			],
+           			"Resource": "*"
+        		}
+    		]
+	}
+				</code>
+
+				<p>Anschließend muss auf "Validate Policy" am unteren Browser-Rand geklickt werden, um festzustellen, ob die Policy fehlerfrei definiert wurde. Das Ergebnis der Validierung wird über dem Namen der Policy dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_policy_create.png">
+
+				<p>Wurde die Policy erfolgreich validiert, kann "Apply Policy" ausgeführt werden. In der Detail-Ansicht der Gruppe ist die neu definierte Policy nun aufgelistet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_groups_details_policy.png">
+
+				<p>Der letzte Schritt ist nun das Erstellen eines neuen Users. Dafür muss in der Menüleiste links der Menüpunkt "Users" ausgewählt werden. Es erscheint eine Übersicht aller vorhandenen User.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_overview.png">
+
+				<p>Durch Klicken auf "Add user" öffnet sich ein Wizard, über den ein neuer User erstellt werden kann. Hier kann der Name des neuen Users eingegeben und definiert werden, welchen Zugriff der User bekommen soll. Biem "Access type" muss "Programmatic access" ausgewählt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_create.png">
+
+				<p>Durch Klicken auf "Next: Permissions" kann zum nächsten Schritt gewechselt werden. Hier muss ausgewählt werden, dass der neue User zur zuvor erstellten Gruppe hinzugefügt werden soll.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_addGroup.png">
+
+				<p>Wurde dies gemacht, kann auf "Next: Review" geklickt werden. Hier werden die getroffenen Einstellungen noch einmal dargestellt, die folgendermaßen aussehen sollten:</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_review.png">
+
+				<p>Nachdem auf "Create User" geklickt wurde, wird der neue User erzeugt. Dies wird über eine Status-Meldung angezeigt. Der neu erstellte User bekommt automatisch einen Access Key zugewiesen, der aus einer "Access key ID" und einem "Secret access key" besteht. Es ist wichtig, dass über den Button "Download .csv", der sich unter der Erfolgsmeldung befindet, dieser Access Key heruntergeladen wird, denn diese Zugangsdaten werden benötigt, um Zugriff auf das AWS zu bekommen. Diese Daten werden von AWS beim User NICHT hinterlegt, d.h. werden die Zugangsdaten verloren, kann über diesen User nicht mehr auf das AWS zugegriffen werden. Diese Zugangsdaten werden später für das Konfigurieren der AWS-Cloud als DEF-Cluster benötigt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_credentials.png">
+
+				<p>Der neu erstellte User wird nun in der User-Übersicht aufgelistet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/IAM/IAM_users_overview_newUser.png">
+
+				<p>Damit wurden alle Einstellungen vorgenommen, die im IAM-Service notwendig waren.</p>
+			</div><br>
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- Virtual Private Cloud (VPC) erstellen -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_configuration_createVPC">
+				<h4>Virtual Private Cloud (VPC) erstellen</h4>
+			</div>
+			<div class="content">
+				<p>Als nächstes muss eine Virtual Private Cloud (VPC) erstellt werden, in der die DEF-Instanzen gestartet werden können. Dafür gibt es den VPC-Service, der über Klicken des Menüpunkts "Services" in der oberen Menüleiste und dann Auswahl von "VPC" in der Kategorie "Networking & Content Delivery" erreicht werden kann.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_openVPC.png">
+
+				<p>Das VPC-Dashboard bietet einen Übersicht über alle Bereiche, die über den VPC-Service konfiguriert werden können.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_dashboard.png">
+
+				<p>Um eine VPC zu erzeugen, wird eine Elastic IP benötigt. Diese kann im Menüpunkt "Elastic IPs" in der Menüleiste am linken Browser-Rand erstellt werden. Die Übersicht zeigt alle Elastic IPs, die aktuell exisitieren. Um eine neue Adresse zu allokieren, muss auf den "Allocate new address"-Button geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_elasticIP.png">
+
+				<p>Damit die neue Adresse allokiert wird, müssen keine Einstellungen getroffen werden, es muss nur auf "Allocate" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_elasticIP_allocate.png">
+
+				<p>Über eine Statusmeldung wird das Allokieren der neuen Adresse bestätigt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_elasticIP_allocated.png">
+
+				<p>In der Übersicht der Elastic IPs wird die neu allokierte Adresse nun dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_elasticIP_newIP.png">
+
+				<p>Durch Klicken auf "VPC Dashboard" in der Menüleiste am linken Browser-Rand gelangt man wieder zum Dahsboard. Über den "Start VPC Wizard" kann eine neue VPC erstellt werden. Im ersten Schritt des Wizards kann die gewünschte VPC-Konfiguration ausgewählt werden. Hier muss "VPC with Public and Private Subnets" ausgewählt und auf "Select" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_create_configuration.png">
+
+				<p>Im zweiten Schritt kann die VPC mit ihren beiden Subnetzen konfiguriert werden. Folgende Standard-Einstellungen können übernommen werden:</p>
+				<ul>
+					<li>IPv4 CIDR block: 10.0.0.0/16</li>
+					<li>Public subnet's IPv4 CIDR: 10.0.0.0/24</li>
+					<li>Private subnet's IPv4 CIDR: 10.0.1.0/24</li>
+				</ul>
+
+				<p>Zudem können die Namen für das VPC und die beiden Subnetze definiert werden. Beim Punkt "Elastic IP Allocation ID" wird die Elastic IP ausgewählt, die zuvor erstellt wurde. Durch Klicken auf den "Create VPC"-Button wird die VPC erzeugt Dies kann einige Minuten dauern.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_create_details.png">
+
+				<p>Wurde die VPC erfolgreich erzeugt, wird dies durch eine Status-Meldung dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_create_finished.png">
+
+				<p>In der Übersicht der VPCs wird die neu erstellte VPC nun dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_vpcOverview.png">
+
+				<p>In dieser VPC werden in weiterer Folge die DEF-Instanzen und ein VPN-Server gestartet. Die DEF-Instanzen befinden sich im privaten Subnetz, während der VPN-Server im öffentlichen Subnetz gestartet wird. Das Aufsetzen des VPN-Servers muss ebenfalls manuell erfolgen, die DEF-Instanzen werden automatisch aus dem vorhandenen Code heraus gestartet, wenn ein DEF-Cluster im AWS über den DEF-Web-Manager konfiguriert wird.</p>
+
+				<p>Nach dem Erzeugen der VPC müssen die Routing-Tabellen der beiden Subnetze angepasst werden. Dafür muss der Menüpunkt "Subnets" in der linken Menüleiste ausgewählt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_vpcOverview_subnets.png">
+
+				<p>Hier muss das private Subnetz markiert und im Tab "Route Table" auf die ID der Routing-Tabelle geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_subnets_routeTable.png">
+
+				<p>Es wird in den Menüpunkt "Route Table" gewechselt. In der Übersicht muss die aufgelistete Eintrag markiert werden und der Tab "Routes" geöffnet werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_routeTables_routes.png">
+
+				<p>Durch Klicken auf "Edit" über der Routing-Tabelle und anschließend "Add another route" wird ein neuer Eintrag in der Routing-Tabelle erzeugt. Hier muss als "Destination" 172.27.224.0/20 eingegeben und bei "Target" die OpenVPN-Instanz ausgewählt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/VPC/VPC_routeTables_newRoute.png">
+
+				<p>Durch Klicken auf den "Save"-Button über der Routing-Tabelle wird die neue Route gespeichert. Dasselbe muss nun noch für das öffentliche Subnetz gemacht werden.</p>
+			</div><br>
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- OpenVPN-Instanz starten -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_configuration_startOpenVPN">
+				<h4>OpenVPN-Instanz starten</h4>
+			</div>
+			<div class="content">
+				<p>Um die DEF-Instanzen vor unberechtigten Zugriffen von außen zu schützen, werden sie in einem privaten Subnetz erstellt, das nur über eine VPN-Verbindung erreicht werden kann. Dafür muss zunächst der VPN-Server aufgesetzt werden, der die entsprechenden Verbindungen regelt. Der VPN-Server wird im öffentlichen Subnetz der eben erzeugten VPC eingerichtet. Es wird ein OpenVPN-Server verwendet.</p>
+
+				<p>Bevor die OpenVPN-Instanz gestartet werden kann, muss ein neues KeyPair erzeugt werden, das in weiterer Folge verwendet wird, um sich auf die Instanz verbinden zu können. Ein neues KeyPair kann im EC2-Service erzeugt werden, der über Klicken des Menüpunkts "Services" in der oberen Menüleiste und dann Auswahl von "EC2" in der Kategorie "Compute" erreicht werden kann.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_openEC2.png">
+
+				<p>In der linken Menüleiste in der Kategorie "Network & Security" befindet sich der Menüpunkt "Key Pairs".</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_dashboard_keyPairs.png">
+
+				<p>In der Übersicht werden alle bereits existierenden Key Pairs dargestellt. Über den Button "Create Key Pair" kann ein neues Key Pair erzeugt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_keyPairs_overview.png">
+
+				<p>Im erscheinenden PopUp-Fenster muss der Name des neuen Key Pairs definiert werden. Durch Klicken auf "Create" wird das neue Key Pair erzeugt und heruntergeladen. Die heruntergeladene .pem-Datei muss aufbewahrt werden, da sie später benötigt wird, um sich mit der Instanz zu verbinden. Hat die Datei eine zusätzliche Datei-Endung bekommen, sodass sie z.B. "DEF-KeyPair.pem.txt" heißt, so muss die zusätzliche Endung entfernt werden, damit es sich um eine .pem-Datei handelt, also "DEF-KeyPair.pem".</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_keyPairs_create_name.png" style="width: 40%; max-width: 500px;">
+
+				<p>Nun wurden alle Vorarbeiten erledigt, um eine OpenVPN-Instanz starten zu können. Dies kann über den <a href="https://aws.amazon.com/marketplace" target="_blank">AWS Marketplace</a> erledigt werden. Im Suchfeld muss dafür "OpenVPN Access Server" eingegeben und die Suche gestartet werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_search.png">
+
+				<p>Von den Suchergebnissen muss "OpenVPN Access Server" ausgewählt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_results.png">
+
+				<p>Um die OpenVPN-Instanz starten zu können, muss auf den orangen Button mit der Aufschrift "Continue to Subscribe" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_subscribe.png">
+
+				<p>Nachdem dies erfolgreich abgeschlossen wurde, kann mit der Konfiguration der Instanz begonnen werden. In der Konfigurationsübersicht muss die entsprechende Region ausgewählt werden, in der die Instanz gestartet werden soll. Diese muss mit der Region, in der die VPC erzeugt wurde, übereinstimmen. Im AWS-Account wird diese am rechten Rand der oberen Menüleiste dargestellt, in diesem Fall "Frankfurt".</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/aws_menubar_top.png">
+
+				<p>Wurde im AWS Marketplace die richtige Region ausgewählt, kann auf "Continue to Launch" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_configure.png">
+
+				<p>Unter "Choose Action" sollte "Launch from Website" ausgewählt werden. Beim "EC2 Instance Type" muss die Größe der gewünschten Instanz angegeben werden und bei den "VPC Settings" die VPC, die zuvor neu erzeugt wurde. Als Subnetz bei den "Subnet Settings" wird das öffentliche Subnetz angegeben. Die IDs der VPC und der Subnetze sind im VPC-Service von AWS dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_launch1.png">
+
+				<p>Unter "Security Group Settings" sollte eine neue Security-Group mit den vorgeschlagenen Einstellungen des Anbieters erzeugt werden. Dies kann gemacht werden, indem auf den Button "Create New Based On Seller Settings" geklickt wird.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_launch_securityGroup.png">
+
+				<p>Nun muss der Name und die Beschreibung der Security-Group eingegeben und auf "Save" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_launch_securityGroup_create.png">
+
+				<p>Bei den "Security Group Settings" sollte nun die neu erzeugte Security-Group ausgewählt werden, sowie bei den "Key Pair Settings" das Key-Pair, das zuvor im AWS erzeugt wurde. Durch Klicken auf "Launch" am unteren Browser-Rand wird die Instanz im AWS gestartet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_launch2.png">
+
+				<p>Wenn das Starten der Instanz erfolgreich war, wird dies durch eine Status-Meldung dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_marketplace_create_finished.png">
+
+				<p>Im nächsten Schritt kann die neu gestartete OpenVPN-Instanz im AWS konfiguriert werden.</p>
+			</div><br>
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- OpenVPN-Instanz konfigurieren -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_configuration_configureOpenVPN">
+				<h4>OpenVPN-Instanz konfigurieren</h4>
+			</div>
+			<div class="content">
+				<p>Wurde die OpenVPN-Instanz erfolgreich über den AWS Marketplace gestartet, kann sie in der AWS-Console konfiguriert werden. Dazu muss der EC2-Service geöffnet werden, wie zuvor beschrieben über den Menüpunkt "Services" in der Menüleiste am oberen Browser-Rand und die anschließende Auswahl von "EC2" in der Kategorie "Compute".</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_openEC2.png">
+
+				<p>Die OpenVPN-Instanz ist im Menüpunkt "Instances", der sich in der linken Menüleiste befindet, zu finden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_dashboard_instances.png">
+
+				<p>Die zuvor erzeugte OpenVPN-Instanz ist nun aufgelistet. Um die Unterscheidungen zu eventuell anderen vorhanden Instanzen zu vereinfachen, kann der Instanz ein Name gegeben werden, der sie als OpenVPN-Instanz kennzeichnet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_instances.png">
+
+				<p>Nachdem die Instanz markiert wurde, kann unter "Actions" -> "Networking" -> "Change Source/Dest.Check" der Source- bzw. Destination-Check ausgeschaltet werden, was für ein richtiges Funktionieren des VPN-Servers notwendig ist.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_instances_sourceDestCheck.png">
+
+				<p>Dies muss im erscheinenden PopUp-Fenster noch bestätigt werden durch Klicken auf "Yes, Disable".</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_instances_sourceDestCheck_disable.png" style="width: 50%; max-width: 500px;">
+
+				<p>Als nächstes muss zu der vorhin erzeugten und der OpenVPN-Instanz zugeteilten Security-Group eine neue Regel hinzugefügt werden. Dafür muss bei den Instanz-Details im Tab "Description" auf die Security-Group geklickt werden, um die Übersicht der Security-Groups zu öffnen.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_instances_securityGroup.png">
+
+				<p>In der Übersicht im Tab "Inbound" werden die entsprechenden Regeln für den eingehenden Traffic für die ausgewählte Gruppe dargestellt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_securityGroups_inbound.png">
+
+				<p>Durch Klicken auf "Edit" über der Tabelle mit den Regeln können die Regeln bearbeitet werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_securityGroups_inbound_edit.png">
+
+				<p>Wird auf den Button "Add Rule" geklickt, wird der Liste eine neue Regel hinzugefügt. Folgende Regeln sollten der Security-Group hinzugefügt werden:</p>
+				<ul>
+					<li>Type: Custom TCP Rule</li>
+					<li>Port Range: 40000 - 40072</li>
+					<li>Source: Custom - 172.27.224.0/20</li>
+					<li>Description: TCP for DEF Manager</li>
+				</ul>
+				<ul>
+					<li>Type: Custom TCP Rule</li>
+					<li>Port Range: 40000 - 40072</li>
+					<li>Source: Custom - 10.0.0.0/24</li>
+					<li>Description: TCP from Public Subnet</li>
+				</ul>
+				<ul>
+					<li>Type: Custom TCP Rule</li>
+					<li>Port Range: 40000 - 40072</li>
+					<li>Source: Custom - 10.0.1.0/24</li>
+					<li>Description: TCP from Private Subnet</li>
+				</ul>
+				<p>Durch Klicken auf "Save" werden die neuen Regeln hinzugefügt.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_securityGroups_inbound_newRules.png">
+
+				<p>Als nächstes muss eine Elastic IP für die OpenVPN-Instanz definiert werden. Dies kann im Menüpunkt "Elastic IPs" in der linken Menüleiste gemacht werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_securityGroups_elasticIPs.png">
+
+				<p>Durch Klicken auf "Allocate New Address" und anschließend "Allocate" wird einen neue Adresse allokiert, die in der Übersicht dargestellt wird. Durch Rechtsklick auf den entsprechenden Eintrag in der Liste und anschließendes Klicken auf "Associate address" kann die Elastic IP einer Instanz zugewiesen werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_elasticIPs_associate.png">
+
+				<p>Beim "Resource type" muss "Instance" ausgewählt werden, bei "Instance" die OpenVPN-Instanz, die zuvor erzeugt wurde und bei "Private IP" die private IP-Adresse der OpenVPN-Instanz, die automatisch vorgeschlagen wird. Durch Klicken auf den "Associate"-Button wird die Elastic IP mit der OpenVPN-Instanz assoziiert.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_elasticIPs_associate_configuration.png">
+
+				<p>Die assoziierte Adresse wird in weiterer Folge verwendet, um sich zum OpenVPN-Server zu verbinden. Die zugehörige öffentliche IP-Adresse kann ebenfalls in der Übersicht aller Instanzen im EC2-Service gefunden. Dazu muss die entsprechende Instanz markiert und in den Details der Tab "Description" ausgewählt werden. Die öffentliche IP-Adresse ist unter "IPv4 Public IP" aufgelistet.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/EC2/EC2_instances_publicIP.png">
+
+				<p>Damit wurden alle Konfigurationen, die im AWS zu tätigen sind, erledigt. </p>
+			</div><br>
+		</div>
+
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<!-- OpenVPN Konfigurationen -->
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<div class="header" id="aws_openVPNconfiguration">
+			<h3>OpenVPN-Konfigurationen</h3>
+		</div>
+		<div class="content">
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- OpenVPN-Server konfigurieren -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_openVPNconfiguration_server">
+				<h4>OpenVPN-Server konfigurieren</h4>
+			</div>
+			<div class="content">
+				<p>Sobald alle Konfigurationen im AWS erfolgreich durchgeführt wurden, kann eine SSH-Verbindung zum OpenVPN-Server hergestellt werden, um den Server selbst zu konfigurieren. Dafür wird das zuvor erzeugte Key-Pair benötigt. Die SSH-Verbindung zum OpenVPN-Server kann folgendermaßen hergestellt werden:</p>
+
+				<code>ssh -i [Pfad zur .pem-Datei] openvpnas@[Public IP des OpenVPN-Servers]</code>
+
+				<p>Konnte die SSH-Verbindung erfolgreich hergestellt werden, startet der Konfigurations-Manager von selbst. Folgende Einstellungen sollten dabei getroffen werden:</p>
+				<ul>
+					<li>Please enter 'yes' to indicate your agreement: yes</li>
+					<li>Will this be the primary Access Server node?: default (yes)</li>
+					<li>Please enter the option number from the list above (1-2): default (2)</li>
+					<li>Please specify the port number for the Admin Web UI: default (943)</li>
+					<li>Please specify the TCP port number for the OpenVPN Daemon: default (443)</li>
+					<li>Should client traffic be routed by default through the VPN?: default (no)</li>
+					<li>Should client DNS traffic be routed by default through the VPN?: default (no)</li>
+					<li>Use local authentication via internal DB?: default (yes)</li>
+					<li>Should private subnets be accessible to clients by default?: default (yes)</li>
+					<li>Do you wish to login to the Admin UI as "openvpn"?: no</li>
+					<li>Specify the username for an existing user or for the new user account: [username]</li>
+					<li>Type the password for the '[username]' account: [password]</li>
+					<li>Confirm the password for the '[username]' account: [password]</li>
+					<li>Please specify your OpenVPN-AS license key: Lizenz-Schlüssel falls vorhanden, ansonsten nur Enter drücken</li>
+				</ul>
+
+				<p>Damit wird der OpenVPN-Server fertig konfiguriert und steht jetzt zur Verfügung. Es müssen jedoch noch ein paar weitere Einstellungen gemacht werden. Die Admin-UI des OpenVPN-Servers kann folgendermaßen angesprochen werden:</p>
+
+				<code>https://[Public IP des OpenVPN-Servers]</code>
+
+				<p>Wurde kein Zertifikat bei der vorangegangenen Konfiguration angegeben, wird der verwendete Browser die Meldung bringen, dass keine sichere Verbindung zu dieser Webseite aufgebaut werden kann. Durch explizites Erlauben dieser Webseite kann jedoch trotzdem eine Verbindung hergestellt werden. Es sollte jedoch ein Zertifikat verwendet werden.</p>
+			</div><br>
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- OpenVPN-Client installieren -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_openVPNconfiguration_client">
+				<h4>OpenVPN-Client installieren</h4>
+			</div>
+			<div class="content">
+				<p>Die Installation des OpenVPN-Clients muss auf dem Rechner ausgeführt werden, auf dem der DEF-Manager läuft.</p>
+
+				<p>Um den OpenVPN-Client installieren zu können, muss eine Verbindung zur Admin-UI des OpenVPN-Servers hergestellt werden. Im Login-Fenster müssen die Login-Daten des zuvor definierten Benutzers eingegeben werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_adminUI_login.png" style="width: 40%; max-width: 500px;">
+
+				<p>Nach dem erfolgreichen Login erscheinen Links für den Download des spezifischen Clients. Hier muss der entsprechende Link ausgewählt werden und der Client wird direkt heruntergeladen. Durch Klicken auf den "Admin"-Button erfolgt eine Weiterleitung zum Admin-UI. Eventuell müssen dafür noch einmal die Login-Daten angegeben werden. Den Service-Bedingungen muss durch Klicken auf "Agree" zugestimmt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_adminUI_clientDownload.png" style="width: 40%; max-width: 500px;">
+
+				<p>Um den Client zu installieren, muss die heruntergeladene Datei gestartet und den Installations-Anweisungen Folge geleistet werden.</p>
+			</div><br>
+
+			<!-- -------------------------------------------------------------------------------- -->
+			<!-- Einstellungen im Admin-UI des OpenVPN-Servers -->
+			<!-- -------------------------------------------------------------------------------- -->
+			<div class="header" id="aws_openVPNconfiguration_adminUI">
+				<h4>Einstellungen im Admin-UI des OpenVPN-Servers</h4>
+			</div>
+			<div class="content">
+				<p>Nach dem erolgreichen Login im Admin-UI wird ein Status-Overview über den OpenVPN-Server geboten.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_adminUI_overview.png">
+
+				<p>Um die Konfiguration des OpenVPN-Servers abzuschließen, muss der Menüpunkt "VPN Settings" in der linken Menüleiste ausgewählt werden. Unter der Überschrift "Routing" müssen folgende Einstellungen getroffen werden:</p>
+				<ul>
+					<li>Should VPN clients have access to private subnets?: Yes, using Routing</li>
+					<li>Specify the private subnets to which all clients should be given access:</li>
+					<ul>
+						<li>10.0.1.0/24</li>
+						<li>10.0.0.0/24</li>
+					</ul>
+				</ul>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_adminUI_vpnSettings.png">
+
+				<p>Unter der Überschrift "VPN IP Network" sollte folgendes standardmäßig definiert sein:</p>
+				<ul>
+					<li>Network Address: 172.27.224.0</li>
+					<li># of Netmask bits: 20</li>
+				</ul>
+				<p>Ist dies nicht der Fall, sollten Einstellungen getroffen werden, dass die hier angegebenen Daten mit der Source-Adresse der neu hinzugefügten Regel in der Security-Gruppe des OpenVPN-Servers übereinstimmen, die in Folge dieser Konfiguration hinzugefügt wurde. Außerdem müssen diese Daten mit der neu hinzugefügten Route des privaten sowie des öffentlichen Subnetzes der VPC übereinstimmen.</p>
+
+				<p>Damit die Änderungen in Kraft treten, muss am Ende der Seite auf "Save Settings" und anschließend auf "Update Running Server" geklickt werden.</p>
+
+				<img class="image" src="./img/cloud-aws/aws-configurations/OpenVPN/OpenVPN_adminUI_updateRunningServer.png">
+
+				<p>Die erfolgreiche Änderung der Einstellungen wird über eine Status-Meldung dargestellt.</p>
+			</div><br>
+		</div>
+
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<!--Verbindung zu VPN-Netzwerk herstellen -->
+		<!-- ---------------------------------------------------------------------------------------------------------------- -->
+		<div class="header" id="aws_connectToVPN">
+			<h3>Verbindung zu VPN-Netzwerk herstellen</h3>
+		</div>
+		<div class="content">
+			<p>Wurden alle Konfigurationen getätigt, kann über den zuvor installierten OpenVPN-Client eine VPN-Verbindung zum konfigurierten OpenVPN-Server aufgebaut werden. Dafür muss der Client gestartet und die Option "Connect" ausgewählt werden.</p>
+
+			<p>Bei der Aufforderung "Enter the hostname of the server:" muss die öffentliche IP-Adresse der OpenVPN-Instanz eingegeben und abermals auf "Connect" geklickt werden. Es erscheint ein PopUp-Fenster, in das der Username und das Passwort des zuvor definierten Benutzers eingegeben werden muss.</p>
+
+			<p>Nach dem Klicken auf "Connect" wird eine VPN-Verbindung vom Rechner, auf dem der Client installiert wurde, zum OpenVPN-Server im AWS hergestellt.</p>
+		</div><br>
+	</div>
+</body>
+</html>

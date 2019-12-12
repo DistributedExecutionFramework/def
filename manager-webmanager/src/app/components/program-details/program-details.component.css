@@ -1,0 +1,25 @@
+.program-details-content {
+  grid-template-areas:
+    "navigation navigation"
+    "program-details progress"
+    "jobs jobs";
+  grid-template-columns: 1fr 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.progress {
+  grid-area: progress;
+}
+
+.program-details {
+  grid-area: program-details;
+}
+
+.jobs {
+  grid-area: jobs;
+}
+

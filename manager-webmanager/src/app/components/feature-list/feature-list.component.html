@@ -1,0 +1,27 @@
+<div class="row" *ngFor="let feature of this.features">
+  <div *ngIf="feature.group.toLowerCase() === 'language'" class="feature language" tooltip="Language: {{feature.name}}, Version: {{feature.version}}{{this.getCountTooltipPart(feature.id)}}">
+    {{feature.name}}
+    <span *ngIf="feature.version !== ''" class="divider"></span>
+    <span *ngIf="feature.version !== ''" class="version">{{feature.version}}</span>
+    <span *ngIf="this.featureCount" class="divider"></span>
+    <span *ngIf="this.featureCount" class="version small">{{this.featureCount.get(feature.id)}}x</span>
+  </div>
+  <div *ngIf="feature.group.toLowerCase() !== 'language'" class="feature" tooltip="Feature: {{feature.name}}, Version: {{feature.version}}{{this.getCountTooltipPart(feature.id)}}">
+    {{feature.name}}
+    <span *ngIf="feature.version !== ''" class="divider"></span>
+    <span *ngIf="feature.version !== ''" class="version">{{feature.version}}</span>
+    <span *ngIf="this.featureCount" class="divider"></span>
+    <span *ngIf="this.featureCount" class="version small">{{this.featureCount.get(feature.id)}}x</span>
+  </div>
+  <div class="pl-3">
+    <div class="row">
+      <div class="feature extension" *ngFor="let extension of feature.extensions" tooltip="Extension: {{extension.name}}, Version: {{extension.version}}{{this.getCountTooltipPart(feature.id)}}">
+        {{extension.name}}
+        <span *ngIf="extension.version !== ''" class="divider"></span>
+        <span *ngIf="extension.version !== ''" class="version">{{extension.version}}</span>
+        <span *ngIf="this.featureCount" class="divider"></span>
+        <span *ngIf="this.featureCount" class="version small">{{this.featureCount.get(extension.id)}}x</span>
+      </div>
+    </div>
+  </div>
+</div>

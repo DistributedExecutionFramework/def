@@ -1,0 +1,219 @@
+<div class="content job-details-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div class="job-details" *ngIf="this.job">
+
+    <div class="card">
+      <h4 class="card-header">Job Info</h4>
+
+      <div class="card-body">
+        <label class="desc">ID</label>
+        <label class="text-monospace">{{job.id}}</label>
+
+        <label class="desc">Created</label>
+        <label>{{this.timeService.getDateAndTimeFromMilliSeconds(job.createTime)}}</label>
+
+        <label *ngIf="this.job.hasJobAlreadyStarted()" class="desc">Start</label>
+        <label *ngIf="this.job.hasJobAlreadyStarted()">{{this.timeService.getDateAndTimeFromMilliSeconds(job.startTime)}}</label>
+
+        <label *ngIf="this.job.hasJobAlreadyStarted()" class="desc">Runtime</label>
+        <label *ngIf="this.job.hasJobAlreadyStarted()">{{this.timeService.formatRuntime(this.currentJobRuntime)}}</label>
+
+        <label *ngIf="this.job.isFinished()" class="desc" >End</label>
+        <label *ngIf="this.job.isFinished()">{{this.timeService.getDateAndTimeFromMilliSeconds(job.finishTime)}}</label>
+
+        <label class="desc">Map-Routine-ID</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{job.mapRoutineId}}"
+           class="text-monospace">{{job.mapRoutineId}}</a>
+
+        <label class="desc">Reduce-Routine-ID</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{job.reduceRoutineId}}"
+           class="text-monospace">{{job.reduceRoutineId}}</a>
+
+        <label class="desc">State</label>
+        <div>
+          <div *ngIf="this.job.state == 'SUCCESS'">
+            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+          </div>
+          <div *ngIf="this.job.state == 'FAILED'">
+            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+          </div>
+          <div *ngIf="this.job.state == 'SCHEDULED'">
+            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+          </div>
+          <div *ngIf="this.job.state == 'RUN'">
+            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+          </div>
+        </div>
+
+        <label class="desc">Tasks</label>
+        <div>
+          <label tooltip="All: {{this.job.getNrOfTasks()}} / Successful: {{this.job.nrOfSuccessfulTasks}} / Running: {{this.job.nrOfRunningTasks}} / Scheduled: {{this.job.nrOfScheduledTasks}} / Failed: {{this.job.nrOfFailedTasks}}">
+            {{job.getNrOfTasks()}} ({{job.nrOfSuccessfulTasks}} / {{job.nrOfRunningTasks}} / {{job.nrOfScheduledTasks}} / {{job.nrOfFailedTasks}})
+          </label>
+        </div>
+
+        <label></label>
+        <div>
+          <button class="btn btn-outline-primary" *ngIf="!job.isFinished()"
+                  mwlConfirmationPopover
+                  placement="right"
+                  [popoverTitle]="'Abort job'"
+                  [popoverMessage]="'Are you sure you want to <b>abort</b> this job?'"
+                  [confirmText]="'Abort'"
+                  [cancelText]="'Cancel'"
+                  (confirm)="abortJob()">
+            Abort Job
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="progress-circle" *ngIf="this.job">
+    <circle-progress *ngIf="!job.isFinished()" outerStrokeColor="green"
+                     innerStrokeColor="green" percent="{{percent}}" radius="100" subtitle="{{progressTextToDisplay}}"
+                     [animation]="this.animateProgress"></circle-progress>
+    <circle-progress *ngIf="job.state == 'SUCCESS'" percent="100"
+                     radius="100" outerStrokeColor="green" innerStrokeColor="green" title="{{successTitleToDisplay}}"
+                     units="" subtitle="{{successSubtitleToDisplay}}" [animation]="false"></circle-progress>
+    <circle-progress *ngIf="job.state == 'FAILED'" percent="100"
+                     outerStrokeColor="red" innerStrokeColor="red" radius="100" title="{{failureTitleToDisplay}}"
+                     units="" subtitle="{{failureSubtitleToDisplay}}" [animation]="false"></circle-progress>
+  </div>
+
+  <div class="out-params" *ngIf="this.job">
+    <h4>Results</h4>
+    <table class="table table-striped">
+      <thead>
+      <th>Key</th>
+      <th>Datatype</th>
+      <th>Value</th>
+      </thead>
+      <tbody *ngIf="this.outParametersToDisplay.length > 0">
+        <tr *ngFor="let param of this.outParametersToDisplay;">
+          <td>
+            {{param.key}}
+          </td>
+          <td>
+            {{param.dataTypeName}}
+          </td>
+          <td>
+            {{param.decodedData}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tasks" *ngIf="this.job">
+    <h4>Tasks</h4>
+    <div class="form-inline task-list justify-content-between">
+      <div class="d-flex">
+        <div class="form-group">
+          State:&nbsp;
+          <select [disabled]="this.areFiltersActive()" class="form-content form-control" style="width: 120px;" name="state" [(ngModel)]="filterTaskState" (change)="this.changedTaskFilter()">
+            <option>SUCCESS</option>
+            <option>SCHEDULED</option>
+            <option>RUN</option>
+            <option>FAILED</option>
+          </select>
+        </div>
+        <div class="form-group">
+          &nbsp;&nbsp;&nbsp;Count:&nbsp;
+          <input [disabled]="this.areFiltersActive()" class="form-content form-control" name="count" style="width: 80px;" type="number" min="1" max="100" [(ngModel)]="filterTaskCount" (change)="this.changedTaskFilter()">
+        </div>
+        <label *ngIf="this.areFiltersActive()" class="text-secondary ml-3">
+          Remove all filters to enable specific selection and sorting criteria
+        </label>
+        <button *ngIf="!this.areFiltersActive() && this.currentSortingCriterion !== noSortingType"
+                class="btn btn-outline-secondary ml-3"
+                (click)="this.removeSortingCriterion()">
+          Remove Sorting
+        </button>
+      </div>
+
+      <div class="form-group ml-3">
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <span class="input-group-text" id="taskFilter">
+          <fa-icon [icon]="['fa', 'search']"></fa-icon>
+        </span>
+          </div>
+          <input type="text" class="form-control" placeholder="Task-Id" aria-label="Task-Id" name="taskFilter"
+                 aria-describedby="taskFilter"
+                 [(ngModel)]="this.displayedTaskFilter" (change)="this.addFilter()"/>
+        </div>
+      </div>
+    </div>
+
+    <div style="background-color: blue;">
+      <a class="filter-button btn btn-outline-secondary btn-sm nohover" *ngFor="let filter of this.taskFilters">
+        <fa-icon [icon]="['fa', 'times']" class="text-secondary" (click)="this.deleteFilter(filter);"></fa-icon>
+        {{filter}}
+      </a>
+    </div>
+    <table class="table table-striped table-hover overview-table">
+      <thead>
+      <th>Id</th>
+      <th>
+        Created
+        &nbsp;
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
+        &nbsp;
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
+      </th>
+      <th>
+        Start
+        &nbsp;
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
+        &nbsp;
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
+      </th>
+      <th>Runtime</th>
+      <th>State</th>
+      </thead>
+      <tbody *ngIf="tasksLoading">
+      <tr>
+        <td colspan="5">
+          <div class="loading">
+            <ngx-loading [show]="tasksLoading"></ngx-loading>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+      <tbody *ngIf="!tasksLoading">
+      <tr *ngFor="let task of tasks;" (click)="openDetailsView(task)">
+        <td>
+          <div class="idTruncated" tooltip="{{task.id}}">{{task.id}}</div>
+        </td>
+        <td>{{this.timeService.getDateAndTimeFromMilliSeconds(task.createTime)}}</td>
+        <td>{{task.startTime > 0 ? this.timeService.getDateAndTimeFromMilliSeconds(task.startTime) : "-"}}</td>
+        <td>{{task.startTime > 0 ? this.timeService.formatRuntime(task.runtime) : "-"}}</td>
+        <td>
+          <div *ngIf="task.state == 'SUCCESS'">
+            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+          </div>
+          <div *ngIf="task.state == 'FAILED'">
+            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+          </div>
+          <div *ngIf="task.state == 'SCHEDULED'">
+            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+          </div>
+          <div *ngIf="task.state == 'RUN'">
+            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

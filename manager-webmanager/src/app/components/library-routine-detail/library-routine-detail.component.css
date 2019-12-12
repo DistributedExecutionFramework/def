@@ -1,0 +1,28 @@
+.routine-details-content {
+  grid-template-areas:
+    "navigation"
+    "routine-details"
+    "routine-usage";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.routine-details {
+  grid-area: routine-details;
+}
+
+.routine-usage {
+  grid-area: routine-usage;
+}
+
+.routine-card-desc {
+  width: 10%;
+}
+
+.routine-card-content {
+  width: 90%;
+}

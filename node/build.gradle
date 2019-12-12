@@ -1,0 +1,10 @@
+dependencies {
+    // Project dependencies
+    compile project(':node-api')
+    compile project(':cluster-api')
+    compile project(':dto-cache')
+    compile project(':communication')
+}
+
+copyDemoRoutines.dependsOn project(':demo-routines').shadowJar
+compileJava.dependsOn copyDemoRoutines

@@ -1,0 +1,184 @@
+<div class="content program-details-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div class="program-details" *ngIf="this.program">
+
+    <div class="card">
+      <h4 class="card-header">Program Info</h4>
+
+      <div class="card-body">
+        <label class="desc">ID</label>
+        <label class="text-monospace">{{this.program.id}}</label>
+
+        <label class="desc">Name</label>
+        <div class="editable-area">
+          <div class="editing-area" *ngIf="editingName">
+            <input [(ngModel)]="newProgramName" class="form-control">
+            <button class="btn btn-outline-success btn-sm" tooltip="Save changes" (click)="updateProgramName();editingName = false">
+              <fa-icon [icon]="['fa', 'check']" class="text-success"></fa-icon>
+            </button>
+            <button class="btn btn-outline-danger btn-sm" tooltip="Cancel" (click)="cancelUpdatingProgramName(); editingName = false;">
+              <fa-icon [icon]="['fa', 'times']" class="text-danger"></fa-icon>
+            </button>
+          </div>
+          <div *ngIf="!editingName">
+            <label>{{this.program.name}}</label>
+            <button class="btn btn-outline-secondary btn-sm" tooltip="Change name" (click)="editingName = true">
+              <fa-icon [icon]="['fa', 'edit']"></fa-icon>
+            </button>
+          </div>
+        </div>
+
+        <label class="desc">Start</label>
+        <label>{{this.timeService.getDateAndTimeFromMilliSeconds(this.program.createTime)}}</label>
+
+        <label class="desc">Runtime</label>
+        <label>{{this.timeService.formatRuntime(this.currentRuntime)}}</label>
+
+        <label class="desc" *ngIf="this.program.isFinished()">End</label>
+        <label *ngIf="this.program.isFinished()">{{this.timeService.getDateAndTimeFromMilliSeconds(this.program.finishTime)}}</label>
+
+        <label class="desc">Description</label>
+        <div class="editable-area">
+          <div class="editing-area" *ngIf="editingDescription">
+            <textarea class="form-control" type="text"
+                      [(ngModel)]="newProgramDescription"></textarea>
+            <button class="btn btn-outline-success btn-sm" tooltip="Save changes" (click)="updateProgramDescription();editingDescription=false">
+              <fa-icon [icon]="['fa', 'check']" class="text-success"></fa-icon>
+            </button>
+            <button class="btn btn-outline-danger btn-sm" tooltip="Cancel" (click)="cancelUpdatingProgramDescription(); editingDescription=false">
+              <fa-icon [icon]="['fa', 'times']" class="text-danger"></fa-icon>
+            </button>
+          </div>
+          <div *ngIf="!editingDescription">
+            <label>{{this.program.description}}</label>
+            <button class="btn btn-outline-secondary btn-sm" tooltip="Change description" (click)="editingDescription = true">
+              <fa-icon [icon]="['fa', 'edit']"></fa-icon>
+            </button>
+          </div>
+        </div>
+
+        <label class="desc">State</label>
+        <div>
+          <div *ngIf="program.state == 'SUCCESS'">
+            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+          </div>
+          <div *ngIf="program.state == 'FAILED'">
+            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+          </div>
+          <div *ngIf="program.state == 'SCHEDULED'">
+            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+          </div>
+          <div *ngIf="program.state == 'RUN'">
+            <fa-icon [icon]="['fa', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
+          </div>
+        </div>
+
+        <label class="desc">Jobs</label>
+        <label>{{this.program.nrOfJobs}}</label>
+
+        <label></label>
+        <div>
+          <button class="btn btn-outline-primary" *ngIf="!program.isFinished()"
+                  mwlConfirmationPopover
+                  placement="right"
+                  [popoverTitle]="'Abort program'"
+                  [popoverMessage]="'Are you sure you want to <b>abort</b> this program?'"
+                  [confirmText]="'Abort'"
+                  [cancelText]="'Cancel'"
+                  (confirm)="abortProgram()">
+            Abort Program
+          </button>
+          <button class="btn btn-outline-danger" *ngIf="program.isFinished()"
+                  mwlConfirmationPopover
+                  placement="right"
+                  [popoverTitle]="'Delete program'"
+                  [popoverMessage]="'Are you sure you want to <b>delete</b> this program?'"
+                  [confirmText]="'Delete'"
+                  [cancelText]="'Cancel'"
+                  (confirm)="deleteProgram()">
+            Delete Program
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-circle" *ngIf="this.program">
+    <div>
+      <circle-progress *ngIf="!program.isFinished()"
+                       outerStrokeColor="green" innerStrokeColor="green" percent="{{percent}}" radius="100"
+                       subtitle="{{progressTextToDisplay}}" [animation]="animateProgress">
+      </circle-progress>
+      <circle-progress *ngIf="program.state === 'SUCCESS'"
+                       percent="100" radius="100" outerStrokeColor="green" innerStrokeColor="green"
+                       title="{{successTitleToDisplay}}" units="" subtitle="{{successSubtitleToDisplay}}"
+                       [animation]="false">
+      </circle-progress>
+      <circle-progress *ngIf="program.state === 'FAILED'" percent="100"
+                       outerStrokeColor="red" innerStrokeColor="red" radius="100" title="{{failureTitleToDisplay}}"
+                       units="" subtitle="{{failureSubtitleToDisplay}}" [animation]="false">
+
+      </circle-progress>
+    </div>
+
+  </div>
+
+  <div class="jobs" *ngIf="this.program">
+    <h4>Jobs</h4>
+    <table class="table table-striped table-hover overview-table">
+      <thead>
+      <th>Id</th>
+      <th>Created</th>
+      <th>Start</th>
+      <th>Runtime</th>
+      <th>Tasks</th>
+      <th>State</th>
+      </thead>
+      <tbody *ngIf="jobsLoading">
+      <tr>
+        <td colspan="6">
+          <div class="loading">
+            <ngx-loading [show]="jobsLoading"></ngx-loading>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+      <tbody *ngIf="!jobsLoading">
+      <tr *ngFor="let job of jobs;" (click)="openDetailsView(job)">
+        <td>
+          <div class="idTruncated" tooltip="{{job.id}}">{{job.id}}</div>
+        </td>
+        <td>{{timeService.getDateAndTimeFromMilliSeconds(job.createTime)}}</td>
+        <td>{{job.startTime > 0 ? timeService.getDateAndTimeFromMilliSeconds(job.startTime) : "-"}}</td>
+        <td>{{job.startTime > 0 ? timeService.formatRuntime(job.runtime) : "-"}}</td>
+        <td>
+          <label class="pointer-cursor" tooltip="Done: {{job.getNrOfFinishedTasks()}} / All: {{job.getNrOfTasks()}}">
+            {{job.getNrOfFinishedTasks()}} / {{job.getNrOfTasks()}}
+          </label>
+        </td>
+        <td>
+          <div *ngIf="job.state == 'SUCCESS'">
+            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+          </div>
+          <div *ngIf="job.state == 'FAILED'">
+            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+          </div>
+          <div *ngIf="job.state == 'SCHEDULED'">
+            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+          </div>
+          <div *ngIf="job.state == 'RUN'">
+            <fa-icon [icon]="['fa', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

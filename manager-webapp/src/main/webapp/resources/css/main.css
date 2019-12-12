@@ -1,0 +1,13 @@
+body {
+    background: url("#{resource['img/back.png']}") fixed;
+}
+
+.centered-body {
+    text-align: center;
+}
+
+.username {
+    text-align: center;
+    padding-top: 0.5em;
+    font-size: 1.25em;
+}

@@ -1,0 +1,31 @@
+//buildscript {
+//    repositories {
+//        mavenLocal()
+//        jcenter()
+//    }
+//
+//    dependencies {
+//        classpath "org.akhikhl.gretty:gretty:+"
+//    }
+//}
+
+apply plugin: 'war'
+// apply plugin: 'org.akhikhl.gretty'
+
+// use `gradle appRun' to start web application
+
+dependencies {
+    compile project(':manager-api')
+    compile project(':communication')
+
+    // Servlet
+    // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: javaxServletVersion
+
+    // JSF
+    // https://mvnrepository.com/artifact/com.sun.faces/jsf-api
+    compile group: 'com.sun.faces', name: 'jsf-api', version: jsfVersion
+
+    // https://mvnrepository.com/artifact/com.sun.faces/jsf-impl
+    compile group: 'com.sun.faces', name: 'jsf-impl', version: jsfVersion
+}

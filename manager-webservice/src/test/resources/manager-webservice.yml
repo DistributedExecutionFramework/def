@@ -1,0 +1,16 @@
+id: test_id
+
+def-servers:
+  rest:
+    enabled: true
+    port: 40060
+    bind-address: 127.0.0.1
+    url-pattern: /api/*
+  thrift-http:
+    enabled: false
+    port: 40061
+    bind-address: 127.0.0.1
+  thrift-tcp:
+    enabled: false
+    port: 40062
+    bind-address: 127.0.0.1

@@ -1,0 +1,36 @@
+task-scheduling-strategy: at.enfilo.def.scheduler.strategy.RoundRobinSchedulingStrategy
+
+notification-from-node:
+  periodically: false
+  period-duration: -1
+  period-unit: SECONDS
+  endpoint:
+    protocol: THRIFT_TCP
+    port: 40022
+
+cluster-endpoint:
+  port: 40012
+  host: localhost
+  protocol: THRIFT_TCP
+
+library-endpoint:
+  host: localhost
+  port: 40042
+  protocol: THRIFT_TCP
+
+def-servers:
+  rest:
+    enabled: false
+    port: 40020
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+  thrift-tcp:
+    enabled: true
+    port: 40022
+    bind-address: 0.0.0.0
+  thrift-http:
+    enabled: false
+    port: 40021
+    bind-address: 0.0.0.0
+    url-pattern: /api/*
+

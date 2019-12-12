@@ -1,0 +1,31 @@
+.add-routine-content {
+  grid-template-areas:
+    "navigation"
+    "formular";
+  grid-template-columns: 1fr;
+  grid-gap: var(--grid-gap);
+}
+
+.navigation {
+  grid-area: navigation;
+}
+
+.add-routine-form {
+  grid-area: formular;
+  display: grid;
+  grid-gap: 30px;
+  grid-template-columns: 1fr;
+}
+
+.form-desc {
+  width: 15%;
+}
+
+.form-content {
+  width: 85%;
+}
+
+.feature:hover {
+  background-color: #eee;
+  cursor: pointer;
+}

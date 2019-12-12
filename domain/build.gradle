@@ -1,0 +1,7 @@
+dependencies {
+    compile project(':transfer')
+    compile project(':logging')
+
+    // https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api
+    compile group: 'org.hibernate.javax.persistence', name: 'hibernate-jpa-2.1-api', version: hibernatejpaVersion
+}

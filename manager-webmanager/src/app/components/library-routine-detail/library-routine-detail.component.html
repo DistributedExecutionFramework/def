@@ -1,0 +1,145 @@
+<div class="content routine-details-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div *ngIf="this.routine" class="card routine-details">
+
+    <h4 class="card-header">{{this.routine.name}}</h4>
+
+    <div class="card-body">
+      <label class="desc">Id</label>
+      <label class="text-monospace">{{this.routine.id}}</label>
+
+      <label class="desc">Name</label>
+      <label>{{this.routine.name}}</label>
+
+      <label class="desc">Description</label>
+      <label>{{this.routine.description}}</label>
+
+      <label class="desc">Type</label>
+      <label>
+        <fa-icon [icon]="['fa', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fa', 'random']" *ngIf="this.libraryService.isMapRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fa', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fa', 'save']" *ngIf="this.libraryService.isStoreRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fa', 'desktop']" *ngIf="this.libraryService.isClientRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+      </label>
+
+      <label class="desc">Required Features</label>
+      <label class="pl-3">
+        <app-feature-list [features]="this.routine.requiredFeatures"></app-feature-list>
+      </label>
+
+      <label class="desc">Revision</label>
+      <label>{{this.routine.revision}}</label>
+
+      <label class="desc">Private</label>
+      <label>{{this.routine.privateRoutine}}</label>
+
+      <label class="desc">Arguments</label>
+      <div>
+        <pre *ngFor="let argument of this.routine.arguments;">{{argument}}</pre>
+      </div>
+
+      <label *ngIf="this.hasInParameters()" class="desc">Input Parameters</label>
+      <div *ngIf="this.hasInParameters()">
+        <table class="table table-sm">
+          <thead>
+          <tr class="d-flex">
+            <th style="width: 20%;" class="small">Name</th>
+            <th style="width: 20%;" class="small">DataType</th>
+            <th style="width: 60%;" class="small">Description</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="d-flex" *ngFor="let inputParam of this.routine.inParameters;">
+            <td style="width: 20%;" class="text-monospace">{{inputParam.name}}</td>
+            <td style="width: 20%;"><a routerLink="{{this.getLinkDataTypeDetails(inputParam.dataType)}}">{{inputParam.dataType.name}}</a>
+            </td>
+            <td style="width: 60%;">{{inputParam.description}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <label *ngIf="this.hasOutParameter()" class="desc">Output Parameter</label>
+      <div *ngIf="this.hasOutParameter()">
+        <table class="table table-sm">
+          <thead>
+          <tr class="d-flex">
+            <th style="width: 20%;" class="small">Name</th>
+            <th style="width: 20%;" class="small">DataType</th>
+            <th style="width: 60%;" class="small">Description</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="d-flex" *ngIf="this.routine.outParameter">
+            <td style="width: 20%;" class="text-monospace">{{this.routine.outParameter.name}}</td>
+            <td style="width: 20%;"><a routerLink="{{this.getLinkDataTypeDetails(this.routine.outParameter.dataType)}}">{{this.routine.outParameter.dataType.name}}</a>
+            </td>
+            <td style="width: 60%;">{{this.routine.outParameter.description}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <label class="desc">Resources</label>
+      <div>
+        <a href="{{this.clientApiUrl}}">
+          <button class="btn btn-primary mr-2 mb-2">
+            <fa-icon [icon]="['fa', 'download']"></fa-icon>
+            Download Client-API
+          </button>
+        </a>
+        <button *ngIf="this.routine.type == this.checkType.OBJECTIVE"
+                class="btn btn-primary mr-2 mb-2" (click)="this.generateAndDownloadDataTypes()">
+          <fa-icon [icon]="['fa', 'download']"></fa-icon>
+          Generate Data types & Download
+        </button>
+      </div>
+
+      <label class="desc" *ngIf="this.actionToDisplay()">Actions</label>
+      <div>
+        <button
+                class="btn btn-outline-danger mr-2 mb-2"
+                mwlConfirmationPopover
+                placement="right"
+                [popoverTitle]="'Delete routine'"
+                [popoverMessage]="'Are you sure you want to <b>delete</b> this routine?'"
+                [confirmText]="'Delete'"
+                [cancelText]="'Cancel'"
+                (confirm)="this.removeRoutine()">
+          Remove Routine
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div *ngIf="this.showUsage()" class="card routine-usage">
+    <h4 class="card-header">Usage</h4>
+    <div class="card-body">
+
+      <label class="desc">Language</label>
+      <select class="form-control" name="language" id="language" [(ngModel)]="this.language"
+              (change)="this.changeLanguage()">
+        <option *ngFor="let language of this.getLanguages()" value="{{language}}">
+          {{this.getLanguageName(language)}}
+        </option>
+      </select>
+
+      <label class="desc">Client example code</label>
+      <div class="code-area" style="overflow-wrap: break-word;">
+        <pre class="pre-area"><code style="overflow-wrap: break-word;" highlight [textContent]="this.clientExample" [language]="this.highlightLanguages"></code></pre>
+      </div>
+
+    </div>
+
+  </div>
+</div>

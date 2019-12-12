@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--<fx:root type="Pane" xmlns:fx="http://javafx.com/fxml/1">-->
+<?import at.enfilo.def.local.simulator.gui.JobGuiComponent?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root type="at.enfilo.def.local.simulator.gui.JobGuiComponent" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+    <GridPane hgap="5.0" vgap="5.0" HBox.hgrow="ALWAYS">
+        <children>
+            <Label text="Job Id:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <TextField fx:id="txtJobId" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+            <Label text="MapRoutine Id:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <TextField fx:id="txtMapRoutineId" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+            <Label text="ReduceRoutine Id:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <TextField fx:id="txtReduceRoutineId" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+            <Label text="Number of tasks:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+            <TextField fx:id="txtNumberOfTasks" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+            <Label text="Execution state:" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+            <ComboBox fx:id="cmbExecState" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+        </children>
+        <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+        </padding>
+        <columnConstraints>
+            <ColumnConstraints hgrow="NEVER"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+    </GridPane>
+    </children>
+</fx:root>

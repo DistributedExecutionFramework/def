@@ -1,0 +1,74 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="../WEB-INF/template/template.xhtml">
+    <ui:define name="title">USER PROGRAMS</ui:define>
+
+    <ui:define name="menu"><ui:include src="menu.xhtml" /></ui:define>
+
+    <ui:define name="content">
+        <h:panelGroup layout="block" styleClass="panel-group">
+            <h:panelGroup layout="block" styleClass="panel panel-default">
+                <h:panelGroup layout="block" styleClass="panel-heading"><strong>USER PROGRAMS PANEL</strong></h:panelGroup>
+                <h:panelGroup layout="block" styleClass="panel-body">
+
+                    <h:form styleClass="form-horizontal">
+                        <h:panelGroup layout="block" styleClass="form-group">
+                            <h:outputLabel for="programIds" value="PROGRAM ID:" styleClass="control-label col-sm-2" />
+                            <h:panelGroup layout="block" styleClass="col-sm-10">
+                                <h:selectOneMenu id="programIds" value="#{programController.selectedProgram}"
+                                                 styleClass="form-control" hideNoSelectionOption="true">
+                                    <f:ajax event="valueChange" execute="@this" render="programInfo" />
+                                    <f:selectItem itemValue="#{null}" itemLabel="" noSelectionOption="true"
+                                                  itemDisabled="true" />
+                                    <f:selectItems value="#{programController.userPrograms}" var="pId"
+                                                   itemLabel="#{pId}" itemValue="#{pId}" />
+                                </h:selectOneMenu>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                    </h:form>
+
+                    <hr/>
+
+                    <h:form id="programInfo">
+                        <h:dataTable value="#{programController.selectedProgramInfo}" var="programDTO"
+                                     styleClass="table table-responsive table-hover table-striped">
+                            <h:column>
+                                <f:facet name="header">ID</f:facet>
+                                #{programDTO.id}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">STATE</f:facet>
+                                #{programDTO.state}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">CREATE TIME</f:facet>
+                                #{programDTO.createTime}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">FINISH TIME</f:facet>
+                                #{programDTO.finishTime}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">MASTER LIBRARY</f:facet>
+                                <h:graphicImage rendered="#{programDTO.masterLibraryRoutine}" value="../resources/img/true.png" />
+                                <h:graphicImage rendered="#{!programDTO.masterLibraryRoutine}" value="../resources/img/false.png" />
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">JOBS</f:facet>
+                                <h:commandButton value="view" styleClass="btn btn-primary btn-xs"
+                                                 action="#{programController.openJobsView(programDTO)}" />
+                            </h:column>
+                        </h:dataTable>
+                    </h:form>
+                </h:panelGroup>
+            </h:panelGroup>
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

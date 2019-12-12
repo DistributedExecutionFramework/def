@@ -1,0 +1,99 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="../WEB-INF/template/template.xhtml">
+    <ui:define name="title">PROGRAM JOBS</ui:define>
+
+    <ui:define name="menu"><ui:include src="menu.xhtml" /></ui:define>
+
+    <ui:define name="content">
+        <h:panelGroup layout="block" styleClass="panel-group">
+            <h:panelGroup layout="block" styleClass="panel panel-default">
+                <h:panelGroup layout="block" styleClass="panel-heading"><strong>PROGRAM JOBS PANEL</strong></h:panelGroup>
+                <h:panelGroup layout="block" styleClass="panel-body">
+
+                    <h:form styleClass="form-horizontal">
+                        <h:panelGroup layout="block"  styleClass="form-group">
+                            <h:outputLabel for="jobIds" value="JOB ID:" styleClass="control-label col-sm-2" />
+                            <h:panelGroup layout="block"  styleClass="col-sm-10">
+                                <h:selectOneMenu id="jobIds" value="#{jobsController.selectedJob}"
+                                                 styleClass="form-control" hideNoSelectionOption="true">
+                                    <f:ajax event="valueChange" execute="@this" render="jobInfo" />
+                                    <f:selectItem itemValue="#{null}" itemLabel="" noSelectionOption="true"
+                                                  itemDisabled="true" />
+                                    <f:selectItems value="#{jobsController.allJobs}" var="jId"
+                                                   itemLabel="#{jId}" itemValue="#{jId}" />
+                                </h:selectOneMenu>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                    </h:form>
+
+                    <hr/>
+
+                    <h:form id="jobInfo">
+                        <h:dataTable value="#{jobsController.selectedJobInfo}" var="jobDTO"
+                                     styleClass="table table-responsive table-hover table-striped">
+                            <h:column>
+                                <f:facet name="header">ID</f:facet>
+                                #{jobDTO.id}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">STATE</f:facet>
+                                #{jobDTO.state}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">CREATE TIME</f:facet>
+                                #{jobDTO.createTime}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">START TIME</f:facet>
+                                #{jobDTO.startTime}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">FINISH TIME</f:facet>
+                                #{jobDTO.finishTime}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">NUMBER OF<br />TASKS</f:facet>
+                                #{jobDTO.numberOfTasks}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">NUMBER OF<br />FINISHED TASKS</f:facet>
+                                #{jobDTO.numberOfFinishedTasks}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">PARTITION<br />LIBRARY ID</f:facet>
+                                #{jobDTO.numberOfFinishedTasks}
+                            </h:column>
+
+
+                            <h:column>
+                                <f:facet name="header">MAP<br />LIBRARY ID</f:facet>
+                                #{jobDTO.numberOfFinishedTasks}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">COMBINE<br />LIBRARY ID</f:facet>
+                                #{jobDTO.numberOfFinishedTasks}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">TASKS</f:facet>
+                                <h:commandButton value="view" styleClass="btn btn-primary btn-xs" type="submit"
+                                                 action="#{jobsController.openTasksView(jobDTO)}" />
+                            </h:column>
+                        </h:dataTable>
+                    </h:form>
+                </h:panelGroup>
+            </h:panelGroup>
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

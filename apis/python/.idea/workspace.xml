@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b48aad06-5875-49e8-8dbb-e5c2452485f7" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/../../manager-webmanager/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../manager-webmanager/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../../settings.gradle" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>getAllT</find>
+      <find>__fetch_result</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>__wait_for_ticket</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="ProjectId" id="1SsRS580pLLJw10cz1qSXwoRyog" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../../def-documentation/docs/user-manual/getting-started" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/def_api/thrift" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Python.example">
+    <configuration name="example" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="python" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/example.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests in client_test.py" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="python" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/def_api/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/def_api/tests/client_test.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.example" />
+      <item itemvalue="Python tests.Unittests in client_test.py" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.example" />
+        <item itemvalue="Python tests.Unittests in client_test.py" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b48aad06-5875-49e8-8dbb-e5c2452485f7" name="Default" comment="" />
+      <created>1539080713057</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1539080713057</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TestHistory">
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 14h 43m 34s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 14h 47m 21s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 14h 49m 16s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 14h 57m 01s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 14h 57m 47s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.13 at 15h 07m 40s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.20 at 09h 13m 31s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.20 at 09h 15m 02s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.20 at 09h 16m 27s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_client_test_py - 2018.11.20 at 09h 17m 39s.xml">
+      <configuration name="Unittests in client_test.py" configurationId="tests" />
+    </history-entry>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

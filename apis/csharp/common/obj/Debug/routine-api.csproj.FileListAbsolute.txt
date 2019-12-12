@@ -1,0 +1,8 @@
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/bin/Debug/routine_api.exe
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/bin/Debug/routine_api.pdb
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/bin/Debug/Thrift45.dll
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/obj/Debug/routine-api.csprojAssemblyReference.cache
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/obj/Debug/routine-api.csproj.CoreCompileInputs.cache
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/obj/Debug/routine-api.csproj.CopyComplete
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/obj/Debug/routine_api.exe
+/Users/admin/Documents/jrz_wp2_def/Prototype2/apis/csharp/routine-api/obj/Debug/routine_api.pdb

@@ -1,0 +1,171 @@
+<div class="content task-detail-content">
+
+  <div class="navigation">
+    <app-navigation-breadcrumb
+      [navigationPath]="this.navigationPath"
+      [activeNavigationElement]="this.activeNavigationElement">
+    </app-navigation-breadcrumb>
+  </div>
+
+  <div class="task-details" *ngIf="this.task">
+
+    <div class="card">
+      <h4 class="card-header">Task Info</h4>
+
+      <div class="card-body">
+        <label class="desc">ID</label>
+        <label class="text-monospace">{{this.task.id}}</label>
+
+        <label class="desc">Created</label>
+        <label>{{this.timeService.getDateAndTimeFromMilliSeconds(this.task.createTime)}}</label>
+
+        <label *ngIf="this.task.hasAlreadyStarted()" class="desc">Start</label>
+        <label *ngIf="this.task.hasAlreadyStarted()">{{this.timeService.getDateAndTimeFromMilliSeconds(this.task.startTime)}}</label>
+
+        <label *ngIf="this.task.hasAlreadyStarted()" class="desc">Runtime</label>
+        <label *ngIf="this.task.hasAlreadyStarted()">{{this.timeService.formatRuntime(this.task.runtime)}}</label>
+
+        <label *ngIf="this.task.isFinished()" class="desc">End</label>
+        <label *ngIf="this.task.isFinished()">{{this.timeService.getDateAndTimeFromMilliSeconds(this.task.finishTime)}}</label>
+
+        <label class="desc">State</label>
+        <div>
+          <div *ngIf="this.task.state == 'SUCCESS'">
+            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+          </div>
+          <div *ngIf="this.task.state == 'FAILED'">
+            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+          </div>
+          <div *ngIf="this.task.state == 'SCHEDULED'">
+            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+          </div>
+          <div *ngIf="this.task.state == 'RUN'">
+            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+          </div>
+        </div>
+
+        <label class="desc">Objective-Routine-ID</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{this.task.objectiveRoutineId}}"
+           class="text-monospace">{{this.task.objectiveRoutineId}}</a>
+
+        <label class="desc">Map-Routine-ID</label>
+        <a routerLink="/manager/library/routines/routine-detail/{{this.task.mapRoutineId}}"
+           class="text-monospace">{{this.task.mapRoutineId}}</a>
+
+        <label class="desc">Messages</label>
+        <div>
+          <label *ngFor="let message of this.task.messages;">{{message}}</label>
+        </div>
+
+        <label></label>
+        <div>
+          <button class="btn btn-outline-primary" *ngIf="!this.task.isFinished()"
+                  mwlConfirmationPopover
+                  placement="right"
+                  [popoverTitle]="'Abort task'"
+                  [popoverMessage]="'Are you sure you want to <b>abort</b> this task?'"
+                  [confirmText]="'Abort'"
+                  [cancelText]="'Cancel'"
+                  (confirm)="abortTask()">
+            Abort Task
+          </button>
+          <button class="btn btn-outline-primary" *ngIf="this.task.isFinished()"
+                  mwlConfirmationPopover
+                  placement="right"
+                  [popoverTitle]="'Restart task'"
+                  [popoverMessage]="'Are you sure you want to <b>restart</b> this task?'"
+                  [confirmText]="'Restart'"
+                  [cancelText]="'Cancel'"
+                  (confirm)="restartTask()">
+            Restart Task
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-circle" *ngIf="this.task">
+    <circle-progress *ngIf="this.task.state == 'RUN'"
+                     outerStrokeColor="dodgerblue" innerStrokeColor="dodgerblue" percent="100" radius="100"
+                     title="{{progressTitleToDisplay}}" subtitle="{{progressSubtitleToDisplay}}" units=""
+                     [animation]="true"></circle-progress>
+    <circle-progress *ngIf="this.task.state == 'SCHEDULED'" outerStrokeColor="grey"
+                     innerStrokeColor="grey" percent="100" radius="100" title="{{scheduledTitleToDisplay}}"
+                     subtitle="{{schedulerSubtitleToDisplay}}" units="" [animation]="true"></circle-progress>
+    <circle-progress *ngIf="this.task.state == 'SUCCESS'" percent="100"
+                     radius="100" outerStrokeColor="green" innerStrokeColor="green" title="{{successTitleToDisplay}}"
+                     units="" subtitle="{{successSubtitleToDisplay}}"></circle-progress>
+    <circle-progress *ngIf="this.task.state == 'FAILED'" percent="100"
+                     outerStrokeColor="red" innerStrokeColor="red" radius="100" title="{{failureTitleToDisplay}}"
+                     units="" subtitle="{{failureSubtitleToDisplay}}"></circle-progress>
+  </div>
+
+  <div class="in-params" *ngIf="this.task">
+    <h4>Input Parameters</h4>
+    <table class="table table-striped">
+      <thead>
+      <th>Name</th>
+      <th>DataType</th>
+      <th>Value</th>
+      </thead>
+      <tbody *ngIf="this.inParametersLoading">
+      <tr>
+        <td colspan="3">
+          <div class="loading">
+            <ngx-loading [show]="this.inParametersLoading"></ngx-loading>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+      <tbody *ngIf="!this.inParametersLoading">
+      <tr *ngFor="let param of this.inParametersToDisplay;">
+        <td>
+          {{param.displayName}}
+        </td>
+        <td>
+          <a routerLink="/manager/library/datatypes/datatype-detail/{{param.dataTypeId}}"
+             class="text-monospace">{{param.dataTypeName}}</a>
+        </td>
+        <td>
+          {{param.decodedData}}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="out-params" *ngIf="this.task">
+    <h4>Results (Out Parameters)</h4>
+    <table class="table table-striped">
+      <thead>
+      <th>Key</th>
+      <th>DataType</th>
+      <th>Value</th>
+      </thead>
+      <tbody *ngIf="this.outParametersLoading">
+      <tr>
+        <td colspan="3">
+          <div class="loading">
+            <ngx-loading [show]="this.outParametersLoading"></ngx-loading>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+      <tbody *ngIf="!this.outParametersLoading">
+      <tr *ngFor="let param of this.outParametersToDisplay;">
+        <td>
+          {{param.key}}
+        </td>
+        <td>
+          <a routerLink="/manager/library/datatypes/datatype-detail/{{param.dataTypeId}}"
+             class="text-monospace">{{param.dataTypeName}}</a>
+        </td>
+        <td>
+          {{param.decodedData}}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

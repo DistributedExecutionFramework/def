@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+    }
+}
+
+apply plugin: "io.spring.dependency-management"
+
+dependencyManagement {
+    imports {
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.228'
+    }
+}
+
+shadowJar {
+    exclude 'cloud-communication.yml'
+    exclude 'log4j2.xml'
+    exclude 'clusterCloudInitScript.txt'
+    exclude 'reducerCloudInitScript.txt'
+    exclude 'workerCloudInitScript.txt'
+}
+
+dependencies {
+    compile project(':cloud-communication-api')
+    compile project(':communication')
+
+    // https://mvnrepository.com/artifact/org.pacesys/openstack4j-core
+    compile group: 'org.pacesys', name: 'openstack4j', version: openStack4jVersion
+    compile 'com.amazonaws:aws-java-sdk-ec2'
+}

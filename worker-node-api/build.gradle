@@ -1,0 +1,10 @@
+dependencies {
+    compile project(':node-api')
+
+    // https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
+    //compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: jaxRsVersion
+
+    // https://mvnrepository.com/artifact/net.java.dev.jna/jna
+    //compile group: 'net.java.dev.jna', name: 'jna', version: '4.2.2'
+    //compile group: 'net.java.dev.jna', name: 'jna-platform', version: '4.2.2'
+}

@@ -1,0 +1,5 @@
+driver: org.h2.Driver
+dialect: org.hibernate.dialect.H2Dialect
+url: jdbc:h2:mem:test;INIT=create schema IF NOT EXISTS test
+user: root
+password: ''

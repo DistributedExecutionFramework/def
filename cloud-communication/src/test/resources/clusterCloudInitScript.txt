@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd ~/library/
+sh startLibrary.sh &
+cd ~/scheduler/
+sh startScheduler.sh &
+cd ~/cluster/
+sh startCluster.sh &
