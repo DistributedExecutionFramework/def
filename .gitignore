@@ -3,3 +3,5 @@
 **/build
 **/out
 **/demo-routines.jar
+**/.idea/
+**/.gradle/
