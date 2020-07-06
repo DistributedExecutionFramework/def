@@ -34,7 +34,7 @@
     "jquery": "^3.5.0",
     "ng-circle-progress": "^1.5.1",
     "ngx-bootstrap": "^3.0.1",
-    "ngx-highlightjs": "^2.1.1",
+    "ngx-highlightjs": "^4.1.0-beta",
     "ngx-loading": "^1.0.15",
     "popper.js": "^1.14.4",
     "prex": "^0.4.3",
