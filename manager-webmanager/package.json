@@ -39,7 +39,6 @@
     "ngx-highlightjs": "^4.1.0-beta",
     "ngx-loading": "^1.0.15",
     "popper.js": "^1.14.7",
-    "prex": "^0.4.7",
     "rxjs": "^6.6.0",
     "rxjs-es": "^5.0.0-beta.12",
     "ts-md5": "^1.2.7",
