@@ -10,8 +10,9 @@ import {Task} from '../../entities/task';
 import {Resource} from '../../entities/resource';
 import {interval} from 'rxjs/internal/observable/interval';
 import {AppConfig} from '../../config/app-config';
-import {Semaphore} from 'prex';
+//import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
+import {Mutex} from "async-mutex";
 
 @Component({
   selector: 'app-task-details',
@@ -41,7 +42,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
   private pId = '';
   private jId = '';
   private tId = '';
-  private taskLock: Semaphore = new Semaphore(1);
+  private taskLock: Mutex = new Mutex();
 
   constructor(
     private route: ActivatedRoute,
@@ -74,7 +75,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const path = this.location.path();
         if (path === ('/manager/programs/' + this.pId + '/jobs/' + this.jId + '/tasks/' + this.tId)) {
-          if (this.taskLock.count >= 0) {
+          if (!this.taskLock.isLocked()) {
             this.fetchTask();
           }
         }
@@ -109,7 +110,7 @@ export class TaskDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchTask() {
-    await this.taskLock.wait();
+    await this.taskLock.acquire();
     this.taskService.getTask(this.pId, this.jId, this.tId)
       .pipe(finalize(() => this.taskLock.release()))
       .subscribe(

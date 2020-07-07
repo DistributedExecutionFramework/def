@@ -6,11 +6,11 @@ import {ActivatedRoute} from '@angular/router';
 import {NodeService} from '../../services/NodeService/node.service';
 import {AppConfig} from '../../config/app-config';
 import {Subscription} from 'rxjs/internal/Subscription';
-import {Semaphore} from 'prex';
 import {interval} from 'rxjs/internal/observable/interval';
 import {finalize} from 'rxjs/operators';
 import {NodeType} from "../../enums/node-type.enum";
 import {Feature} from "../../entities/feature";
+import {Semaphore} from "async-mutex";
 
 @Component({
   selector: 'app-node-details',
@@ -57,7 +57,7 @@ export class NodeDetailsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const path = this.location.path();
         if (path === ('/manager/clusters/' + this.cId + '/nodes/' + this.nId)) {
-          if (this.lock.count > 1) {
+          if (!this.lock.isLocked()) {
             this.fetchNode();
           }
         }
@@ -130,8 +130,8 @@ export class NodeDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchNode(): Promise<void> {
-    await this.lock.wait();
-    await this.lock.wait(); // wait two times, because of two releases
+    await this.lock.acquire();
+    await this.lock.acquire(); // wait two times, because of two releases
 
     this.nodeService.getNodeInfo(this.cId, this.nId)
       .pipe(finalize(() => this.lock.release()))

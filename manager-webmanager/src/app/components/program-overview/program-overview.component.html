@@ -43,10 +43,10 @@
         <td>{{program.userId}}</td>
         <td>
           <div *ngIf="program.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="help text-dark"  tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="help text-dark"  tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="program.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="help text-info" [spin]="true"  tooltip="In progress"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="help text-info" [spin]="true"  tooltip="In progress"></fa-icon>
           </div>
         </td>
       </tr>
@@ -87,10 +87,10 @@
         <td>{{program.userId}}</td>
         <td>
           <div *ngIf="program.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="help text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="help text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="program.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="help text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="help text-danger" tooltip="Error occurred"></fa-icon>
           </div>
         </td>
       </tr>

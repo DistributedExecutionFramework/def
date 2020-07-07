@@ -8,10 +8,11 @@ import {Subscription} from 'rxjs/internal/Subscription';
 import {ClusterService} from '../../services/ClusterService/cluster.service';
 import {NodeService} from '../../services/NodeService/node.service';
 import {interval} from 'rxjs/internal/observable/interval';
-import {Semaphore} from 'prex';
+//import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
 import {AppConfig} from '../../config/app-config';
 import {NodeType} from "../../enums/node-type.enum";
+import { Mutex, Semaphore } from 'async-mutex';
 
 @Component({
   selector: 'app-cluster-details',
@@ -21,7 +22,7 @@ import {NodeType} from "../../enums/node-type.enum";
 export class ClusterDetailsComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
   private cId: string;
-  private lock: Semaphore = new Semaphore(1);
+  private lock: Mutex = new Mutex();
   private maxLoadsPerNodeType: Map<NodeType, number> = new Map();
 
   navigationPath: NavigationElement[] = [];
@@ -79,7 +80,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
     // Subscribe to fetch cluster info and worker periodically
     this.subscription = interval(this.appConfig.updateInterval).pipe()
       .subscribe(() => {
-        if (this.lock.count > 0) {
+        if (!this.lock.isLocked()) {
           // this site is updated all the time (even when the user isn't on this page)
           // to ensure that the tasks peak is always correct
           this.fetchCluster();
@@ -106,11 +107,14 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
 
   private async prepareCluster(cluster: ClusterInfo): Promise<void> {
 
-    const lock = new Semaphore(0);
+    const firstLock = new Mutex();
+    const secondLock = new Mutex();
+    const thirdLock = new Mutex();
 
+    await firstLock.acquire();
     this.clusterService.getEnvironment(cluster.id)
       .pipe(finalize(() => {
-        lock.release();
+        firstLock.release();
         this.featuresLoading = false;
       }))
       .subscribe(
@@ -119,9 +123,10 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
       );
 
     // Fetch all workers and update data
+    await secondLock.acquire();
     this.nodeService.getAllWorkersOfCluster(cluster.id)
       .pipe(finalize(() => {
-        lock.release();
+        secondLock.release();
         this.workersLoading = false;
       }))
       .subscribe(
@@ -130,9 +135,10 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
       );
 
     // Fetch all reducers and update data
+    await thirdLock.acquire();
     this.nodeService.getAllReducersOfCluster(cluster.id)
       .pipe(finalize(() => {
-        lock.release();
+        thirdLock.release();
         this.reducersLoading = false;
       }))
       .subscribe(
@@ -141,9 +147,9 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
       );
 
     // Wait for 3 releases
-    for (let i = 0; i < 3; i++) {
-      await lock.wait();
-    }
+    await firstLock.acquire();
+    await secondLock.acquire();
+    await thirdLock.acquire();
 
     cluster.adaptCalculatedValues(this.cluster);
     this.cluster = cluster;
@@ -195,7 +201,7 @@ export class ClusterDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchCluster(): Promise<void> {
-    await this.lock.wait();
+    await this.lock.acquire();
     this.clusterService.getClusterInfo(this.cId)
       .pipe(finalize(() => {
         this.lock.release();

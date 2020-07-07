@@ -21,16 +21,16 @@
           <div class="editing-area" *ngIf="editingName">
             <input [(ngModel)]="newProgramName" class="form-control">
             <button class="btn btn-outline-success btn-sm" tooltip="Save changes" (click)="updateProgramName();editingName = false">
-              <fa-icon [icon]="['fa', 'check']" class="text-success"></fa-icon>
+              <fa-icon [icon]="['fas', 'check']" class="text-success"></fa-icon>
             </button>
             <button class="btn btn-outline-danger btn-sm" tooltip="Cancel" (click)="cancelUpdatingProgramName(); editingName = false;">
-              <fa-icon [icon]="['fa', 'times']" class="text-danger"></fa-icon>
+              <fa-icon [icon]="['fas', 'times']" class="text-danger"></fa-icon>
             </button>
           </div>
           <div *ngIf="!editingName">
             <label>{{this.program.name}}</label>
             <button class="btn btn-outline-secondary btn-sm" tooltip="Change name" (click)="editingName = true">
-              <fa-icon [icon]="['fa', 'edit']"></fa-icon>
+              <fa-icon [icon]="['fas', 'edit']"></fa-icon>
             </button>
           </div>
         </div>
@@ -50,16 +50,16 @@
             <textarea class="form-control" type="text"
                       [(ngModel)]="newProgramDescription"></textarea>
             <button class="btn btn-outline-success btn-sm" tooltip="Save changes" (click)="updateProgramDescription();editingDescription=false">
-              <fa-icon [icon]="['fa', 'check']" class="text-success"></fa-icon>
+              <fa-icon [icon]="['fas', 'check']" class="text-success"></fa-icon>
             </button>
             <button class="btn btn-outline-danger btn-sm" tooltip="Cancel" (click)="cancelUpdatingProgramDescription(); editingDescription=false">
-              <fa-icon [icon]="['fa', 'times']" class="text-danger"></fa-icon>
+              <fa-icon [icon]="['fas', 'times']" class="text-danger"></fa-icon>
             </button>
           </div>
           <div *ngIf="!editingDescription">
             <label>{{this.program.description}}</label>
             <button class="btn btn-outline-secondary btn-sm" tooltip="Change description" (click)="editingDescription = true">
-              <fa-icon [icon]="['fa', 'edit']"></fa-icon>
+              <fa-icon [icon]="['fas', 'edit']"></fa-icon>
             </button>
           </div>
         </div>
@@ -67,16 +67,16 @@
         <label class="desc">State</label>
         <div>
           <div *ngIf="program.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="program.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
           </div>
           <div *ngIf="program.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="program.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
           </div>
         </div>
 
@@ -165,16 +165,16 @@
         </td>
         <td>
           <div *ngIf="job.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="job.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
           </div>
           <div *ngIf="job.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="job.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="text-info" tooltip="Running" [spin]="true"></fa-icon>
           </div>
         </td>
       </tr>

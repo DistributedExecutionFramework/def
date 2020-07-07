@@ -7,9 +7,10 @@ import {Subscription} from 'rxjs/internal/Subscription';
 import {interval} from 'rxjs/internal/observable/interval';
 import {AppConfig} from '../../config/app-config';
 import {Location} from '@angular/common';
-import {Semaphore} from 'prex';
+//import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
 import {NavigationElement} from "../../routing/navigation-element";
+import { Mutex } from 'async-mutex';
 
 @Component({
   selector: 'app-cluster-overview',
@@ -18,7 +19,9 @@ import {NavigationElement} from "../../routing/navigation-element";
 })
 export class ClusterOverviewComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
-  private lock: Semaphore = new Semaphore(1);
+  //private lock: Semaphore = new Semaphore(1);
+  //private lock: Semaphore = new Semaphore(1);
+  private lock: Mutex = new Mutex();
 
   activeNavigationElement: NavigationElement;
   clusters: ClusterInfo[] = [];
@@ -47,7 +50,7 @@ export class ClusterOverviewComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const path = this.location.path();
         if (path === '/manager/clusters') {
-          if (this.lock.count >= 0) {
+          if (!this.lock.isLocked()) {
             this.fetchClusters();
           }
         }
@@ -59,8 +62,10 @@ export class ClusterOverviewComponent implements OnInit, OnDestroy {
   }
 
   private async fetchClusters() {
-    await this.lock.wait();
+    // await this.lock.wait();
+    await this.lock.acquire();
     this.clusterService.getAllClusters()
+      //.pipe(finalize(() => this.lock.release()))
       .pipe(finalize(() => this.lock.release()))
       .subscribe(
         cluster => this.prepareClusters(cluster),

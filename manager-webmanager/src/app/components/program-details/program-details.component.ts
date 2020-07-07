@@ -10,8 +10,9 @@ import {interval} from 'rxjs/internal/observable/interval';
 import {Location} from '@angular/common';
 import {AppConfig} from '../../config/app-config';
 import {Subscription} from 'rxjs/internal/Subscription';
-import {Semaphore} from 'prex';
+//import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
+import {Mutex} from "async-mutex";
 
 @Component({
   selector: 'app-program-details',
@@ -41,8 +42,8 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
   newProgramDescription = '';
   currentRuntime: number = 0;
   private subscription: Subscription;
-  private programLock: Semaphore = new Semaphore(1);
-  private jobsLock: Semaphore = new Semaphore(1);
+  private programLock: Mutex = new Mutex();
+  private jobsLock: Mutex = new Mutex();
 
   constructor(
     private route: ActivatedRoute,
@@ -77,7 +78,7 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const path = this.location.path();
         if (path === ('/manager/programs/' + this.pId) && !this.editingName && !this.editingDescription) {
-          if (this.programLock.count >= 0) {
+          if (!this.programLock.isLocked()) {
             this.fetchProgram(this.pId);
           }
         }
@@ -89,7 +90,7 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchProgram(pId: string): Promise<void> {
-    await this.programLock.wait();
+    await this.programLock.acquire();
     this.programService.getProgram(pId)
       .pipe(finalize(() => this.programLock.release()))
       .subscribe(
@@ -142,7 +143,7 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchAllJobsOfProgram(): Promise<void> {
-    await this.jobsLock.wait();
+    await this.jobsLock.acquire();
     this.jobService.getAllJobsOfProgram(this.program.id)
       .pipe(finalize(() => {
         this.jobsLock.release();

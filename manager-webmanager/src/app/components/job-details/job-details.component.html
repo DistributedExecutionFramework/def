@@ -39,16 +39,16 @@
         <label class="desc">State</label>
         <div>
           <div *ngIf="this.job.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="this.job.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
           </div>
           <div *ngIf="this.job.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="this.job.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
           </div>
         </div>
 
@@ -144,7 +144,7 @@
         <div class="input-group">
           <div class="input-group-prepend">
         <span class="input-group-text" id="taskFilter">
-          <fa-icon [icon]="['fa', 'search']"></fa-icon>
+          <fa-icon [icon]="['fas', 'search']"></fa-icon>
         </span>
           </div>
           <input type="text" class="form-control" placeholder="Task-Id" aria-label="Task-Id" name="taskFilter"
@@ -156,7 +156,7 @@
 
     <div style="background-color: blue;">
       <a class="filter-button btn btn-outline-secondary btn-sm nohover" *ngFor="let filter of this.taskFilters">
-        <fa-icon [icon]="['fa', 'times']" class="text-secondary" (click)="this.deleteFilter(filter);"></fa-icon>
+        <fa-icon [icon]="['fas', 'times']" class="text-secondary" (click)="this.deleteFilter(filter);"></fa-icon>
         {{filter}}
       </a>
     </div>
@@ -166,16 +166,16 @@
       <th>
         Created
         &nbsp;
-        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fas', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
         &nbsp;
-        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion == this.creationDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fas', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.creationDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
       </th>
       <th>
         Start
         &nbsp;
-        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateNewestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fas', 'caret-down']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateNewestType) : ''" tooltip="From Newest to Oldest"></fa-icon>
         &nbsp;
-        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fa', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
+        <fa-icon class="{{this.areFiltersActive() ? 'text-secondary' : this.currentSortingCriterion === this.startDateOldestType ? 'text-danger pointer-cursor' : 'text-secondary pointer-cursor'}}" [icon]="['fas', 'caret-up']" (click)="!this.areFiltersActive() ? this.sortTasks(this.startDateOldestType) : ''" tooltip="From Oldest to Newest"></fa-icon>
       </th>
       <th>Runtime</th>
       <th>State</th>
@@ -199,16 +199,16 @@
         <td>{{task.startTime > 0 ? this.timeService.formatRuntime(task.runtime) : "-"}}</td>
         <td>
           <div *ngIf="task.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="task.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
           </div>
           <div *ngIf="task.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="task.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
           </div>
         </td>
       </tr>

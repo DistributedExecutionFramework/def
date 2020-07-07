@@ -107,7 +107,7 @@
       <div *ngIf="this.workers.length > 0" class="nodes">
         <div class="card node-card" *ngFor="let worker of this.workers">
           <div class="card-header d-flex align-items-center justify-content-between" (click)="openDetailsView(worker)">
-            <fa-icon [icon]="['fa', 'microchip']" size="1x"></fa-icon>
+            <fa-icon [icon]="['fas', 'microchip']" size="1x"></fa-icon>
             <div class="float-right w-50 text-monospace text-truncate" tooltip="{{worker.id}}">{{worker.id}}</div>
           </div>
 
@@ -146,8 +146,8 @@
             <div class="pl-3">
               <div class="float-right">
                 <a routerLink="." (click)="this.toggleShowNodeFeatures(worker)">
-                  <fa-icon *ngIf="!this.showNodeFeatures.get(worker.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
-                  <fa-icon *ngIf="this.showNodeFeatures.get(worker.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                  <fa-icon *ngIf="!this.showNodeFeatures.get(worker.id)" [icon]="['fas', 'chevron-right']"></fa-icon>
+                  <fa-icon *ngIf="this.showNodeFeatures.get(worker.id)" [icon]="['fas', 'chevron-down']"></fa-icon>
                 </a>
               </div>
               <div *ngIf="this.showNodeFeatures.get(worker.id)">
@@ -185,7 +185,7 @@
           <a id="{{reducer.id}}"></a>
           <div class="card-header d-flex align-items-center justify-content-between"
                (click)="openDetailsView(reducer)">
-            <fa-icon [icon]="['fa', 'compress-arrows-alt']" size="1x"></fa-icon>
+            <fa-icon [icon]="['fas', 'compress-arrows-alt']" size="1x"></fa-icon>
             <div class="float-right w-50 text-monospace text-truncate" tooltip="{{reducer.id}}">{{reducer.id}}</div>
           </div>
 
@@ -225,8 +225,8 @@
             <div class="pl-3">
               <div class="float-right">
                 <a routerLink="." (click)="this.toggleShowNodeFeatures(reducer)">
-                  <fa-icon *ngIf="!this.showNodeFeatures.get(reducer.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
-                  <fa-icon *ngIf="this.showNodeFeatures.get(reducer.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                  <fa-icon *ngIf="!this.showNodeFeatures.get(reducer.id)" [icon]="['fas', 'chevron-right']"></fa-icon>
+                  <fa-icon *ngIf="this.showNodeFeatures.get(reducer.id)" [icon]="['fas', 'chevron-down']"></fa-icon>
                 </a>
               </div>
               <div *ngIf="this.showNodeFeatures.get(reducer.id)">

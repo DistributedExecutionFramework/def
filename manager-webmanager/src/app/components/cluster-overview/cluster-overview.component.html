@@ -14,7 +14,7 @@
 
         <div class="card-header d-flex align-items-center justify-content-between"
              (click)="openDetailsView(this.cluster)">
-          <fa-icon [icon]="['fa', 'server']" size="1x"></fa-icon>
+          <fa-icon [icon]="['fas', 'server']" size="1x"></fa-icon>
           <div class="float-right w-50 text-right text-monospace text-truncate" tooltip="{{cluster.id}}">{{cluster.id}}</div>
         </div>
 
@@ -56,8 +56,8 @@
           <div class="pl-3">
             <div class="float-right">
               <a routerLink="." (click)="this.toggleShowFeatures(cluster.id)">
-                <fa-icon *ngIf="!this.showFeatures.get(cluster.id)" [icon]="['fa', 'chevron-right']"></fa-icon>
-                <fa-icon *ngIf="this.showFeatures.get(cluster.id)" [icon]="['fa', 'chevron-down']"></fa-icon>
+                <fa-icon *ngIf="!this.showFeatures.get(cluster.id)" [icon]="['fas', 'chevron-right']"></fa-icon>
+                <fa-icon *ngIf="this.showFeatures.get(cluster.id)" [icon]="['fas', 'chevron-down']"></fa-icon>
               </a>
             </div>
             <div *ngIf="this.showFeatures.get(cluster.id)">

@@ -12,9 +12,10 @@ import {interval} from 'rxjs/internal/observable/interval';
 import {AppConfig} from '../../config/app-config';
 import {DataConverterService} from '../../services/DataConverterService/data-converter.service';
 import {TaskService} from '../../services/TaskService/task.service';
-import {Semaphore} from 'prex';
+//import {Semaphore} from 'prex';
 import {finalize} from 'rxjs/operators';
 import {SortingCriterion} from "../../enums/sorting-criterion.enum";
+import { Mutex } from 'async-mutex';
 
 @Component({
   selector: 'app-job-details',
@@ -45,8 +46,8 @@ export class JobDetailsComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
   private pId = '';
   private jId = '';
-  private tasksLock: Semaphore = new Semaphore(1);
-  private jobLock: Semaphore = new Semaphore(1);
+  private tasksLock: Mutex = new Mutex();
+  private jobLock: Mutex = new Mutex();
 
   currentSortingCriterion: SortingCriterion = SortingCriterion.NO_SORTING;
   creationDateNewestType: SortingCriterion = SortingCriterion.CREATION_DATE_FROM_NEWEST;
@@ -90,7 +91,7 @@ export class JobDetailsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const path = this.location.path();
         if (path === ('/manager/programs/' + this.pId + '/jobs/' + this.jId)) {
-          if (this.jobLock.count > 0) {
+          if (!this.jobLock.isLocked()) {
             this.fetchJob();
           }
         }
@@ -138,7 +139,7 @@ export class JobDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchJob() {
-    await this.jobLock.wait();
+    await this.jobLock.acquire();
     this.jobService.getJob(this.pId, this.jId)
       .pipe(finalize(() => this.jobLock.release()))
       .subscribe(
@@ -195,8 +196,8 @@ export class JobDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchTasks() {
-    await this.tasksLock.wait();
-    await this.jobLock.wait();
+    await this.tasksLock.acquire();
+    await this.jobLock.acquire();
     this.taskService.getSortedTasksWithState(this.pId, this.jId, this.filterTaskState, this.currentSortingCriterion, this.filterTaskCount)
       .pipe(finalize(() => {
         this.tasksLoading = false;
@@ -210,8 +211,8 @@ export class JobDetailsComponent implements OnInit, OnDestroy {
   }
 
   private async fetchTasksWithFilter() {
-    await this.tasksLock.wait();
-    await this.jobLock.wait();
+    await this.tasksLock.acquire();
+    await this.jobLock.acquire();
 
     this.taskService.getTasksWithFilters(this.pId, this.jId, this.taskFilters, this.currentSortingCriterion)
       .pipe(finalize(() => {

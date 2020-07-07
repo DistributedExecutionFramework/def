@@ -40,7 +40,7 @@
         <div class="form-content">
         <div class="row pl-3">
           <div class="feature extension" *ngFor="let extension of this.languageFeature.extensions" (click)="this.setRequiredFeature(extension)">
-            <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fa', 'check']"></fa-icon>
+            <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fas', 'check']"></fa-icon>
             {{extension.name}}
             <span class="divider"></span>
             <span class="version">{{extension.version}}</span>
@@ -64,7 +64,7 @@
         <div class="form-content h-25 pl-3 pr-3 pre-scrollable">
           <div class="row" *ngFor="let feature of this.nonLanguageFeatures">
             <div class="feature" (click)="this.setRequiredFeature(feature)">
-              <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(feature)" [icon]="['fa', 'check']"></fa-icon>
+              <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(feature)" [icon]="['fas', 'check']"></fa-icon>
               {{feature.name}}
               <span class="divider"></span>
               <span class="version">{{feature.version}}</span>
@@ -72,7 +72,7 @@
             <div class="pl-3">
               <div class="row">
               <div class="feature extension" *ngFor="let extension of feature.extensions" (click)="this.setRequiredFeature(extension)">
-                <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fa', 'check']"></fa-icon>
+                <fa-icon class="text-primary" *ngIf="this.isRequiredFeatureActive(extension)" [icon]="['fas', 'check']"></fa-icon>
                 {{extension.name}}
                 <span class="divider"></span>
                 <span class="version">{{extension.version}}</span>
@@ -109,14 +109,14 @@
           </td>
           <td>
             <button type="button" class="btn btn-outline-danger" (click)="this.removeInParameter(inParam)" name="{{inParam.id}}.remove">
-              <fa-icon [icon]="['fa', 'times']"></fa-icon>
+              <fa-icon [icon]="['fas', 'times']"></fa-icon>
             </button>
           </td>
         </tr>
         </tbody>
       </table>
       <button type="button" class="btn btn-outline-success" (click)="this.addInParameter()" name="addInParameter">
-        <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+        <fa-icon [icon]="['fas', 'plus']"></fa-icon>
       </button>
     </div>
 
@@ -173,14 +173,14 @@
           <td>{{routineBinary.md5}}</td>
           <td>
             <button class="btn btn-outline-danger" (click)="this.removeRoutineBinary(routineBinary)">
-              <fa-icon [icon]="['fa', 'times']"></fa-icon>
+              <fa-icon [icon]="['fas', 'times']"></fa-icon>
             </button>
           </td>
         </tr>
         </tbody>
       </table>
       <button type="button" class="btn btn-outline-success" (click)="this.addRoutineBinary()">
-        <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+        <fa-icon [icon]="['fas', 'plus']"></fa-icon>
       </button>
     </div>
 
@@ -189,11 +189,11 @@
         Note: The form fields marked with a red line at the beginning are required fields!
       </p>
     </div>
-    
+
     <div>
       <div *ngIf="!this.submitting">
         <button class="btn btn-primary">
-          <fa-icon [icon]="['fa', 'upload']"></fa-icon>
+          <fa-icon [icon]="['fas', 'upload']"></fa-icon>
           <b> Submit</b>
         </button>
       </div>

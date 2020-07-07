@@ -37,7 +37,7 @@
       <div class="col input-group mb-3 pr-1">
         <div class="input-group-prepend">
           <span class="input-group-text" id="routineFilter">
-            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+            <fa-icon [icon]="['fas', 'search']"></fa-icon>
           </span>
         </div>
         <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
@@ -47,7 +47,7 @@
       <div class="col-auto pl-1">
         <a routerLink="./routine-add" class="float-right">
           <button class="btn btn-success">
-            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            <fa-icon [icon]="['fas', 'plus']"></fa-icon>
             Add routine
           </button>
         </a>
@@ -83,17 +83,17 @@
           <td class="table-col-2 text-justify text-truncate">{{routine.name}}</td>
           <td class="table-col-4 text-justify">{{routine.description}}</td>
           <td class="table-col-1 text-center text-secondary">
-            <fa-icon [icon]="['fa', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
-            <fa-icon [icon]="['fa', 'random']" *ngIf="this.libraryService.isMapRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
-            <fa-icon [icon]="['fa', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
-            <fa-icon [icon]="['fa', 'save']" *ngIf="this.libraryService.isStoreRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
-            <fa-icon [icon]="['fa', 'desktop']" *ngIf="this.libraryService.isClientRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fas', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fas', 'random']" *ngIf="this.libraryService.isMapRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fas', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fas', 'save']" *ngIf="this.libraryService.isStoreRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
+            <fa-icon [icon]="['fas', 'desktop']" *ngIf="this.libraryService.isClientRoutine(routine)" tooltip="{{this.getRoutineTypeName(routine.type)}}"></fa-icon>
           </td>
           <td class="table-col-2">
             <app-feature-list [features]="routine.requiredFeatures"></app-feature-list>
           </td>
           <td class="table-col-1">{{routine.revision}}</td>
-          <td class="table-col-1"><fa-icon [icon]="['fa', 'check']" *ngIf="routine.privateRoutine"></fa-icon></td>
+          <td class="table-col-1"><fa-icon [icon]="['fas', 'check']" *ngIf="routine.privateRoutine"></fa-icon></td>
         </tr>
       </tbody>
     </table>
@@ -105,7 +105,7 @@
       <div class="col input-group mb-3 pr-1">
         <div class="input-group-prepend">
           <span class="input-group-text" id="dataTypeFilter">
-            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+            <fa-icon [icon]="['fas', 'search']"></fa-icon>
           </span>
         </div>
         <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
@@ -115,7 +115,7 @@
       <div class="col-auto pl-1">
         <a routerLink="./datatype-add" class="float-right">
           <button class="btn btn-success">
-            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            <fa-icon [icon]="['fas', 'plus']"></fa-icon>
             Add data type
           </button>
         </a>
@@ -154,7 +154,7 @@
       <div class="col input-group mb-3 pr-1">
         <div class="input-group-prepend">
           <span class="input-group-text" id="featuresFilter">
-            <fa-icon [icon]="['fa', 'search']"></fa-icon>
+            <fa-icon [icon]="['fas', 'search']"></fa-icon>
           </span>
         </div>
         <input type="text" class="form-control" placeholder="Filter" aria-label="Filter"
@@ -164,7 +164,7 @@
       <div *ngIf="this.loginService.isAdmin()" class="col-auto pl-1">
         <a routerLink="./feature-add" class="float-right">
           <button class="btn btn-success">
-            <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+            <fa-icon [icon]="['fas', 'plus']"></fa-icon>
             Add Feature
           </button>
         </a>
@@ -228,10 +228,10 @@
                   <td *ngIf="extFeature.id == 'new'" class="table-col-2">
                     <div class="input-group">
                       <button class="btn btn-outline-success mr-1" (click)="this.saveNewExtension(feature)">
-                        <fa-icon [icon]="['fa', 'check']"></fa-icon>
+                        <fa-icon [icon]="['fas', 'check']"></fa-icon>
                       </button>
                       <button class="btn btn-outline-danger" (click)="this.cancelAddExtension(feature)">
-                        <fa-icon [icon]="['fa', 'times']"></fa-icon>
+                        <fa-icon [icon]="['fas', 'times']"></fa-icon>
                       </button>
                     </div>
                   </td>
@@ -239,7 +239,7 @@
               </tbody>
             </table>
             <button *ngIf="this.showAddExtension(feature)" class="btn btn-outline-success btn-sm float-right mr-2" (click)="this.addExtension(feature)">
-                <fa-icon [icon]="['fa', 'plus']"></fa-icon>
+                <fa-icon [icon]="['fas', 'plus']"></fa-icon>
                 Add Extension
             </button>
           </td>

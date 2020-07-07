@@ -31,16 +31,16 @@
         <label class="desc">State</label>
         <div>
           <div *ngIf="this.task.state == 'SUCCESS'">
-            <fa-icon [icon]="['fa', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
+            <fa-icon [icon]="['fas', 'check']" class="text-success" tooltip="Successfully"></fa-icon>
           </div>
           <div *ngIf="this.task.state == 'FAILED'">
-            <fa-icon [icon]="['fa', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
+            <fa-icon [icon]="['fas', 'exclamation']" class="text-danger" tooltip="Error occurred"></fa-icon>
           </div>
           <div *ngIf="this.task.state == 'SCHEDULED'">
-            <fa-icon [icon]="['fa', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
+            <fa-icon [icon]="['fas', 'clock']" class="text-dark" tooltip="Scheduled"></fa-icon>
           </div>
           <div *ngIf="this.task.state == 'RUN'">
-            <fa-icon [icon]="['fa', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
+            <fa-icon [icon]="['fas', 'sync']" class="text-info" [spin]="true" tooltip="Running"></fa-icon>
           </div>
         </div>
 

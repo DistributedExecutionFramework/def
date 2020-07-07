@@ -3,7 +3,7 @@ export class RoutineBinary {
   md5: string;
   sizeInBytes: number;
   primary: boolean;
-  data = [];
+  data: string | ArrayBuffer;
   // fileName: string;
 
   RoutineBinary() {

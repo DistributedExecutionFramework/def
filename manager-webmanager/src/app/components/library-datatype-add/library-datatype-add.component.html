@@ -38,8 +38,8 @@
                  aria-controls="collapseHelp"
                  (click)="this.isHelpCollapsed = !this.isHelpCollapsed">
                 How Do I Create a New Data Type?
-                <fa-icon *ngIf="this.isHelpCollapsed" [icon]="['fa', 'caret-down']"></fa-icon>
-                <fa-icon *ngIf="!this.isHelpCollapsed" [icon]="['fa', 'caret-up']"></fa-icon>
+                <fa-icon *ngIf="this.isHelpCollapsed" [icon]="['fas', 'caret-down']"></fa-icon>
+                <fa-icon *ngIf="!this.isHelpCollapsed" [icon]="['fas', 'caret-up']"></fa-icon>
             </div>
 
             <div id="collapseHelp"
@@ -124,7 +124,7 @@
     <div>
       <div *ngIf="!this.submitting">
         <button class="btn btn-primary">
-          <fa-icon [icon]="['fa', 'save']"></fa-icon>
+          <fa-icon [icon]="['fas', 'save']"></fa-icon>
           <b> Add Data Type</b>
         </button>
       </div>

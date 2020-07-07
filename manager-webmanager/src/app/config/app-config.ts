@@ -9,6 +9,6 @@ export class AppConfig {
 
   constructor() {
     // ToDo: Read from config.json
-    this.serviceConfig = new ServiceConfig('http', 'localhost', '40060', '/api');
+    this.serviceConfig = new ServiceConfig('http', 'manager', '40060', '/api');
   }
 }

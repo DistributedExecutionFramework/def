@@ -5,12 +5,12 @@ import { AppRoutingModule } from './routing/app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { LoadingModule } from 'ngx-loading';
+//import { LoadingModule } from 'ngx-loading';
 import { NgCircleProgressModule } from 'ng-circle-progress';
 import { ConfirmationPopoverModule } from 'angular-confirmation-popover';
-import { TooltipModule } from 'ngx-bootstrap';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { HighlightModule } from 'ngx-highlightjs';
-import { ContenteditableModule } from 'ng-contenteditable';
+import { ContenteditableModule} from "@ng-stack/contenteditable";
 
 /** Components */
 import { AppComponent } from './app.component';
@@ -45,11 +45,13 @@ import { DatePipe } from '@angular/common';
 import { LoginService } from './services/LoginService/login.service';
 
 /** Font Awesome Modules **/
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { library } from '@fortawesome/fontawesome-svg-core';
+//import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+//import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 
 /** Font Awesome Icons **/
 import {
+  fas,
   faQuestionCircle,
   faCoffee,
   faClock,
@@ -83,39 +85,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { LibraryFeatureAddComponent } from './components/library-feature-add/library-feature-add.component';
 import { FeatureListComponent } from './components/feature-list/feature-list.component';
+import {LoadingModule} from "ngx-loading";
 
-
-/** Add icons to Font Awesome library **/
-library.add(faQuestionCircle);
-library.add(faCoffee);
-library.add(faClock);
-library.add(faSync);
-library.add(faCheck);
-library.add(faExclamation);
-library.add(faTimes);
-library.add(faEdit);
-library.add(faServer);
-library.add(faCopy);
-library.add(faMicrochip);
-library.add(faSearch);
-library.add(faPlus);
-library.add(faUpload);
-library.add(faRocket);
-library.add(faSave);
-library.add(faDownload);
-library.add(faDatabase);
-library.add(faArchive);
-library.add(faCaretDown);
-library.add(faCaretUp);
-library.add(faSignOutAlt);
-library.add(faUserCircle);
-library.add(faPlay);
-library.add(faRandom);
-library.add(faDesktop);
-library.add(faCompress);
-library.add(faChevronRight);
-library.add(faChevronDown);
-library.add(faCompressArrowsAlt);
 
 @NgModule({
   declarations: [
@@ -147,12 +118,12 @@ library.add(faCompressArrowsAlt);
     ContenteditableModule,
     FormsModule,
     NgSelectModule,
-    LoadingModule.forRoot({
+    /*LoadingModule.forRoot({
       backdropBackgroundColour: 'rgba(0,0,0,0.0)',
       primaryColour: '#8c8c8c',
       secondaryColour: '#8c8c8c',
       tertiaryColour: '#8c8c8c'
-    }),
+    }),*/
     NgCircleProgressModule.forRoot({
       radius: 100,
       maxPercent: 100,
@@ -166,7 +137,8 @@ library.add(faCompressArrowsAlt);
       confirmButtonType: 'danger'
     }),
     TooltipModule.forRoot(),
-    HighlightModule.forRoot({theme: 'atom-one-light'})
+    HighlightModule,
+    LoadingModule
   ],
   providers: [
     AppConfig,
@@ -183,4 +155,39 @@ library.add(faCompressArrowsAlt);
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+  constructor(library: FaIconLibrary) {
+    /** Add icons to Font Awesome library **/
+    library.addIconPacks(fas);
+    library.addIcons(faQuestionCircle);
+    library.addIcons(faCoffee);
+    library.addIcons(faClock);
+    library.addIcons(faSync);
+    library.addIcons(faCheck);
+    library.addIcons(faExclamation);
+    library.addIcons(faTimes);
+    library.addIcons(faEdit);
+    library.addIcons(faServer);
+    library.addIcons(faCopy);
+    library.addIcons(faMicrochip);
+    library.addIcons(faSearch);
+    library.addIcons(faPlus);
+    library.addIcons(faUpload);
+    library.addIcons(faRocket);
+    library.addIcons(faSave);
+    library.addIcons(faDownload);
+    library.addIcons(faDatabase);
+    library.addIcons(faArchive);
+    library.addIcons(faCaretDown);
+    library.addIcons(faCaretUp);
+    library.addIcons(faSignOutAlt);
+    library.addIcons(faUserCircle);
+    library.addIcons(faPlay);
+    library.addIcons(faRandom);
+    library.addIcons(faDesktop);
+    library.addIcons(faCompress);
+    library.addIcons(faChevronRight);
+    library.addIcons(faChevronDown);
+    library.addIcons(faCompressArrowsAlt);
+  }
+}

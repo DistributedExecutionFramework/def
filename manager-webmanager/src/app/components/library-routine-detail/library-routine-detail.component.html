@@ -23,11 +23,11 @@
 
       <label class="desc">Type</label>
       <label>
-        <fa-icon [icon]="['fa', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
-        <fa-icon [icon]="['fa', 'random']" *ngIf="this.libraryService.isMapRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
-        <fa-icon [icon]="['fa', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
-        <fa-icon [icon]="['fa', 'save']" *ngIf="this.libraryService.isStoreRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
-        <fa-icon [icon]="['fa', 'desktop']" *ngIf="this.libraryService.isClientRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fas', 'play']" *ngIf="this.libraryService.isObjectiveRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fas', 'random']" *ngIf="this.libraryService.isMapRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fas', 'compress-arrows-alt']" *ngIf="this.libraryService.isReduceRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fas', 'save']" *ngIf="this.libraryService.isStoreRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
+        <fa-icon [icon]="['fas', 'desktop']" *ngIf="this.libraryService.isClientRoutine(this.routine)" tooltip="{{this.getRoutineTypeName(this.routine.type)}}"></fa-icon>
       </label>
 
       <label class="desc">Required Features</label>
@@ -92,13 +92,13 @@
       <div>
         <a href="{{this.clientApiUrl}}">
           <button class="btn btn-primary mr-2 mb-2">
-            <fa-icon [icon]="['fa', 'download']"></fa-icon>
+            <fa-icon [icon]="['fas', 'download']"></fa-icon>
             Download Client-API
           </button>
         </a>
         <button *ngIf="this.routine.type == this.checkType.OBJECTIVE"
                 class="btn btn-primary mr-2 mb-2" (click)="this.generateAndDownloadDataTypes()">
-          <fa-icon [icon]="['fa', 'download']"></fa-icon>
+          <fa-icon [icon]="['fas', 'download']"></fa-icon>
           Generate Data types & Download
         </button>
       </div>
